@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IzolluCRM", "IzolluCRM", "{9948BBA9-EC7E-02F2-3904-234B1E45F718}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IzolluVakfi", "IzolluCRM\IzolluDayanismaMerkezi\IzolluVakfi.csproj", "{1125848F-8D7F-1E10-8803-5D654665AEFA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1125848F-8D7F-1E10-8803-5D654665AEFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1125848F-8D7F-1E10-8803-5D654665AEFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1125848F-8D7F-1E10-8803-5D654665AEFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1125848F-8D7F-1E10-8803-5D654665AEFA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1125848F-8D7F-1E10-8803-5D654665AEFA} = {9948BBA9-EC7E-02F2-3904-234B1E45F718}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DB648E21-3D93-46D2-9351-DB24A0133E97}
+	EndGlobalSection
+EndGlobal
