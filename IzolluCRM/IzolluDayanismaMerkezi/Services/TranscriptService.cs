@@ -28,6 +28,15 @@ public class TranscriptService
         _context.TranscriptRecords.Add(transcript);
         await _context.SaveChangesAsync();
 
+        // Update student's TranskriptNotu with the latest transcript GNO
+        var student = await _context.Students.FindAsync(transcript.StudentId);
+        if (student != null)
+        {
+            student.TranskriptNotu = transcript.GNO.ToString("0.00");
+            student.GuncellemeTarihi = DateTime.Now;
+            await _context.SaveChangesAsync();
+        }
+
         await _logService.LogAsync("TranskriptEkle", 
             $"Transkript eklendi - Öğrenci ID: {transcript.StudentId}, GNO: {transcript.GNO}");
 
@@ -39,6 +48,8 @@ public class TranscriptService
         var transcript = await _context.TranscriptRecords.FindAsync(id);
         if (transcript != null)
         {
+            var studentId = transcript.StudentId;
+            
             // PDF dosyasını sil
             if (!string.IsNullOrEmpty(transcript.PdfDosyaYolu))
             {
@@ -52,8 +63,22 @@ public class TranscriptService
             _context.TranscriptRecords.Remove(transcript);
             await _context.SaveChangesAsync();
 
+            // Update student's TranskriptNotu with the new latest transcript GNO
+            var latestTranscript = await _context.TranscriptRecords
+                .Where(t => t.StudentId == studentId)
+                .OrderByDescending(t => t.GirisTarihi)
+                .FirstOrDefaultAsync();
+            
+            var student = await _context.Students.FindAsync(studentId);
+            if (student != null)
+            {
+                student.TranskriptNotu = latestTranscript != null ? latestTranscript.GNO.ToString("0.00") : string.Empty;
+                student.GuncellemeTarihi = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+
             await _logService.LogAsync("TranskriptSil", 
-                $"Transkript silindi - ID: {id}, Öğrenci ID: {transcript.StudentId}");
+                $"Transkript silindi - ID: {id}, Öğrenci ID: {studentId}");
         }
     }
 
@@ -91,24 +116,15 @@ public class TranscriptService
             if (latestTranscript != null && latestTranscript.GNO < 2.0m)
             {
                 student.AktifBursMu = false;
-                student.GuncellemeTarihi = DateTime.Now;
-                student.ScholarshipCutReason = $"Transkript kontrolü (GNO: {latestTranscript.GNO})";
                 student.ScholarshipCutDate = DateTime.Now;
-
-                var reason = "Transkript";
-                if (string.IsNullOrWhiteSpace(student.Notlar))
-                {
-                    student.Notlar = reason;
-                }
-                else if (!student.Notlar.Contains(reason))
-                {
-                    student.Notlar = $"{student.Notlar}; {reason}";
-                }
+                student.ScholarshipCutReason = "Transkript Kontrolü";
+                student.TranskriptNotu = latestTranscript.GNO.ToString("0.00");
+                student.GuncellemeTarihi = DateTime.Now;
 
                 affectedStudents.Add(student);
 
                 await _logService.LogAsync("BursKesildi", 
-                    $"{student.AdSoyad} - GNO: {latestTranscript.GNO}");
+                    $"{student.AdSoyad} - Transkript Kontrolü - GNO: {latestTranscript.GNO}");
             }
         }
 

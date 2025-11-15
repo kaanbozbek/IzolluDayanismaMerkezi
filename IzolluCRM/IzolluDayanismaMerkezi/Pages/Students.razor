@@ -865,7 +865,13 @@
     {
         var parameters = new DialogParameters { ["StudentId"] = student.Id };
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
-        await DialogService.ShowAsync<StudentDetailDialog>("Öğrenci Detayı", parameters, options);
+        var dialog = await DialogService.ShowAsync<StudentDetailDialog>("Öğrenci Detayı", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+        }
     }
 
     private async Task OpenGraduateDetailDialog(Student student)

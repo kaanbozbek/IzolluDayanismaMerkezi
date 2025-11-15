@@ -112,7 +112,11 @@
                     <MudCheckBox T="bool" @bind-Value="_student.AktifBursMu" Label="Aktif Burs" />
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField @bind-Value="_student.TranskriptNotu" Label="Transkript Notu" Lines="3" />
+                    <MudTextField @bind-Value="_student.Notlar" 
+                                  Label="Notlar" 
+                                  Lines="3" 
+                                  Placeholder="Öğrenci ile ilgili genel notları buraya yazabilirsiniz..."
+                                  HelperText="Öğrenci hakkında önemli notları ekleyin" />
                 </MudItem>
             </MudGrid>
         </MudForm>

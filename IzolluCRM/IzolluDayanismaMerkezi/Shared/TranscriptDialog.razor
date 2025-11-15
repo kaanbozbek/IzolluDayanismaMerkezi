@@ -2,17 +2,22 @@
 @using IzolluVakfi.Services
 @inject TranscriptService TranscriptService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="3">
-            <MudTextField @bind-Value="_gnoString" 
-                         Label="GNO" 
-                         Variant="Variant.Outlined" 
-                         Required="true"
-                         Immediate="true"
-                         Pattern="^[0-4](\.[0-9]{1,2})?$"
-                         HelperText="Sadece nokta (.) kullanın. Örnek: 2.50" />
+            <div class="form-group">
+                <label class="form-label">GNO *</label>
+                <select id="gnoSelect" class="form-control">
+                    <option value="">GNO Seçiniz</option>
+                    @for (decimal i = 0.0m; i <= 4.0m; i += 0.1m)
+                    {
+                        <option value="@i.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)">@i.ToString("F1")</option>
+                    }
+                </select>
+                <small class="form-text text-muted">0.0 - 4.0 arası bir değer seçin</small>
+            </div>
 
             <label class="form-label">Giriş Tarihi</label>
             <InputDate @bind-Value="_girisTarihi" class="form-control" />
@@ -57,11 +62,26 @@
     private DateTime? _girisTarihi = DateTime.Now;
     private IBrowserFile? _selectedFile;
     private string _fileName = string.Empty;
-    private string _gnoString = string.Empty;
+    private decimal _selectedGno = 0m;
 
     protected override void OnInitialized()
     {
         _transcript.StudentId = StudentId;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("select2Helper.initializeGnoSelect", "gnoSelect");
+            }
+            catch (Exception)
+            {
+                // Fallback to regular dropdown if Select2 fails
+            }
+        }
     }
 
     private void OnFileSelected(InputFileChangeEventArgs e)
@@ -72,17 +92,27 @@
 
     private async Task Save()
     {
-        // Validate GNO input - only dots allowed, no commas
-        if (_gnoString.Contains(','))
+        // Get selected GNO value
+        string? gnoValue = null;
+        try
         {
-            Snackbar.Add("GNO girişinde virgül kullanılamaz. Sadece nokta (.) kullanın. Örnek: 2.50", Severity.Warning);
+            gnoValue = await JS.InvokeAsync<string>("select2Helper.getValue", "gnoSelect");
+        }
+        catch
+        {
+            Snackbar.Add("GNO değeri alınırken hata oluştu", Severity.Error);
+            return;
+        }
+        
+        if (string.IsNullOrWhiteSpace(gnoValue))
+        {
+            Snackbar.Add("Lütfen bir GNO değeri seçiniz", Severity.Warning);
             return;
         }
 
-        // Parse GNO from string
-        if (!decimal.TryParse(_gnoString, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out decimal gno) || gno <= 0 || gno > 4)
+        if (!decimal.TryParse(gnoValue, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out decimal gno))
         {
-            Snackbar.Add("Lütfen geçerli bir GNO giriniz (0-4 arası). Örnek: 2.50", Severity.Warning);
+            Snackbar.Add("Geçersiz GNO değeri", Severity.Warning);
             return;
         }
 

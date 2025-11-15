@@ -116,10 +116,10 @@
 
                 <MudTabPanel Text="Transkript" Icon="@Icons.Material.Filled.Receipt">
                     <div class="mt-4">
-                        @if (!string.IsNullOrWhiteSpace(_student.TranskriptNotu))
+                        @if (!string.IsNullOrWhiteSpace(_latestTranscriptNote))
                         {
                             <MudAlert Severity="Severity.Info" Class="mb-4">
-                                <strong>Transkript Notu:</strong> @_student.TranskriptNotu
+                                <strong>Son Transkript Notu:</strong> @_latestTranscriptNote
                             </MudAlert>
                         }
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" 
@@ -287,21 +287,35 @@
     private bool _loading = true;
     private bool _dataLoaded = false;
     private int _activePanelIndex = 0;
+    private string _latestTranscriptNote = string.Empty;
+    private bool _hasChanges = false;
 
     protected override async Task OnParametersSetAsync()
     {
         if (!_dataLoaded && StudentId > 0)
         {
             _loading = true;
-            _student = await StudentService.GetByIdAsync(StudentId);
-            if (_student != null)
+            try
             {
-                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
-                _meetingAttendances = await MeetingService.GetAttendancesForStudentAsync(StudentId);
-                _activityLogs = await ActivityLogService.GetByPersonNameAsync(_student.AdSoyad);
+                _student = await StudentService.GetByIdAsync(StudentId);
+                if (_student != null)
+                {
+                    _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                    var latestTranscript = _transcripts.FirstOrDefault();
+                    _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                    _meetingAttendances = await MeetingService.GetAttendancesForStudentAsync(StudentId);
+                    _activityLogs = await ActivityLogService.GetByPersonNameAsync(_student.AdSoyad);
+                }
             }
-            _loading = false;
-            _dataLoaded = true;
+            catch (Exception)
+            {
+                // Handle disposed context gracefully
+            }
+            finally
+            {
+                _loading = false;
+                _dataLoaded = true;
+            }
         }
     }
 
@@ -333,6 +347,9 @@
         if (!result.Canceled)
         {
             _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+            var latestTranscript = _transcripts.FirstOrDefault();
+            _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+            _hasChanges = true;
             StateHasChanged();
         }
     }
@@ -348,6 +365,9 @@
         {
             await TranscriptService.DeleteAsync(transcriptId);
             _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+            var latestTranscript = _transcripts.FirstOrDefault();
+            _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+            _hasChanges = true;
             StateHasChanged();
         }
     }
@@ -367,7 +387,17 @@
         }
     }
 
-    private void Close() => MudDialog.Close();
+    private void Close()
+    {
+        if (_hasChanges)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            MudDialog.Close();
+        }
+    }
 
     private async Task UpdateAttendanceAsync(StudentMeetingAttendance attendance, bool katildi)
     {
