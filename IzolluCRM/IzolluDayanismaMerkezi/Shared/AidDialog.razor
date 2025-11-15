@@ -2,6 +2,7 @@
 @using IzolluVakfi.Services
 @inject AidService AidService
 @inject VillageService VillageService
+@inject SettingsService SettingsService
 @inject IJSRuntime JS
 
 <MudDialog>
@@ -24,9 +25,9 @@
                     <select id="village-selector-@_instanceId" class="selectpicker" data-width="100%" 
                             data-style="btn-outline-primary" data-live-search="true"
                             value="@_selectedVillage" @onchange="OnVillageChanged" title="Köy Seçiniz">
-                        @foreach (var village in _villages)
+                        @foreach (var villageName in _izolluVillages)
                         {
-                            <option value="@village.Ad">@village.Ad</option>
+                            <option value="@villageName">@villageName</option>
                         }
                     </select>
                 </div>
@@ -45,6 +46,18 @@
                     </select>
                 </div>
             }
+
+            <div class="mt-3">
+                <label class="form-label">Dönem</label>
+                <select id="period-selector-@_instanceId" class="selectpicker" data-width="100%" 
+                        data-style="btn-outline-primary" data-live-search="true"
+                        @bind="Aid.AcademicYear" title="Dönem Seçiniz">
+                    @foreach (var period in _academicYears)
+                    {
+                        <option value="@period">@period</option>
+                    }
+                </select>
+            </div>
 
             <MudTextField @bind-Value="Aid.Notlar" Label="Notlar" Lines="3" Class="mt-3" />
         </MudForm>
@@ -74,6 +87,16 @@
     private string _selectedVillage = string.Empty;
     private string _selectedCity = string.Empty;
     private bool _isRendered;
+    private List<string> _academicYears = new();
+    
+    private readonly List<string> _izolluVillages = new()
+    {
+        "Abuşoğlu", "Akça", "Akuşağı", "Bağlıca", "Bentköy", "Çanakçı", "Darıpınar",
+        "Dedeköy", "Düztarla", "Erdemli", "Gülenköy", "Güneyce", "İkizpınar", "Kaleköy",
+        "Karaağaç", "Karahüseyin", "Kıyıcak", "Kozluk", "Kumluyazı", "Mahmut Dursun",
+        "Salkımlı", "Sarıot", "Soğukpınar", "Tepebaşı", "Uyanık", "Uzunhüseyin",
+        "Üçdeğirmen", "Yenidamlar"
+    };
 
     private readonly List<string> _turkishCities = new()
     {
@@ -92,6 +115,21 @@
     protected override async Task OnInitializedAsync()
     {
         _villages = await VillageService.GetAllAsync();
+        
+        // Load academic years from settings
+        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
+        if (periodsFromSettings.Count > 0)
+        {
+            _academicYears = periodsFromSettings.OrderByDescending(p => p).ToList();
+        }
+        else
+        {
+            // Fallback: Generate academic years
+            for (int startYear = 2025; startYear <= 2039; startYear++)
+            {
+                _academicYears.Add($"{startYear}-{startYear + 1}");
+            }
+        }
         
         // Initialize selected values from Aid entity
         if (IsEdit)

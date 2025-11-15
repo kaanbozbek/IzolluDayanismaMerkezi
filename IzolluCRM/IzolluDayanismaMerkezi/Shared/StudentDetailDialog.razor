@@ -81,6 +81,16 @@
                             {
                                 <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Aktif Burs</MudChip>
                             }
+                            else if (!string.IsNullOrEmpty(_student.ScholarshipCutReason))
+                            {
+                                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                                    <MudText Typo="Typo.body2"><strong>Burs Kesim Sebebi:</strong> @_student.ScholarshipCutReason</MudText>
+                                    @if (_student.ScholarshipCutDate.HasValue)
+                                    {
+                                        <MudText Typo="Typo.body2"><strong>Kesim Tarihi:</strong> @_student.ScholarshipCutDate.Value.ToString("dd.MM.yyyy HH:mm")</MudText>
+                                    }
+                                </MudAlert>
+                            }
                             else if (!string.IsNullOrEmpty(_student.Notlar))
                             {
                                 @if (_student.Notlar.Contains("Transkript"))

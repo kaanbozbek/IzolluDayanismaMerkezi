@@ -100,6 +100,16 @@ public class StudentService
             }
         }
 
+        // Get the original student to check if scholarship status changed
+        var originalStudent = await _context.Students.AsNoTracking().FirstOrDefaultAsync(s => s.Id == student.Id);
+        
+        // If scholarship is being reactivated, clear cut information
+        if (originalStudent != null && !originalStudent.AktifBursMu && student.AktifBursMu)
+        {
+            student.ScholarshipCutReason = null;
+            student.ScholarshipCutDate = null;
+        }
+
         student.GuncellemeTarihi = DateTime.Now;
         _context.Students.Update(student);
         await _context.SaveChangesAsync();

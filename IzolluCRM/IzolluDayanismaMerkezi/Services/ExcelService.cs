@@ -15,8 +15,7 @@ public class ExcelService
         {
             "Sicil Numarası", "Ad Soyad", "TC No", "Email", "Telefon", "Cinsiyet", "Doğum Tarihi", "Köy",
             "Ebeveyn Adı", "Ebeveyn Telefon", "Adres", "Üniversite", "Bölüm",
-            "Sınıf", "Meslek", "Referans", "Bağışçı", "Aylık Tutar",
-            "Burs Başlangıç", "Dönem"
+            "Sınıf", "Referans", "Burs Başlangıç", "Dönem", "IBAN"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -41,12 +40,10 @@ public class ExcelService
         worksheet.Cell(2, 12).Value = "İstanbul Üniversitesi";
         worksheet.Cell(2, 13).Value = "Bilgisayar Mühendisliği";
         worksheet.Cell(2, 14).Value = "1";
-        worksheet.Cell(2, 15).Value = "Öğrenci";
-        worksheet.Cell(2, 16).Value = "Referans kişi";
-        worksheet.Cell(2, 17).Value = "Bağışçı adı";
-        worksheet.Cell(2, 18).Value = "3000";
-        worksheet.Cell(2, 19).Value = "01.09.2024";
-        worksheet.Cell(2, 20).Value = "2025-2026";
+        worksheet.Cell(2, 15).Value = "Referans kişi";
+        worksheet.Cell(2, 16).Value = "01.09.2024";
+        worksheet.Cell(2, 17).Value = "2025-2026";
+        worksheet.Cell(2, 18).Value = "TR330006100519786457841326";
 
         worksheet.Columns().AdjustToContents();
 
@@ -65,8 +62,7 @@ public class ExcelService
         {
             "Ad Soyad", "TC No", "Email", "Telefon", "Doğum Tarihi", "Yaş", "Cinsiyet", "Köy",
             "Ebeveyn Adı", "Ebeveyn Telefon", "Adres", "Üniversite", "Bölüm",
-            "Sınıf", "Meslek", "Referans", "Bağışçı", "Aylık Tutar",
-            "Burs Başlangıç", "Burs Bitiş", "Dönem", "Sicil Numarası",
+            "Sınıf", "Referans", "Burs Başlangıç", "Burs Bitiş", "Sicil Numarası",
             "IBAN", "Mezun", "Mezuniyet Tarihi", "Aktif Burs", "Transkript Notu"
         };
 
@@ -97,18 +93,15 @@ public class ExcelService
             worksheet.Cell(row, 12).Value = student.Universite ?? "";
             worksheet.Cell(row, 13).Value = student.Bolum ?? "";
             worksheet.Cell(row, 14).Value = student.Sinif;
-            worksheet.Cell(row, 15).Value = student.Meslek;
-            worksheet.Cell(row, 16).Value = student.Referans ?? "";
-            worksheet.Cell(row, 17).Value = student.BagisciAdi ?? "";
-            worksheet.Cell(row, 18).Value = student.AylikTutar;
-            worksheet.Cell(row, 19).Value = student.BursBaslangicTarihi?.ToString("dd.MM.yyyy") ?? "";
-            worksheet.Cell(row, 20).Value = student.BursBitisTarihi?.ToString("dd.MM.yyyy") ?? "";
-            worksheet.Cell(row, 21).Value = student.SicilNumarasi ?? "";
-            worksheet.Cell(row, 22).Value = student.IBAN ?? "";
-            worksheet.Cell(row, 23).Value = student.MezunMu ? "Evet" : "Hayır";
-            worksheet.Cell(row, 24).Value = student.MezuniyetTarihi?.ToString("dd.MM.yyyy") ?? "";
-            worksheet.Cell(row, 26).Value = student.AktifBursMu ? "Evet" : "Hayır";
-            worksheet.Cell(row, 27).Value = student.TranskriptNotu ?? "";
+            worksheet.Cell(row, 15).Value = student.Referans ?? "";
+            worksheet.Cell(row, 16).Value = student.BursBaslangicTarihi?.ToString("dd.MM.yyyy") ?? "";
+            worksheet.Cell(row, 17).Value = student.BursBitisTarihi?.ToString("dd.MM.yyyy") ?? "";
+            worksheet.Cell(row, 18).Value = student.SicilNumarasi ?? "";
+            worksheet.Cell(row, 19).Value = student.IBAN ?? "";
+            worksheet.Cell(row, 20).Value = student.MezunMu ? "Evet" : "Hayır";
+            worksheet.Cell(row, 21).Value = student.MezuniyetTarihi?.ToString("dd.MM.yyyy") ?? "";
+            worksheet.Cell(row, 22).Value = student.AktifBursMu ? "Evet" : "Hayır";
+            worksheet.Cell(row, 23).Value = student.TranskriptNotu ?? "";
         }
 
         worksheet.Columns().AdjustToContents();
@@ -130,8 +123,7 @@ public class ExcelService
         {
             "Sicil Numarası", "Ad Soyad", "TC No", "Email", "Telefon", "Cinsiyet", "Doğum Tarihi", "Köy",
             "Ebeveyn Adı", "Ebeveyn Telefon", "Adres", "Üniversite", "Bölüm",
-            "Sınıf", "Meslek", "Referans", "Bağışçı", "Aylık Tutar",
-            "Burs Başlangıç", "Dönem"
+            "Sınıf", "Referans", "Burs Başlangıç", "Dönem", "IBAN"
         };
 
         for (int i = 0; i < expectedHeaders.Length; i++)
@@ -166,17 +158,12 @@ public class ExcelService
                     Universite = row.Cell(12).GetString(),
                     Bolum = row.Cell(13).GetString(),
                     Sinif = ParseInt(row.Cell(14).GetString(), 1),
-                    Meslek = row.Cell(15).GetString(),
-                    Referans = row.Cell(16).GetString(),
-                    BagisciAdi = row.Cell(17).GetString(),
-                    AylikTutar = ParseDecimal(row.Cell(18).GetString()),
-                    BursBaslangicTarihi = ParseDate(row.Cell(19).GetString()),
-                    AktifBursMu = !string.IsNullOrWhiteSpace(row.Cell(17).GetString()), // Bağışçı varsa aktif
+                    Referans = row.Cell(15).GetString(),
+                    BursBaslangicTarihi = ParseDate(row.Cell(16).GetString()),
+                    IBAN = row.Cell(18).GetString(),
+                    AktifBursMu = true,
                     OlusturmaTarihi = DateTime.Now
                 };
-
-                if (string.IsNullOrWhiteSpace(student.Meslek))
-                    student.Meslek = "Öğrenci";
 
                 students.Add(student);
             }
@@ -225,7 +212,7 @@ public class ExcelService
         var headers = new[]
         {
             "Sicil Numarası", "Ad Soyad", "TC No", "Email", "Telefon", "Adres", 
-            "Meslek", "Doğum Tarihi", "Köy / Mahalle", "Üyelik Türü", 
+            "Meslek", "Firma", "Doğum Tarihi", "Köy / Mahalle", "Üyelik Türü", 
             "Üyelik Başlangıç Tarihi", "Durum", "Not"
         };
 
@@ -244,12 +231,13 @@ public class ExcelService
         worksheet.Cell(2, 5).Value = "0532 123 4567";
         worksheet.Cell(2, 6).Value = "Adres bilgisi";
         worksheet.Cell(2, 7).Value = "Mühendis";
-        worksheet.Cell(2, 8).Value = "15.05.1980";
-        worksheet.Cell(2, 9).Value = "Örnek Mahalle";
-        worksheet.Cell(2, 10).Value = "Üye";
-        worksheet.Cell(2, 11).Value = "01.01.2025";
-        worksheet.Cell(2, 12).Value = "Aktif";
-        worksheet.Cell(2, 13).Value = "Örnek not";
+        worksheet.Cell(2, 8).Value = "Örnek Şirket A.Ş.";
+        worksheet.Cell(2, 9).Value = "15.05.1980";
+        worksheet.Cell(2, 10).Value = "Örnek Mahalle";
+        worksheet.Cell(2, 11).Value = "Üye";
+        worksheet.Cell(2, 12).Value = "01.01.2025";
+        worksheet.Cell(2, 13).Value = "Aktif";
+        worksheet.Cell(2, 14).Value = "Örnek not";
 
         worksheet.Columns().AdjustToContents();
 
@@ -322,7 +310,7 @@ public class ExcelService
         var expectedHeaders = new[]
         {
             "Sicil Numarası", "Ad Soyad", "TC No", "Email", "Telefon", "Adres", 
-            "Meslek", "Doğum Tarihi", "Köy / Mahalle", "Üyelik Türü", 
+            "Meslek", "Firma", "Doğum Tarihi", "Köy / Mahalle", "Üyelik Türü", 
             "Üyelik Başlangıç Tarihi", "Durum", "Not"
         };
 
@@ -351,12 +339,13 @@ public class ExcelService
                     Telefon = row.Cell(5).GetString(),
                     Adres = row.Cell(6).GetString(),
                     Meslek = row.Cell(7).GetString(),
-                    DogumTarihi = ParseDate(row.Cell(8).GetString()),
-                    Koy = row.Cell(9).GetString(),
-                    UyelikTuru = row.Cell(10).GetString(),
-                    UyelikBaslangicTarihi = ParseDate(row.Cell(11).GetString()),
-                    Durum = row.Cell(12).GetString(),
-                    Notlar = row.Cell(13).GetString()
+                    Firma = row.Cell(8).GetString(),
+                    DogumTarihi = ParseDate(row.Cell(9).GetString()),
+                    Koy = row.Cell(10).GetString(),
+                    UyelikTuru = row.Cell(11).GetString(),
+                    UyelikBaslangicTarihi = ParseDate(row.Cell(12).GetString()),
+                    Durum = row.Cell(13).GetString(),
+                    Notlar = row.Cell(14).GetString()
                 };
 
                 // Üyelik türüne göre otomatik bayrak ayarla
@@ -375,5 +364,53 @@ public class ExcelService
         }
 
         return members;
+    }
+
+    public byte[] ExportScholarshipCutStudents(List<Student> students, string cutType)
+    {
+        using var workbook = new XLWorkbook();
+        // Sheet name must be <= 31 characters
+        var worksheet = workbook.Worksheets.Add("Bursu Kesilenler");
+
+        // Başlıklar
+        var headers = new[]
+        {
+            "Ad Soyad", "TC No", "Telefon", "Email", "Üniversite", "Bölüm", 
+            "Sınıf", "Bağışçı", "Kesim Sebebi", "Kesim Tarihi", "Aylık Tutar", "Notlar"
+        };
+
+        for (int i = 0; i < headers.Length; i++)
+        {
+            worksheet.Cell(1, i + 1).Value = headers[i];
+            worksheet.Cell(1, i + 1).Style.Font.Bold = true;
+            worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.Red;
+            worksheet.Cell(1, i + 1).Style.Font.FontColor = XLColor.White;
+        }
+
+        // Veri satırları
+        for (int i = 0; i < students.Count; i++)
+        {
+            var student = students[i];
+            int row = i + 2;
+
+            worksheet.Cell(row, 1).Value = student.AdSoyad;
+            worksheet.Cell(row, 2).Value = student.TCNo ?? "";
+            worksheet.Cell(row, 3).Value = student.Telefon ?? "";
+            worksheet.Cell(row, 4).Value = student.Email ?? "";
+            worksheet.Cell(row, 5).Value = student.Universite ?? "";
+            worksheet.Cell(row, 6).Value = student.Bolum ?? "";
+            worksheet.Cell(row, 7).Value = student.Sinif?.ToString() ?? "";
+            worksheet.Cell(row, 8).Value = student.BagisciAdi ?? "";
+            worksheet.Cell(row, 9).Value = student.ScholarshipCutReason ?? "";
+            worksheet.Cell(row, 10).Value = student.ScholarshipCutDate?.ToString("dd.MM.yyyy HH:mm") ?? "";
+            worksheet.Cell(row, 11).Value = student.AylikTutar;
+            worksheet.Cell(row, 12).Value = student.Notlar ?? "";
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
     }
 }

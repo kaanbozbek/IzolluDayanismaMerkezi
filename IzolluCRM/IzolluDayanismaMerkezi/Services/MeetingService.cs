@@ -124,12 +124,18 @@ public class MeetingService
 
     public async Task<int> ApplyLatestMeetingAbsencePenaltyAsync()
     {
+        var result = await ApplyLatestMeetingAbsencePenaltyWithDetailsAsync();
+        return result.Count;
+    }
+
+    public async Task<List<Student>> ApplyLatestMeetingAbsencePenaltyWithDetailsAsync()
+    {
         var latestMeeting = await _context.Meetings
             .OrderByDescending(m => m.Tarih)
             .FirstOrDefaultAsync();
 
         if (latestMeeting == null)
-            return 0;
+            return new List<Student>();
 
         var absentStudentIds = await _context.StudentMeetingAttendances
             .Where(a => a.MeetingId == latestMeeting.Id && !a.Katildi)
@@ -137,7 +143,7 @@ public class MeetingService
             .ToListAsync();
 
         if (!absentStudentIds.Any())
-            return 0;
+            return new List<Student>();
 
         var affectedStudents = await _context.Students
             .Where(s => absentStudentIds.Contains(s.Id) && s.AktifBursMu)
@@ -146,6 +152,8 @@ public class MeetingService
         foreach (var student in affectedStudents)
         {
             student.AktifBursMu = false;
+            student.ScholarshipCutReason = $"Toplantı kontrolü ({latestMeeting.Baslik} - {latestMeeting.Tarih:dd.MM.yyyy})";
+            student.ScholarshipCutDate = DateTime.Now;
 
             var reason = "Toplantıya katılmama";
             if (string.IsNullOrWhiteSpace(student.Notlar))
@@ -164,6 +172,6 @@ public class MeetingService
         }
 
         await _context.SaveChangesAsync();
-        return affectedStudents.Count;
+        return affectedStudents;
     }
 }

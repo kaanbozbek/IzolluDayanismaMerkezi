@@ -184,6 +184,12 @@
                             ₺ Burs Alıyor
                         </MudChip>
                     }
+                    else if (context.ScholarshipCutDate.HasValue)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">
+                            Bursu Kesildi
+                        </MudChip>
+                    }
                     else
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Default" Icon="@Icons.Material.Filled.Block">
@@ -304,6 +310,7 @@
                     <MudRadio Value="ScholarshipStatusFilter.All" Color="Color.Primary">Tümü</MudRadio>
                     <MudRadio Value="ScholarshipStatusFilter.HasScholarship" Color="Color.Success">Burs Alan</MudRadio>
                     <MudRadio Value="ScholarshipStatusFilter.NoScholarship" Color="Color.Default">Burs Almayan</MudRadio>
+                    <MudRadio Value="ScholarshipStatusFilter.ScholarshipCut" Color="Color.Error">Bursu Kesildi</MudRadio>
                 </MudRadioGroup>
             </div>
 
@@ -572,7 +579,9 @@
             if (_filters.ScholarshipStatus == ScholarshipStatusFilter.HasScholarship)
                 query = query.Where(s => s.AktifBursMu);
             else if (_filters.ScholarshipStatus == ScholarshipStatusFilter.NoScholarship)
-                query = query.Where(s => !s.AktifBursMu);
+                query = query.Where(s => !s.AktifBursMu && s.ScholarshipCutDate == null);
+            else if (_filters.ScholarshipStatus == ScholarshipStatusFilter.ScholarshipCut)
+                query = query.Where(s => !s.AktifBursMu && s.ScholarshipCutDate != null);
 
             // Gender
             if (_filters.Gender == GenderFilter.Male)
@@ -793,6 +802,7 @@
     {
         ScholarshipStatusFilter.HasScholarship => "Burs Alan",
         ScholarshipStatusFilter.NoScholarship => "Burs Almayan",
+        ScholarshipStatusFilter.ScholarshipCut => "Bursu Kesildi",
         _ => "Tümü"
     };
 

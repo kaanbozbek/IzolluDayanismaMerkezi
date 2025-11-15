@@ -1,13 +1,16 @@
 @page "/members"
 @using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Data.Models
 @using IzolluVakfi.Services
 @using IzolluVakfi.Models
 @using MudBlazor
 @inject MemberService MemberService
 @inject DonorService DonorService
 @inject MemberScholarshipCommitmentService CommitmentService
+@inject SettingsService SettingsService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>Üyeler</PageTitle>
 
@@ -48,6 +51,30 @@
                         <MudText Typo="Typo.h4" Style="font-weight: 600;">@ScholarshipGivers</MudText>
                     </div>
                     <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Taahhüt Edilen Burs</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalPledgedScholarships</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.Handshake" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Gerçekleşen Burs</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalGivenScholarships</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Style="opacity: 0.8;" />
                 </MudStack>
             </MudPaper>
         </MudItem>
@@ -130,6 +157,12 @@
                         {
                             <MudChip T="string" OnClose="RemoveRoleFilter" Color="Color.Info" Size="Size.Small">
                                 Rol: @GetRoleFilterText()
+                            </MudChip>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_filters.SelectedPeriod))
+                        {
+                            <MudChip T="string" OnClose="RemovePeriodFilter" Color="Color.Info" Size="Size.Small">
+                                Dönem: @_filters.SelectedPeriod
                             </MudChip>
                         }
                         @if (_filters.MembershipStartFrom.HasValue || _filters.MembershipStartTo.HasValue)
@@ -258,6 +291,7 @@
                         <MudTh>Verilen</MudTh>
                         <MudTh>Kalan</MudTh>
                         <MudTh>Durum</MudTh>
+                        <MudTh>Tamamlandı</MudTh>
                         <MudTh>İşlemler</MudTh>
                     </HeaderContent>
                     <PagerContent>
@@ -624,9 +658,28 @@
                 <MudRadio T="RoleFilter" Value="RoleFilter.All" Color="Color.Primary">Tümü</MudRadio>
                 <MudRadio T="RoleFilter" Value="RoleFilter.Mutevelli" Color="Color.Primary">Mütevelli Heyeti</MudRadio>
                 <MudRadio T="RoleFilter" Value="RoleFilter.YonetimKurulu" Color="Color.Secondary">Yönetim Kurulu</MudRadio>
-                <MudRadio T="RoleFilter" Value="RoleFilter.DenetimKurulu" Color="Color.Tertiary">Denetim Kurulu</MudRadio>
             </MudRadioGroup>
         </MudPaper>
+
+        @* Filter Group 6.5: Dönem (Period) for Donors *@
+        @if (_activeTabIndex == 1)
+        {
+            <MudPaper Elevation="1" Class="pa-3 mb-3">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Dönem</strong></MudText>
+                <div>
+                    <label class="form-label">Dönem Seçiniz</label>
+                    <select id="period-filter-selector" class="selectpicker" data-width="100%" 
+                            data-style="btn-outline-primary" data-live-search="true"
+                            value="@_filters.SelectedPeriod" @onchange="OnPeriodFilterChanged" title="Tümü">
+                        <option value="">Tümü</option>
+                        @foreach (var period in _allPeriods)
+                        {
+                            <option value="@period">@period</option>
+                        }
+                    </select>
+                </div>
+            </MudPaper>
+        }
 
         @* Filter Group 7: Üyelik Başlangıç Tarihi (Membership Start Date) *@
         <MudPaper Elevation="1" Class="pa-3 mb-3">
@@ -689,9 +742,12 @@
     private List<Member> _filteredMembers = new();
     private Dictionary<int, (int PledgedCount, int GivenCount, int RemainingCount)> _memberCommitments = new();
     private Dictionary<int, string> _memberCommitmentsWithYear = new();
+    private Dictionary<int, List<MemberScholarshipCommitment>> _allMemberCommitments = new();
     private bool _loading = true;
     private bool _showFilters = true;
     private int _activeTabIndex = 0;
+    private List<string> _allPeriods = new();
+    private bool _selectPickerInitialized = false;
 
     // Filter Options
     private List<string> _allProfessions = new();
@@ -710,10 +766,58 @@
     private int TotalMembers => _allMembers.Count;
     private int ActiveMembers => _allMembers.Count(m => m.AktifMi);
     private int ScholarshipGivers => _allMembers.Count(m => m.BursVeriyor && m.AktifMi);
+    private int TotalPledgedScholarships => GetFilteredMembersForStatistics().Sum(m => 
+        _memberCommitments.ContainsKey(m.Id) ? _memberCommitments[m.Id].PledgedCount : 0);
+    private int TotalGivenScholarships => GetFilteredMembersForStatistics().Sum(m => 
+        _memberCommitments.ContainsKey(m.Id) ? _memberCommitments[m.Id].GivenCount : 0);
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        await LoadPeriodsFromSettings();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || !_selectPickerInitialized)
+        {
+            await Task.Delay(200);
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+            _selectPickerInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async Task LoadPeriodsFromSettings()
+    {
+        try
+        {
+            _allPeriods = await SettingsService.GetListValueAsync("AcademicPeriods");
+            if (_allPeriods.Count == 0)
+            {
+                // Fallback to generating periods
+                for (int year = 2025; year <= 2039; year++)
+                {
+                    _allPeriods.Add($"{year}-{year + 1}");
+                }
+            }
+            _allPeriods = _allPeriods.OrderByDescending(p => p).ToList();
+        }
+        catch
+        {
+            _allPeriods = new List<string>();
+        }
     }
 
     private async Task LoadData()
@@ -763,32 +867,81 @@
 
     private async Task LoadMemberCommitments()
     {
-        // Load commitments for all members across all terms
+        // Load commitments for all members
         var allMemberIds = _allMembers.Select(m => m.Id).ToList();
         var commitmentTasks = allMemberIds.Select(memberId => CommitmentService.GetByMemberAsync(memberId));
         var commitmentResults = await Task.WhenAll(commitmentTasks);
         
         var allCommitments = commitmentResults.SelectMany(c => c).ToList();
         
-        _memberCommitments = allCommitments
+        // Store all commitments by member
+        _allMemberCommitments = allCommitments
             .GroupBy(c => c.MemberId)
-            .ToDictionary(
-                g => g.Key,
-                g => (
-                    PledgedCount: g.Sum(c => c.PledgedCount),
-                    GivenCount: g.Sum(c => c.GivenCount),
-                    RemainingCount: g.Sum(c => c.RemainingCount)
-                )
-            );
+            .ToDictionary(g => g.Key, g => g.ToList());
         
-        // Load most recent academic year for each member
-        _memberCommitmentsWithYear = allCommitments
-            .Where(c => !string.IsNullOrWhiteSpace(c.AcademicYear))
-            .GroupBy(c => c.MemberId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.OrderByDescending(c => c.AcademicYear).First().AcademicYear ?? "-"
-            );
+        // Calculate commitments based on selected period filter
+        UpdateCommitmentStatistics();
+    }
+
+    private void UpdateCommitmentStatistics()
+    {
+        if (string.IsNullOrWhiteSpace(_filters.SelectedPeriod))
+        {
+            // Show most recent period for each member
+            var latestCommitments = _allMemberCommitments
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value
+                        .Where(c => !string.IsNullOrWhiteSpace(c.AcademicYear))
+                        .OrderByDescending(c => c.AcademicYear)
+                        .FirstOrDefault()
+                );
+            
+            _memberCommitments = latestCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => (
+                        PledgedCount: kvp.Value!.PledgedCount,
+                        GivenCount: kvp.Value!.GivenCount,
+                        RemainingCount: kvp.Value!.RemainingCount
+                    )
+                );
+            
+            _memberCommitmentsWithYear = latestCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.AcademicYear ?? "-"
+                );
+        }
+        else
+        {
+            // Filter by selected period
+            var periodCommitments = _allMemberCommitments
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.FirstOrDefault(c => c.AcademicYear == _filters.SelectedPeriod)
+                );
+            
+            _memberCommitments = periodCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => (
+                        PledgedCount: kvp.Value!.PledgedCount,
+                        GivenCount: kvp.Value!.GivenCount,
+                        RemainingCount: kvp.Value!.RemainingCount
+                    )
+                );
+            
+            _memberCommitmentsWithYear = periodCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.AcademicYear ?? "-"
+                );
+        }
     }
 
     private async Task ApplyFilters()
@@ -853,10 +1006,6 @@
         {
             query = query.Where(m => m.IsYonetimKurulu);
         }
-        else if (_filters.Role == RoleFilter.DenetimKurulu)
-        {
-            query = query.Where(m => m.IsDenetimKurulu);
-        }
 
         // Membership Start Date Range Filter
         if (_filters.MembershipStartFrom.HasValue)
@@ -889,7 +1038,49 @@
 
     private IEnumerable<Member> GetFilteredMembersForDonorsTab()
     {
-        return _filteredMembers.Where(m => m.BursVeriyor);
+        var donors = _filteredMembers.Where(m => m.BursVeriyor);
+        
+        // If period filter is active, only show donors with commitments for that period
+        if (!string.IsNullOrWhiteSpace(_filters.SelectedPeriod))
+        {
+            donors = donors.Where(m => _memberCommitmentsWithYear.ContainsKey(m.Id));
+        }
+        
+        return donors;
+    }
+
+    private IEnumerable<Member> GetFilteredMembersForStatistics()
+    {
+        // For statistics cards, use donors tab if active, otherwise all filtered members
+        if (_activeTabIndex == 1)
+        {
+            return GetFilteredMembersForDonorsTab();
+        }
+        return _filteredMembers;
+    }
+
+    private bool IsPledgeCompleted(int memberId)
+    {
+        if (!_memberCommitments.ContainsKey(memberId))
+            return false;
+        
+        var commitment = _memberCommitments[memberId];
+        return commitment.PledgedCount > 0 && commitment.GivenCount >= commitment.PledgedCount;
+    }
+
+    private async Task OnPeriodFilterChanged(ChangeEventArgs e)
+    {
+        _filters.SelectedPeriod = e.Value?.ToString() ?? string.Empty;
+        UpdateCommitmentStatistics();
+        await ApplyFilters();
+        StateHasChanged();
+    }
+
+    private async Task RemovePeriodFilter()
+    {
+        _filters.SelectedPeriod = string.Empty;
+        UpdateCommitmentStatistics();
+        await ApplyFilters();
     }
 
     private IEnumerable<Member> GetFilteredMembersForMutevelliTab()
@@ -1051,7 +1242,6 @@
         {
             RoleFilter.Mutevelli => "Mütevelli Heyeti",
             RoleFilter.YonetimKurulu => "Yönetim Kurulu",
-            RoleFilter.DenetimKurulu => "Denetim Kurulu",
             _ => "Tümü"
         };
     }
@@ -1091,13 +1281,17 @@
         if (_filters.Role != RoleFilter.All) count++;
         if (_filters.MembershipStartFrom.HasValue || _filters.MembershipStartTo.HasValue) count++;
         if (_filters.AgeFrom.HasValue || _filters.AgeTo.HasValue) count++;
+        if (!string.IsNullOrWhiteSpace(_filters.SelectedPeriod)) count++;
         return count;
     }
 
     // Tab Change Handler
-    private void OnTabChanged(int newIndex)
+    private async void OnTabChanged(int newIndex)
     {
         _activeTabIndex = newIndex;
+        StateHasChanged();
+        await Task.Delay(100);
+        await InitializeSelectPickerAsync();
     }
 
     // CRUD Dialog Methods

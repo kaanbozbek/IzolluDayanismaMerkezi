@@ -88,6 +88,11 @@ public class Student
     [StringLength(34)]
     public string? IBAN { get; set; }
 
+    [StringLength(100)]
+    public string? ScholarshipCutReason { get; set; }
+
+    public DateTime? ScholarshipCutDate { get; set; }
+
     // Navigation properties
     public virtual ICollection<TranscriptRecord> Transcripts { get; set; } = new List<TranscriptRecord>();
     public virtual ICollection<StudentMeetingAttendance> MeetingAttendances { get; set; } = new List<StudentMeetingAttendance>();

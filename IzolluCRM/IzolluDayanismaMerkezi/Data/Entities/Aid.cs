@@ -30,6 +30,9 @@ public class Aid
     [StringLength(500)]
     public string? Notlar { get; set; }
 
+    [StringLength(50)]
+    public string? AcademicYear { get; set; }
+
     public DateTime OlusturmaTarihi { get; set; }
     public DateTime? GuncellemeTarihi { get; set; }
 }

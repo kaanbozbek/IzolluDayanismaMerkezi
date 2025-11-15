@@ -22,6 +22,11 @@ public class ScholarshipPayment
     /// </summary>
     public int StudentId { get; set; }
 
+    /// <summary>
+    /// The term this payment belongs to (optional for legacy data)
+    /// </summary>
+    public int? TermId { get; set; }
+
     // Navigation properties
     public virtual MemberScholarshipCommitment Commitment { get; set; } = default!;
     public virtual Student Student { get; set; } = default!;

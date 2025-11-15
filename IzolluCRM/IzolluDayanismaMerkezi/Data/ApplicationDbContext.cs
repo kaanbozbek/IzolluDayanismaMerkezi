@@ -23,6 +23,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ScholarshipPayment> ScholarshipPayments { get; set; }
     public DbSet<Village> Villages { get; set; }
     public DbSet<Aid> Aids { get; set; }
+    public DbSet<Term> Terms { get; set; }
+    public DbSet<TermScholarshipConfig> TermScholarshipConfigs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -6,6 +6,7 @@
 @inject SettingsService SettingsService
 @inject MemberScholarshipCommitmentService CommitmentService
 @inject SystemSettingsService SystemSettingsService
+@inject AidService AidService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
@@ -19,6 +20,25 @@
 }
 else
 {
+    <!-- Dönem Filtresi -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <label class="form-label">Dönem Filtresi</label>
+                    <select id="report-period-filter" class="selectpicker" data-live-search="true" 
+                            data-width="100%" title="Dönem Seçiniz" @onchange="OnReportPeriodChanged">
+                        <option value="">Tüm Dönemler</option>
+                        @foreach (var period in _academicYears)
+                        {
+                            <option value="@period" selected="@(_selectedReportPeriod == period)">@period</option>
+                        }
+                    </select>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
     <!-- Genel İstatistikler -->
     <MudGrid Class="mb-4">
         <MudItem xs="12">
@@ -52,9 +72,9 @@ else
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                                <MudText Typo="Typo.body2" Style="color: white;">Toplam Aylık Burs Tutarı</MudText>
-                                <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.TotalAmount.ToString("N0") ₺</strong></MudText>
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                <MudText Typo="Typo.body2" Style="color: white;">Taahhüt Toplam Dönem Burs Tutarı</MudText>
+                                <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.PeriodBursTutari.ToString("N0") ₺</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
@@ -94,6 +114,18 @@ else
                             <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); border-radius: 12px;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Gerçekleşen Burs Adedi</MudText>
                                 <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.RealizedCount</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 12px;">
+                                <MudText Typo="Typo.body2" Style="color: white;">Toplam Yardım Sayısı</MudText>
+                                <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.TotalAidsCount</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 12px;">
+                                <MudText Typo="Typo.body2" Style="color: #333;">Köy Sayısı</MudText>
+                                <MudText Typo="Typo.h6" Style="color: #333;"><strong>@_stats.VillageCount</strong></MudText>
                             </MudPaper>
                         </MudItem>
                     </MudGrid>
@@ -191,10 +223,60 @@ else
     private List<IzolluVakfi.Services.MemberScholarshipDetail> _memberScholarshipDetails = new();
     private Dictionary<string, int> _universityData = new();
     private ReportStats _stats = new();
+    private List<string> _academicYears = new();
+    private string _selectedReportPeriod = string.Empty;
+    private bool _selectPickerInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
+        // Load periods from settings
+        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
+        if (periodsFromSettings.Count > 0)
+        {
+            _academicYears = periodsFromSettings.OrderByDescending(p => p).ToList();
+        }
+        else
+        {
+            // Fallback: Generate academic years from 2025-2026 to 2039-2040
+            for (int startYear = 2025; startYear <= 2039; startYear++)
+            {
+                _academicYears.Add($"{startYear}-{startYear + 1}");
+            }
+        }
+        
         await RefreshReportsAsync();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_selectPickerInitialized)
+        {
+            _selectPickerInitialized = true;
+            await InitializeSelectPickerAsync();
+        }
+    }
+    
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await Task.Delay(100);
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+    
+    private async Task OnReportPeriodChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string newPeriod)
+        {
+            _selectedReportPeriod = newPeriod;
+            await RefreshReportsAsync();
+            StateHasChanged();
+        }
     }
 
     private async Task RefreshReportsAsync()
@@ -202,7 +284,7 @@ else
         _loading = true;
         try
         {
-            _stats.ActivePeriod = "Geçerli Durum";
+            _stats.ActivePeriod = string.IsNullOrWhiteSpace(_selectedReportPeriod) ? "Tüm Dönemler" : _selectedReportPeriod;
 
             // Get all students
             var allStudents = await StudentService.GetAllAsync();
@@ -215,19 +297,47 @@ else
 
             // Calculate amounts from active students
             _stats.TotalAmount = await StudentService.GetTotalActiveScholarshipAmountAsync();
-            _stats.PeriodBursTutari = _stats.TotalAmount * 12; // Yearly = Monthly * 12
 
-            // Get pledge counts from MemberScholarshipCommitment (all commitments)
+            // Get pledge counts from MemberScholarshipCommitment
             var allCommitments = await CommitmentService.GetAllAsync();
-            _stats.PledgedCount = allCommitments.Sum(c => c.PledgedCount);
-            _stats.RealizedCount = allCommitments.Sum(c => c.GivenCount);
+            
+            // Filter commitments by selected period if specified
+            var filteredCommitments = string.IsNullOrWhiteSpace(_selectedReportPeriod)
+                ? allCommitments
+                : allCommitments.Where(c => c.AcademicYear == _selectedReportPeriod).ToList();
+            
+            _stats.PledgedCount = filteredCommitments.Sum(c => c.PledgedCount);
+            _stats.RealizedCount = filteredCommitments.Sum(c => c.GivenCount);
+            
+            // Calculate period scholarship amount from filtered commitments
+            _stats.PeriodBursTutari = filteredCommitments.Sum(c => c.YearlyAmountPerScholarship * c.PledgedCount);
+            
+            // Calculate realized total amount (yearlyAmountPerScholarship * realized count)
+            _stats.RealizedTotalAmount = filteredCommitments.Sum(c => c.YearlyAmountPerScholarship * c.GivenCount);
 
             // Members and donors
             _stats.TotalMembers = await MemberService.GetTotalCountAsync();
             _stats.TotalDonors = await MemberService.GetDonorCountAsync();
 
-            // Update charts/tables
-            await LoadChartsAndTablesAsync(allStudents, allCommitments);
+            // Get all aids
+            var allAids = await AidService.GetAllAsync();
+            
+            // Filter aids by selected period if specified
+            var filteredAids = string.IsNullOrWhiteSpace(_selectedReportPeriod)
+                ? allAids
+                : allAids.Where(a => a.AcademicYear == _selectedReportPeriod).ToList();
+            
+            _stats.TotalAidsCount = filteredAids.Count;
+            
+            // Calculate unique village count (only from İzollulu aids)
+            _stats.VillageCount = filteredAids
+                .Where(a => a.IsIzollulu && !string.IsNullOrWhiteSpace(a.Koy))
+                .Select(a => a.Koy)
+                .Distinct()
+                .Count();
+
+            // Update charts/tables with filtered commitments
+            await LoadChartsAndTablesAsync(allStudents, filteredCommitments);
         }
         catch (Exception ex)
         {
@@ -275,6 +385,9 @@ else
         public decimal PeriodBursTutari { get; set; }
         public int PledgedCount { get; set; }
         public int RealizedCount { get; set; }
+        public int TotalAidsCount { get; set; }
+        public int VillageCount { get; set; }
+        public decimal RealizedTotalAmount { get; set; }
     }
 
     private async Task GeneratePdfReport()

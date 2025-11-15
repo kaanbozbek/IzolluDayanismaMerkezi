@@ -9,6 +9,7 @@ public class MemberFilterModel
     public List<string> SelectedCities { get; set; } = new();
     public List<string> SelectedMembershipTypes { get; set; } = new();
     public RoleFilter Role { get; set; } = RoleFilter.All;
+    public string? SelectedPeriod { get; set; }
     public DateTime? MembershipStartFrom { get; set; }
     public DateTime? MembershipStartTo { get; set; }
     public int? AgeFrom { get; set; }
@@ -23,6 +24,7 @@ public class MemberFilterModel
                || SelectedCities.Any()
                || SelectedMembershipTypes.Any()
                || Role != RoleFilter.All
+               || !string.IsNullOrWhiteSpace(SelectedPeriod)
                || MembershipStartFrom.HasValue
                || MembershipStartTo.HasValue
                || AgeFrom.HasValue
@@ -38,6 +40,7 @@ public class MemberFilterModel
         SelectedCities.Clear();
         SelectedMembershipTypes.Clear();
         Role = RoleFilter.All;
+        SelectedPeriod = null;
         MembershipStartFrom = null;
         MembershipStartTo = null;
         AgeFrom = null;
@@ -63,6 +66,5 @@ public enum RoleFilter
 {
     All,
     Mutevelli,
-    YonetimKurulu,
-    DenetimKurulu
+    YonetimKurulu
 }

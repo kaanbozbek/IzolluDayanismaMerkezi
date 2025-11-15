@@ -49,7 +49,8 @@ public enum ScholarshipStatusFilter
 {
     All,
     HasScholarship,
-    NoScholarship
+    NoScholarship,
+    ScholarshipCut
 }
 
 public enum GenderFilter

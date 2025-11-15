@@ -14,6 +14,11 @@ public class MemberScholarshipCommitment
     // Foreign Keys
     public int MemberId { get; set; }
 
+    /// <summary>
+    /// The term this commitment belongs to (optional for legacy data)
+    /// </summary>
+    public int? TermId { get; set; }
+
     // Navigation properties
     public virtual Member Member { get; set; } = default!;
 

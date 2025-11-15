@@ -11,7 +11,8 @@
                          Variant="Variant.Outlined" 
                          Required="true"
                          Immediate="true"
-                         HelperText="Örnek: 2.50" />
+                         Pattern="^[0-4](\.[0-9]{1,2})?$"
+                         HelperText="Sadece nokta (.) kullanın. Örnek: 2.50" />
 
             <label class="form-label">Giriş Tarihi</label>
             <InputDate @bind-Value="_girisTarihi" class="form-control" />
@@ -71,10 +72,17 @@
 
     private async Task Save()
     {
-        // Parse GNO from string
-        if (!decimal.TryParse(_gnoString.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal gno) || gno <= 0 || gno > 4)
+        // Validate GNO input - only dots allowed, no commas
+        if (_gnoString.Contains(','))
         {
-            Snackbar.Add("Lütfen geçerli bir GNO giriniz (0-4 arası)", Severity.Warning);
+            Snackbar.Add("GNO girişinde virgül kullanılamaz. Sadece nokta (.) kullanın. Örnek: 2.50", Severity.Warning);
+            return;
+        }
+
+        // Parse GNO from string
+        if (!decimal.TryParse(_gnoString, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out decimal gno) || gno <= 0 || gno > 4)
+        {
+            Snackbar.Add("Lütfen geçerli bir GNO giriniz (0-4 arası). Örnek: 2.50", Severity.Warning);
             return;
         }
 

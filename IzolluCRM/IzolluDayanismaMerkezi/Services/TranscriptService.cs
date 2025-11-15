@@ -69,12 +69,18 @@ public class TranscriptService
 
     public async Task<int> CheckAndUpdateScholarshipsAsync()
     {
+        var result = await CheckAndUpdateScholarshipsWithDetailsAsync();
+        return result.Count;
+    }
+
+    public async Task<List<Student>> CheckAndUpdateScholarshipsWithDetailsAsync()
+    {
         var activeStudents = await _context.Students
             .Include(s => s.Transcripts)
             .Where(s => s.AktifBursMu)
             .ToListAsync();
 
-        int affectedCount = 0;
+        var affectedStudents = new List<Student>();
 
         foreach (var student in activeStudents)
         {
@@ -86,6 +92,8 @@ public class TranscriptService
             {
                 student.AktifBursMu = false;
                 student.GuncellemeTarihi = DateTime.Now;
+                student.ScholarshipCutReason = $"Transkript kontrolü (GNO: {latestTranscript.GNO})";
+                student.ScholarshipCutDate = DateTime.Now;
 
                 var reason = "Transkript";
                 if (string.IsNullOrWhiteSpace(student.Notlar))
@@ -97,21 +105,21 @@ public class TranscriptService
                     student.Notlar = $"{student.Notlar}; {reason}";
                 }
 
-                affectedCount++;
+                affectedStudents.Add(student);
 
                 await _logService.LogAsync("BursKesildi", 
                     $"{student.AdSoyad} - GNO: {latestTranscript.GNO}");
             }
         }
 
-        if (affectedCount > 0)
+        if (affectedStudents.Count > 0)
         {
             await _context.SaveChangesAsync();
         }
 
         await _logService.LogAsync("TranskriptKontrol", 
-            $"Transkript kontrolü tamamlandı. {affectedCount} öğrencinin bursu kesildi.");
+            $"Transkript kontrolü tamamlandı. {affectedStudents.Count} öğrencinin bursu kesildi.");
 
-        return affectedCount;
+        return affectedStudents;
     }
 }

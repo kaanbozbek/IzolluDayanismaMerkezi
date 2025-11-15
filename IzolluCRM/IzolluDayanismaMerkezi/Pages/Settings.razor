@@ -1,18 +1,22 @@
 @page "/settings"
 @using IzolluVakfi.Data.Models
+@using IzolluVakfi.Data.Entities
+@using Microsoft.JSInterop
 @inject SettingsService SettingsService
 @inject SystemSettingsService SystemSettingsService
 @inject TranscriptService TranscriptService
 @inject MeetingService MeetingService
+@inject ExcelService ExcelService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>Ayarlar - İzollu Dayanışma Merkezi</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">Ayarlar</MudText>
 
 <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-4">
-    <MudTabPanel Text="Kontroller">
+    <MudTabPanel Text="Transkript Kontrolü">
         <MudCard Class="mt-4">
             <MudCardHeader>
                 <CardHeaderContent>
@@ -41,6 +45,42 @@
             </MudCardContent>
         </MudCard>
 
+        @if (_transcriptCutStudents.Any())
+        {
+            <MudCard Class="mt-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Error">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" />
+                            Bursu Kesilen Öğrenciler (@_transcriptCutStudents.Count)
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable Items="@_transcriptCutStudents" Dense="true" Hover="true" Striped="true" Bordered="true">
+                        <HeaderContent>
+                            <MudTh>Ad Soyad</MudTh>
+                            <MudTh>Üniversite</MudTh>
+                            <MudTh>Bölüm</MudTh>
+                            <MudTh>Kesim Sebebi</MudTh>
+                            <MudTh>Kesim Tarihi</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Ad Soyad"><strong>@context.AdSoyad</strong></MudTd>
+                            <MudTd DataLabel="Üniversite">@context.Universite</MudTd>
+                            <MudTd DataLabel="Bölüm">@context.Bolum</MudTd>
+                            <MudTd DataLabel="Kesim Sebebi">
+                                <MudText Typo="Typo.body2" Color="Color.Error"><strong>@context.ScholarshipCutReason</strong></MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Kesim Tarihi">@context.ScholarshipCutDate?.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudTabPanel>
+
+    <MudTabPanel Text="Toplantı Kontrolü">
         <MudCard Class="mt-4">
             <MudCardHeader>
                 <CardHeaderContent>
@@ -68,6 +108,40 @@
                 </MudButton>
             </MudCardContent>
         </MudCard>
+
+        @if (_meetingCutStudents.Any())
+        {
+            <MudCard Class="mt-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Error">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" />
+                            Bursu Kesilen Öğrenciler (@_meetingCutStudents.Count)
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable Items="@_meetingCutStudents" Dense="true" Hover="true" Striped="true" Bordered="true">
+                        <HeaderContent>
+                            <MudTh>Ad Soyad</MudTh>
+                            <MudTh>Üniversite</MudTh>
+                            <MudTh>Bölüm</MudTh>
+                            <MudTh>Kesim Sebebi</MudTh>
+                            <MudTh>Kesim Tarihi</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Ad Soyad"><strong>@context.AdSoyad</strong></MudTd>
+                            <MudTd DataLabel="Üniversite">@context.Universite</MudTd>
+                            <MudTd DataLabel="Bölüm">@context.Bolum</MudTd>
+                            <MudTd DataLabel="Kesim Sebebi">
+                                <MudText Typo="Typo.body2" Color="Color.Error"><strong>@context.ScholarshipCutReason</strong></MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Kesim Tarihi">@context.ScholarshipCutDate?.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        }
     </MudTabPanel>
 
     <MudTabPanel Text="Sektörler">
@@ -247,6 +321,8 @@
     private List<ScholarshipAmountModel> _scholarshipAmounts = new();
     private bool _processingTranscript;
     private bool _processingMeeting;
+    private List<Student> _transcriptCutStudents = new();
+    private List<Student> _meetingCutStudents = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -512,11 +588,27 @@
             return;
 
         _processingTranscript = true;
+        StateHasChanged();
+        
         try
         {
-            var affectedCount = await TranscriptService.CheckAndUpdateScholarshipsAsync();
-            Snackbar.Add($"Transkript kontrolü tamamlandı. {affectedCount} öğrencinin bursu kesildi.", 
-                affectedCount > 0 ? Severity.Warning : Severity.Info);
+            var affectedStudents = await TranscriptService.CheckAndUpdateScholarshipsWithDetailsAsync();
+            _transcriptCutStudents = affectedStudents;
+            
+            if (affectedStudents.Count > 0)
+            {
+                // Excel dosyası oluştur ve indir
+                var excelData = ExcelService.ExportScholarshipCutStudents(affectedStudents, "Transkript");
+                var fileName = $"Transkript_Bursu_Kesilenler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelData));
+                
+                Snackbar.Add($"Transkript kontrolü tamamlandı. {affectedStudents.Count} öğrencinin bursu kesildi. Excel raporu indirildi.", 
+                    Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add("Transkript kontrolü tamamlandı. Bursu kesilen öğrenci yok.", Severity.Info);
+            }
         }
         catch (Exception ex)
         {
@@ -525,6 +617,7 @@
         finally
         {
             _processingTranscript = false;
+            StateHasChanged();
         }
     }
 
@@ -539,11 +632,27 @@
             return;
 
         _processingMeeting = true;
+        StateHasChanged();
+        
         try
         {
-            var affectedCount = await MeetingService.ApplyLatestMeetingAbsencePenaltyAsync();
-            Snackbar.Add($"Toplantı kontrolü tamamlandı. {affectedCount} öğrencinin bursu kesildi.", 
-                affectedCount > 0 ? Severity.Warning : Severity.Info);
+            var affectedStudents = await MeetingService.ApplyLatestMeetingAbsencePenaltyWithDetailsAsync();
+            _meetingCutStudents = affectedStudents;
+            
+            if (affectedStudents.Count > 0)
+            {
+                // Excel dosyası oluştur ve indir
+                var excelData = ExcelService.ExportScholarshipCutStudents(affectedStudents, "Toplanti");
+                var fileName = $"Toplanti_Bursu_Kesilenler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelData));
+                
+                Snackbar.Add($"Toplantı kontrolü tamamlandı. {affectedStudents.Count} öğrencinin bursu kesildi. Excel raporu indirildi.", 
+                    Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add("Toplantı kontrolü tamamlandı. Bursu kesilen öğrenci yok.", Severity.Info);
+            }
         }
         catch (Exception ex)
         {
@@ -552,6 +661,7 @@
         finally
         {
             _processingMeeting = false;
+            StateHasChanged();
         }
     }
 }

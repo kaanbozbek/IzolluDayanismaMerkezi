@@ -10,6 +10,11 @@ public class SystemSettings
     public int Id { get; set; }
 
     /// <summary>
+    /// The currently active term ID (if any)
+    /// </summary>
+    public int? ActiveTermId { get; set; }
+
+    /// <summary>
     /// Application version or other metadata
     /// </summary>
     [StringLength(50)]
