@@ -1,0 +1,118 @@
+@inject TermService TermService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Dönem Düzenle</MudText>
+
+        <div class="mb-3">
+            <label class="form-label">Dönem Adı *</label>
+            <InputText @bind-Value="_displayName" class="form-control" placeholder="Örn: 2024-2025 Bahar" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Açıklama</label>
+            <InputTextArea @bind-Value="_description" class="form-control" rows="3" placeholder="Dönem hakkında açıklama (isteğe bağlı)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Başlangıç Tarihi *</label>
+            <InputDate @bind-Value="_startDate" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Bitiş Tarihi *</label>
+            <InputDate @bind-Value="_endDate" class="form-control" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="my-2">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Kaydet</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] 
+    public Data.Entities.Term Term { get; set; } = null!;
+
+    private string _displayName = string.Empty;
+    private string? _description;
+    private DateTime _startDate = DateTime.Today;
+    private DateTime _endDate = DateTime.Today.AddMonths(6);
+    private string _errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (Term != null)
+        {
+            _displayName = Term.DisplayName;
+            _description = Term.Description;
+            _startDate = Term.Start;
+            _endDate = Term.End;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = string.Empty;
+
+        // Validate
+        if (string.IsNullOrWhiteSpace(_displayName))
+        {
+            _errorMessage = "Dönem adı zorunludur.";
+            return;
+        }
+
+        if (_startDate == default(DateTime))
+        {
+            _errorMessage = "Başlangıç tarihi seçilmelidir.";
+            return;
+        }
+
+        if (_endDate == default(DateTime))
+        {
+            _errorMessage = "Bitiş tarihi seçilmelidir.";
+            return;
+        }
+
+        if (_endDate <= _startDate)
+        {
+            _errorMessage = "Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.";
+            return;
+        }
+
+        try
+        {
+            // Save changes
+            await TermService.UpdateTermAsync(
+                termId: Term.Id,
+                start: _startDate,
+                end: _endDate,
+                displayName: _displayName,
+                description: _description
+            );
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Hata: {ex.Message}";
+        }
+    }
+}

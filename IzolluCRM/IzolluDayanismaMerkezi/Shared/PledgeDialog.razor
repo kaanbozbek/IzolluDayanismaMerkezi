@@ -1,0 +1,261 @@
+@inject MemberScholarshipCommitmentService CommitmentService
+@inject TermService TermService
+@inject TermScholarshipConfigService TermScholarshipConfigService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.body1"><strong>Üye:</strong> @MemberName</MudText>
+                </MudItem>
+
+                @if (!IsEdit)
+                {
+                    <MudItem xs="12" Class="mt-2">
+                        <MudSelect T="int" 
+                                   Value="_selectedTermId" 
+                                   ValueChanged="OnTermChanged"
+                                   Label="Dönem Seçiniz" 
+                                   Variant="Variant.Outlined"
+                                   Required="true"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var term in _availableTerms)
+                            {
+                                <MudSelectItem Value="@term.Id">
+                                    @term.DisplayName (@term.Start.ToString("dd.MM.yyyy") - @term.End.ToString("dd.MM.yyyy"))
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12" Class="mt-2">
+                        <MudText Typo="Typo.body2"><strong>Dönem:</strong> @TermDisplayName</MudText>
+                    </MudItem>
+                }
+                
+                <MudItem xs="12" Class="mt-4">
+                    <MudNumericField @bind-Value="_commitment.PledgedCount" 
+                                    Label="Taahhüt Edilen Burs Adedi" 
+                                    Min="0" 
+                                    Required="true"
+                                    Variant="Variant.Outlined"
+                                    HelperText="Bu üyenin bu dönemde vermeyi taahhüt ettiği toplam burs sayısı" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudNumericField @bind-Value="_commitment.YearlyAmountPerScholarship" 
+                                    Label="Burs Başına Yıllık Tutar (₺)" 
+                                    Min="0"
+                                    Format="N2"
+                                    Required="true"
+                                    Variant="Variant.Outlined"
+                                    HelperText="Bir bursun yıllık toplam tutarı (12 aylık)" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudNumericField @bind-Value="_commitment.GivenCount" 
+                                    Label="Fiilen Verilen Burs Adedi" 
+                                    Min="0" 
+                                    Max="@_commitment.PledgedCount"
+                                    Variant="Variant.Outlined"
+                                    HelperText="Bu dönemde gerçekten öğrencilere atanan burs sayısı" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_commitment.Notes" 
+                                 Label="Notlar (Opsiyonel)" 
+                                 Lines="3"
+                                 Variant="Variant.Outlined"
+                                 MaxLength="1000" />
+                </MudItem>
+
+                @if (_commitment.PledgedCount > 0 && _commitment.YearlyAmountPerScholarship > 0)
+                {
+                    <MudItem xs="12" Class="mt-4">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-3">Özet</MudText>
+                            <MudGrid>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2"><strong>Fiilen Verilen:</strong></MudText>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Success">@_commitment.GivenCount adet</MudText>
+                                </MudItem>
+
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2"><strong>Kalan Burs:</strong></MudText>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2">@(_commitment.PledgedCount - _commitment.GivenCount) adet</MudText>
+                                </MudItem>
+
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2"><strong>Aylık Tutar (Bir Burs):</strong></MudText>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2">@((_commitment.YearlyAmountPerScholarship / 12).ToString("N2")) ₺</MudText>
+                                </MudItem>
+
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2"><strong>Toplam Aylık Tutar:</strong></MudText>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Success">
+                                        <strong>@(((_commitment.YearlyAmountPerScholarship / 12) * _commitment.PledgedCount).ToString("N2")) ₺</strong>
+                                    </MudText>
+                                </MudItem>
+
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2"><strong>Toplam Yıllık Tutar:</strong></MudText>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Primary">
+                                        <strong>@((_commitment.YearlyAmountPerScholarship * _commitment.PledgedCount).ToString("N2")) ₺</strong>
+                                    </MudText>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Error" OnClick="Delete" Disabled="@(!IsEdit)">Sil</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)">Kaydet</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public int MemberId { get; set; }
+    [Parameter] public int TermId { get; set; }
+    [Parameter] public string MemberName { get; set; } = string.Empty;
+    [Parameter] public string TermDisplayName { get; set; } = string.Empty;
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public List<int> ExistingTermIds { get; set; } = new();
+    [Parameter] public MemberScholarshipCommitment? ExistingCommitment { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private MemberScholarshipCommitment _commitment = new();
+    private List<Term> _availableTerms = new();
+    private int _selectedTermId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load all terms
+        var allTerms = await TermService.GetAllTermsAsync();
+        
+        if (IsEdit && ExistingCommitment != null)
+        {
+            // Edit mode - load existing commitment
+            _commitment = new MemberScholarshipCommitment
+            {
+                Id = ExistingCommitment.Id,
+                MemberId = ExistingCommitment.MemberId,
+                TermId = ExistingCommitment.TermId,
+                PledgedCount = ExistingCommitment.PledgedCount,
+                GivenCount = ExistingCommitment.GivenCount,
+                YearlyAmountPerScholarship = ExistingCommitment.YearlyAmountPerScholarship,
+                Notes = ExistingCommitment.Notes
+            };
+            _selectedTermId = ExistingCommitment.TermId;
+        }
+        else
+        {
+            // New commitment - show only terms that don't have commitments yet
+            _availableTerms = allTerms.Where(t => !ExistingTermIds.Contains(t.Id)).ToList();
+            
+            // Select active term or first available
+            var activeTerm = _availableTerms.FirstOrDefault(t => t.IsActive);
+            _selectedTermId = activeTerm?.Id ?? _availableTerms.FirstOrDefault()?.Id ?? 0;
+            
+            // Initialize commitment
+            _commitment.MemberId = MemberId;
+            _commitment.TermId = _selectedTermId;
+            _commitment.GivenCount = 0;
+            
+            // Load burs tutarı from TermScholarshipConfig for selected term
+            await LoadTermScholarshipAmount();
+        }
+    }
+
+    private async Task LoadTermScholarshipAmount()
+    {
+        if (_selectedTermId == 0) return;
+        
+        _commitment.TermId = _selectedTermId;
+        
+        // Get TermScholarshipConfig for this term
+        var config = await TermScholarshipConfigService.GetOrCreateForTermAsync(_selectedTermId);
+        
+        // Use the yearly amount from config
+        _commitment.YearlyAmountPerScholarship = config.YearlyAmount;
+    }
+
+    private async Task OnTermChanged(int newTermId)
+    {
+        _selectedTermId = newTermId;
+        await LoadTermScholarshipAmount();
+        StateHasChanged();
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (!_success)
+            return;
+
+        if (_commitment.GivenCount > _commitment.PledgedCount)
+        {
+            Snackbar.Add("Verilen burs sayısı, taahhüt edilen sayıdan fazla olamaz!", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            if (IsEdit)
+            {
+                await CommitmentService.UpdateAsync(_commitment);
+                Snackbar.Add("Taahhüt başarıyla güncellendi.", Severity.Success);
+            }
+            else
+            {
+                await CommitmentService.CreateAsync(_commitment);
+                Snackbar.Add("Taahhüt başarıyla oluşturuldu.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task Delete()
+    {
+        if (!IsEdit || ExistingCommitment == null)
+            return;
+
+        try
+        {
+            await CommitmentService.DeleteAsync(ExistingCommitment.Id);
+            Snackbar.Add("Taahhüt başarıyla silindi.", Severity.Info);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,168 @@
+@inject DonorService DonorService
+@inject SettingsService SettingsService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_donor.AdSoyad" Label="Ad Soyad" Required="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_donor.Meslek" Label="Meslek" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_donor.Sirket" Label="Şirket" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    @if (_isLoading)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" />
+                    }
+                    else if (_sectors.Any())
+                    {
+                        <label class="form-label">Sektör</label>
+                        <select class="form-select" @bind="_selectedSektor">
+                            <option value="">Seçiniz</option>
+                            @foreach (var sector in _sectors)
+                            {
+                                <option value="@sector">@sector</option>
+                            }
+                        </select>
+                        <MudText Typo="Typo.caption" Class="mt-1" Color="Color.Success">✓ @_sectors.Count sektör yüklendi</MudText>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Error">Sektör listesi yüklenemedi!</MudAlert>
+                    }
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_donor.Email" Label="Email" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_donor.Telefon" Label="Telefon" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_donor.Adres" Label="Adres" Lines="2" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Value="_donor.BursAdedi" 
+                                   ValueChanged="@((int val) => OnBursCountChanged(val))"
+                                   Label="Burs Adedi" Min="0" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField Value="_donor.BirimBursTutari" 
+                                   ValueChanged="@((decimal val) => OnBursAmountChanged(val))"
+                                   Label="1 Burs Tutarı" Min="0" Format="N2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Success">
+                        <strong>Toplam Tutar:</strong> @CalculateTotalAmount().ToString("N2") ₺
+                        <small>(Adet: @_donor.BursAdedi x Tutar: @_donor.BirimBursTutari.ToString("N2") ₺)</small>
+                    </MudAlert>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <label class="form-label">İlk Burs Verdiği Tarih</label>
+                    <InputDate @bind-Value="_ilkBursTarihi" class="form-control" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <label class="form-label">Son Burs Verdiği Tarih</label>
+                    <InputDate @bind-Value="_sonBursTarihi" class="form-control" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)">Kaydet</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public Donor? Donor { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private Donor _donor = new();
+    private DateTime? _ilkBursTarihi;
+    private DateTime? _sonBursTarihi;
+
+    private List<string> _sectors = new();
+    private bool _isLoading = true;
+    private string? _selectedSektor
+    {
+        get => _donor.Sektor;
+        set => _donor.Sektor = value;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        
+        // Sektör listesini ayarlardan çek
+        _sectors = await SettingsService.GetListValueAsync("Sektorler");
+        Console.WriteLine($"✓ [DonorDialog] Loaded {_sectors.Count} sectors");
+        
+        _isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsEdit && Donor != null)
+        {
+            _donor = Donor;
+            _ilkBursTarihi = _donor.IlkBursVerdigiTarih;
+            _sonBursTarihi = _donor.SonBursVerdigiTarih;
+        }
+        else if (!IsEdit)
+        {
+            // Yeni kayıt için varsayılan burs tutarını ayarlardan al
+            _donor.BirimBursTutari = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
+        }
+    }
+
+    private void OnBursCountChanged(int value)
+    {
+        _donor.BursAdedi = value;
+        _donor.ToplamTutar = CalculateTotalAmount();
+        StateHasChanged();
+    }
+
+    private void OnBursAmountChanged(decimal value)
+    {
+        _donor.BirimBursTutari = value;
+        _donor.ToplamTutar = CalculateTotalAmount();
+        StateHasChanged();
+    }
+
+    private decimal CalculateTotalAmount()
+    {
+        return _donor.BursAdedi * _donor.BirimBursTutari;
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (_success)
+        {
+            _donor.IlkBursVerdigiTarih = _ilkBursTarihi;
+            _donor.SonBursVerdigiTarih = _sonBursTarihi;
+            _donor.ToplamTutar = CalculateTotalAmount();
+
+            if (IsEdit)
+            {
+                await DonorService.UpdateAsync(_donor);
+            }
+            else
+            {
+                await DonorService.CreateAsync(_donor);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

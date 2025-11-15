@@ -1,0 +1,310 @@
+@page "/excel-import"
+@inject ExcelService ExcelService
+@inject StudentService StudentService
+@inject MemberService MemberService
+@inject TermService TermService
+@inject SettingsService SettingsService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Excel ile Veri Yükle - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Excel ile Veri Yükle</MudText>
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+    <MudTabPanel Text="Öğrenciler" Icon="@Icons.Material.Filled.School">
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Öğrenci Verilerini Yükle</MudText>
+                
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2" Class="mb-2"><strong>Aktif Dönem:</strong> @_activeTermName</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" 
+                                   StartIcon="@Icons.Material.Filled.Download" 
+                                   OnClick="DownloadStudentTemplate" FullWidth="true">
+                            Örnek Excel'i İndir
+                        </MudButton>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" 
+                                   StartIcon="@Icons.Material.Filled.Download" 
+                                   OnClick="ExportStudents" FullWidth="true">
+                            Öğrencileri Dışa Aktar
+                        </MudButton>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="UploadStudentFile" MaximumFileCount="1">
+                            <ActivatorContent>
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.CloudUpload">
+                                    Excel Dosyası Yükle
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    </MudItem>
+                    
+                    @if (_uploadingStudents)
+                    {
+                        <MudItem xs="12">
+                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                            <MudText Typo="Typo.body2" Class="mt-2">Dosya işleniyor...</MudText>
+                        </MudItem>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(_studentUploadResult))
+                    {
+                        <MudItem xs="12">
+                            <MudAlert Severity="@_studentUploadSeverity">@_studentUploadResult</MudAlert>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Üyeler" Icon="@Icons.Material.Filled.People">
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">Üye Verilerini Yükle</MudText>
+                
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" 
+                                   StartIcon="@Icons.Material.Filled.Download" 
+                                   OnClick="DownloadMemberTemplate" FullWidth="true">
+                            Örnek Excel'i İndir
+                        </MudButton>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" 
+                                   StartIcon="@Icons.Material.Filled.Download" 
+                                   OnClick="ExportMembers" FullWidth="true">
+                            Üyeleri Dışa Aktar
+                        </MudButton>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="UploadMemberFile" MaximumFileCount="1">
+                            <ActivatorContent>
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.CloudUpload">
+                                    Excel Dosyası Yükle
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    </MudItem>
+                    
+                    @if (_uploadingMembers)
+                    {
+                        <MudItem xs="12">
+                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                            <MudText Typo="Typo.body2" Class="mt-2">Dosya işleniyor...</MudText>
+                        </MudItem>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(_memberUploadResult))
+                    {
+                        <MudItem xs="12">
+                            <MudAlert Severity="@_memberUploadSeverity">@_memberUploadResult</MudAlert>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private string _activeTermName = "";
+    private bool _uploadingStudents = false;
+    private string _studentUploadResult = "";
+    private Severity _studentUploadSeverity = Severity.Info;
+    
+    private bool _uploadingMembers = false;
+    private string _memberUploadResult = "";
+    private Severity _memberUploadSeverity = Severity.Info;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _activeTermName = activeTerm?.DisplayName ?? "Aktif dönem bulunamadı";
+    }
+
+    private async Task DownloadStudentTemplate()
+    {
+        try
+        {
+            var fileBytes = ExcelService.GenerateStudentTemplate();
+            await JS.InvokeVoidAsync("downloadFile", "ogrenci_sablonu.xlsx", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Şablon dosyası indirildi.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportStudents()
+    {
+        try
+        {
+            var students = await StudentService.GetAllAsync();
+            var fileBytes = ExcelService.ExportStudents(students);
+            await JS.InvokeVoidAsync("downloadFile", $"ogrenciler_{DateTime.Now:yyyyMMdd}.xlsx", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Öğrenci listesi dışa aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UploadStudentFile(IBrowserFile file)
+    {
+        if (file == null) return;
+
+        _uploadingStudents = true;
+        _studentUploadResult = "";
+        StateHasChanged();
+
+        try
+        {
+            var activeTerm = await TermService.GetActiveTermAsync();
+            if (activeTerm == null)
+            {
+                _studentUploadResult = "Aktif dönem bulunamadı. Lütfen önce bir dönem oluşturun.";
+                _studentUploadSeverity = Severity.Warning;
+                return;
+            }
+
+            // Asenkron stream'i MemoryStream'e kopyala
+            using var memoryStream = new MemoryStream();
+            using (var fileStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+            {
+                await fileStream.CopyToAsync(memoryStream);
+            }
+            memoryStream.Position = 0;
+            
+            var students = ExcelService.ImportStudents(memoryStream, activeTerm.DisplayName);
+
+            // Get default scholarship amount from settings
+            var defaultMonthlyAmount = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
+            
+            foreach (var student in students)
+            {
+                if (string.IsNullOrWhiteSpace(student.Donem))
+                {
+                    student.Donem = activeTerm.DisplayName;
+                }
+                if (student.AylikTutar <= 0)
+                {
+                    student.AylikTutar = defaultMonthlyAmount;
+                }
+                await StudentService.CreateAsync(student);
+            }
+
+            _studentUploadResult = $"Başarıyla {students.Count} öğrenci eklendi.";
+            _studentUploadSeverity = Severity.Success;
+            Snackbar.Add(_studentUploadResult, Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _studentUploadResult = $"Hata: {ex.Message}";
+            _studentUploadSeverity = Severity.Error;
+            Snackbar.Add(_studentUploadResult, Severity.Error);
+        }
+        finally
+        {
+            _uploadingStudents = false;
+        }
+    }
+
+    private async Task DownloadMemberTemplate()
+    {
+        try
+        {
+            var fileBytes = ExcelService.GenerateMemberTemplate();
+            await JS.InvokeVoidAsync("downloadFile", "uye_sablonu.xlsx", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Şablon dosyası indirildi.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportMembers()
+    {
+        try
+        {
+            var members = await MemberService.GetAllAsync();
+            var fileBytes = ExcelService.ExportMembers(members);
+            await JS.InvokeVoidAsync("downloadFile", $"uyeler_{DateTime.Now:yyyyMMdd}.xlsx", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Üye listesi dışa aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UploadMemberFile(IBrowserFile file)
+    {
+        if (file == null) return;
+
+        _uploadingMembers = true;
+        _memberUploadResult = "";
+        StateHasChanged();
+
+        try
+        {
+            var activeTerm = await TermService.GetActiveTermAsync();
+            if (activeTerm == null)
+            {
+                _memberUploadResult = "Aktif dönem bulunamadı. Lütfen önce bir dönem oluşturun.";
+                _memberUploadSeverity = Severity.Error;
+                return;
+            }
+
+            // Asenkron stream'i MemoryStream'e kopyala
+            using var memoryStream = new MemoryStream();
+            using (var fileStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+            {
+                await fileStream.CopyToAsync(memoryStream);
+            }
+            memoryStream.Position = 0;
+            
+            var members = ExcelService.ImportMembers(memoryStream);
+
+            foreach (var member in members)
+            {
+                await MemberService.CreateAsync(member);
+            }
+
+            _memberUploadResult = $"Başarıyla {members.Count} üye eklendi.";
+            _memberUploadSeverity = Severity.Success;
+            Snackbar.Add(_memberUploadResult, Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _memberUploadResult = $"Hata: {ex.Message}";
+            _memberUploadSeverity = Severity.Error;
+            Snackbar.Add(_memberUploadResult, Severity.Error);
+        }
+        finally
+        {
+            _uploadingMembers = false;
+        }
+    }
+}

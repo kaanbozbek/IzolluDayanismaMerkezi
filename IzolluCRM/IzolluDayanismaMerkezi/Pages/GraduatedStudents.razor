@@ -1,0 +1,275 @@
+@page "/graduated-students"
+@inject StudentService StudentService
+@inject TermService TermService
+@inject MemberService MemberService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject TermChangeNotifier TermChangeNotifier
+@implements IDisposable
+
+<PageTitle>Mezun Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Mezun Öğrenciler</MudText>
+
+<MudTable Items="@_students" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Student, bool>(FilterFunc)">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Toplam: @_students.Count mezun</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Sicil No</MudTh>
+        <MudTh>Adı Soyadı</MudTh>
+        <MudTh>Mesleği</MudTh>
+        <MudTh>Okulu</MudTh>
+        <MudTh>Yaşı</MudTh>
+        <MudTh>Cinsiyeti</MudTh>
+        <MudTh>Adresi</MudTh>
+        <MudTh>İletişim</MudTh>
+        <MudTh>Mezuniyet Tarihi</MudTh>
+        <MudTh>İşlemler</MudTh>
+    </HeaderContent>
+    <RowTemplate Context="student">
+        <MudTd DataLabel="Sicil No">@(!string.IsNullOrWhiteSpace(student.SicilNumarasi) ? student.SicilNumarasi : "-")</MudTd>
+        <MudTd DataLabel="Adı Soyadı">
+            <MudLink OnClick="@(() => OpenDetailDialog(student))" Style="cursor: pointer;">
+                <MudText Typo="Typo.body2"><b>@student.AdSoyad</b></MudText>
+            </MudLink>
+        </MudTd>
+        <MudTd DataLabel="Mesleği">
+            @if (!string.IsNullOrEmpty(student.Meslek))
+            {
+                <MudText Typo="Typo.body2">@student.Meslek</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
+        <MudTd DataLabel="Okulu">
+            <MudText Typo="Typo.body2">@student.Universite</MudText>
+            @if (!string.IsNullOrEmpty(student.Bolum))
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@student.Bolum</MudText>
+            }
+        </MudTd>
+        <MudTd DataLabel="Yaşı">
+            <MudText Typo="Typo.body2">@(student.Yas?.ToString() ?? "-")</MudText>
+        </MudTd>
+        <MudTd DataLabel="Cinsiyeti">
+            <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(student.Cinsiyet) ? "-" : student.Cinsiyet)</MudText>
+        </MudTd>
+        <MudTd DataLabel="Adresi">
+            @if (!string.IsNullOrEmpty(student.Adres))
+            {
+                <MudText Typo="Typo.body2">@(student.Adres.Length > 40 ? student.Adres.Substring(0, 40) + "..." : student.Adres)</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
+        <MudTd DataLabel="İletişim">
+            @if (!string.IsNullOrEmpty(student.Telefon))
+            {
+                <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" /> @student.Telefon</MudText>
+            }
+            @if (!string.IsNullOrEmpty(student.Email))
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary"><MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" /> @student.Email</MudText>
+            }
+            @if (string.IsNullOrEmpty(student.Telefon) && string.IsNullOrEmpty(student.Email))
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
+        <MudTd DataLabel="Mezuniyet Tarihi">
+            @if (student.MezuniyetTarihi.HasValue)
+            {
+                <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.School">
+                    @student.MezuniyetTarihi.Value.ToString("dd.MM.yyyy")
+                </MudChip>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+            }
+        </MudTd>
+        <MudTd DataLabel="İşlemler">
+            @if (_memberStudentIds.Contains(student.Id))
+            {
+                <MudChip T="string" Color="Color.Info" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle">Üye</MudChip>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="@(() => ConvertToMemberAsync(student))">
+                    Üye Olarak Ekle
+                </MudButton>
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Student> _students = new();
+    private bool _loading = true;
+    private string _searchString = "";
+    private int? _selectedTermId;
+    private HashSet<int> _memberStudentIds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to term change notifications
+        TermChangeNotifier.OnTermChanged += OnTermChangedHandler;
+        
+        // Always use active term from Settings
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _selectedTermId = activeTerm?.Id;
+        
+        await LoadData();
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload data when term changes
+        await LoadData();
+    }
+    
+    private async void OnTermChangedHandler()
+    {
+        // Reload active term and data when term changes
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _selectedTermId = activeTerm?.Id;
+        await LoadData();
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        TermChangeNotifier.OnTermChanged -= OnTermChangedHandler;
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        // Always use active term from Settings
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _selectedTermId = activeTerm?.Id;
+        
+        if (_selectedTermId.HasValue)
+        {
+            // Use term-based queries
+            _students = await StudentService.GetGraduatedStudentsByTermAsync(_selectedTermId.Value);
+        }
+        else
+        {
+            // Fallback to legacy queries
+            _students = await StudentService.GetGraduatedStudentsAsync();
+        }
+        
+        // Load member IDs to check if student is already a member
+        await LoadMemberStudentIds();
+        
+        _loading = false;
+    }
+    
+    private async Task LoadMemberStudentIds()
+    {
+        var allMembers = await MemberService.GetAllAsync();
+        var studentIds = _students.Select(s => s.Id).ToList();
+        
+        // Check if any graduated student has matching TC No, name, or other identifiers
+        _memberStudentIds = allMembers
+            .Where(m => _students.Any(s => 
+                (!string.IsNullOrEmpty(m.TCNo) && !string.IsNullOrEmpty(s.TCNo) && m.TCNo == s.TCNo) ||
+                (!string.IsNullOrEmpty(m.AdSoyad) && !string.IsNullOrEmpty(s.AdSoyad) && m.AdSoyad.Equals(s.AdSoyad, StringComparison.OrdinalIgnoreCase))
+            ))
+            .Select(m => _students.First(s => 
+                (!string.IsNullOrEmpty(m.TCNo) && !string.IsNullOrEmpty(s.TCNo) && m.TCNo == s.TCNo) ||
+                (!string.IsNullOrEmpty(m.AdSoyad) && !string.IsNullOrEmpty(s.AdSoyad) && m.AdSoyad.Equals(s.AdSoyad, StringComparison.OrdinalIgnoreCase))
+            ).Id)
+            .ToHashSet();
+    }
+    
+    private async Task ConvertToMemberAsync(Student student)
+    {
+        var confirm = await DialogService.ShowMessageBox(
+            "Onay", 
+            $"{student.AdSoyad} adlı mezun öğrenciyi üye olarak eklemek istediğinizden emin misiniz?",
+            yesText: "Evet", cancelText: "Hayır");
+        
+        if (confirm != true) return;
+        
+        try
+        {
+            // Create new member from student data
+            var member = new Member
+            {
+                AdSoyad = student.AdSoyad,
+                TCNo = student.TCNo,
+                DogumTarihi = student.DogumTarihi,
+                Yas = student.Yas,
+                Telefon = student.Telefon,
+                Email = student.Email,
+                Adres = student.Adres,
+                Koy = student.Koy,
+                Meslek = student.Meslek,
+                SicilNumarasi = student.SicilNumarasi,
+                AktifMi = true,
+                BursVeriyor = false,
+                IsMutevelli = false,
+                IsYonetimKurulu = false,
+                IsDenetimKurulu = false,
+                IsIzollulu = student.IsIzollulu,
+                UyelikTuru = "Mezun Öğrenci",
+                UyelikBaslangicTarihi = DateTime.Now,
+                Notlar = $"Mezun öğrenciden dönüştürüldü. Mezuniyet Tarihi: {student.MezuniyetTarihi?.ToString("dd.MM.yyyy")}",
+                OlusturmaTarihi = DateTime.Now
+            };
+            
+            await MemberService.CreateAsync(member);
+            _memberStudentIds.Add(student.Id);
+            
+            Snackbar.Add($"{student.AdSoyad} başarıyla üye olarak eklendi.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private bool FilterFunc(Student student)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (student.AdSoyad?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Meslek?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Universite?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Bolum?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Telefon?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Email?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Cinsiyet?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        return false;
+    }
+
+    private async Task OpenDetailDialog(Student student)
+    {
+        var parameters = new DialogParameters { ["StudentId"] = student.Id };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+        await DialogService.ShowAsync<StudentDetailDialog>("Mezun Öğrenci Detayı", parameters, options);
+    }
+}

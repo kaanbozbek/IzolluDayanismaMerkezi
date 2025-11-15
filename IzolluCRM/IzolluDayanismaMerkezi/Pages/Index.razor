@@ -1,0 +1,11 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+
+<PageTitle>Dashboard - İzollu Dayanışma Merkezi</PageTitle>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/reports", true);
+    }
+}

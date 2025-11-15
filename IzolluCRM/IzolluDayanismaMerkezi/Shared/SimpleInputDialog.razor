@@ -1,0 +1,26 @@
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_inputValue" 
+                     Label="@Label" 
+                     Variant="Variant.Outlined" 
+                     FullWidth="true"
+                     AutoFocus="true"
+                     InputType="@InputType" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(_inputValue)">Ekle</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string Title { get; set; } = "Giriş";
+    [Parameter] public string Label { get; set; } = "Değer";
+    [Parameter] public InputType InputType { get; set; } = InputType.Text;
+
+    private string _inputValue = string.Empty;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(_inputValue));
+    private void Cancel() => MudDialog.Cancel();
+}

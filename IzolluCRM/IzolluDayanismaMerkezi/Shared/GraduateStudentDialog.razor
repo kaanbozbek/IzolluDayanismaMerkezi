@@ -1,0 +1,38 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudAlert Severity="Severity.Info">
+                Öğrenci mezun edildiğinde aktif burs durumu otomatik olarak sonlandırılacaktır.
+            </MudAlert>
+
+            <label class="form-label">Mezuniyet Tarihi</label>
+            <InputDate @bind-Value="_mezuniyetTarihi" class="form-control" max="@_todayIso" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Graduate">Mezun Et</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    private DateTime? _mezuniyetTarihi = DateTime.Now;
+    private readonly string _todayIso = DateTime.Now.ToString("yyyy-MM-dd");
+
+    private async Task Graduate()
+    {
+        if (!_mezuniyetTarihi.HasValue)
+        {
+            Snackbar.Add("Lütfen mezuniyet tarihi seçiniz", Severity.Warning);
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(_mezuniyetTarihi.Value));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

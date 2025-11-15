@@ -1,0 +1,125 @@
+@inject TermService TermService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            <strong>Bilgilendirme:</strong> Yeni dönem açıldığında, mevcut aktif dönemdeki tüm öğrenciler ve üyelerin verileri yeni döneme kopyalanacaktır.
+        </MudAlert>
+
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_displayName" 
+                             Label="Dönem Adı" 
+                             Variant="Variant.Outlined"
+                             Required="true"
+                             Placeholder="Örn: 2025-2026 Akademik Yılı" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <label class="form-label">Başlangıç Tarihi *</label>
+                <InputDate @bind-Value="_startDate" class="form-control" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <label class="form-label">Bitiş Tarihi *</label>
+                <InputDate @bind-Value="_endDate" class="form-control" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_description" 
+                             Label="Açıklama (Opsiyonel)" 
+                             Variant="Variant.Outlined"
+                             Lines="3" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Submit"
+                   Disabled="_processing">
+            @if (_processing)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <span class="ms-2">İşleniyor...</span>
+            }
+            else
+            {
+                <span>Dönem Aç</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    MudDialogInstance MudDialog { get; set; } = null!;
+
+    private string _displayName = string.Empty;
+    private DateTime _startDate;
+    private DateTime _endDate;
+    private string _description = string.Empty;
+    private bool _processing;
+
+    protected override void OnInitialized()
+    {
+        // Set default dates for academic year (September 1 - August 31)
+        var currentYear = DateTime.Now.Year;
+        var currentMonth = DateTime.Now.Month;
+        
+        // If we're in September or later, start from this September
+        // Otherwise, start from last September
+        var startYear = currentMonth >= 9 ? currentYear : currentYear - 1;
+        
+        _startDate = new DateTime(startYear, 9, 1);
+        _endDate = new DateTime(startYear + 1, 8, 31);
+        _displayName = $"{startYear}-{startYear + 1} Akademik Yılı";
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_displayName))
+        {
+            Snackbar.Add("Dönem adı zorunludur", Severity.Warning);
+            return;
+        }
+
+        if (_startDate == default(DateTime) || _endDate == default(DateTime))
+        {
+            Snackbar.Add("Başlangıç ve bitiş tarihleri zorunludur", Severity.Warning);
+            return;
+        }
+
+        if (_startDate >= _endDate)
+        {
+            Snackbar.Add("Bitiş tarihi başlangıç tarihinden sonra olmalıdır", Severity.Warning);
+            return;
+        }
+
+        _processing = true;
+        StateHasChanged();
+        
+        try
+        {
+            await TermService.OpenNewTermAsync(_startDate, _endDate, _description);
+            
+            if (MudDialog != null)
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+}

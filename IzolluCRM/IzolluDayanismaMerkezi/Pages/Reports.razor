@@ -1,0 +1,395 @@
+@page "/reports"
+@inject StudentService StudentService
+@inject DonorService DonorService
+@inject MemberService MemberService
+@inject TermService TermService
+@inject TermScholarshipConfigService TermScholarshipConfigService
+@inject PdfService PdfService
+@inject SettingsService SettingsService
+@inject MemberScholarshipCommitmentService CommitmentService
+@inject SystemSettingsService SystemSettingsService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject TermChangeNotifier TermChangeNotifier
+@implements IDisposable
+
+<PageTitle>Analiz ve Raporlar - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Analiz ve Raporlar</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <!-- Genel İstatistikler -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">
+                            <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="mr-2" />
+                            Genel İstatistikler
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <MudText Typo="Typo.body2" Style="color: white;">Aktif Dönem</MudText>
+                                <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.ActivePeriod</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <MudText Typo="Typo.body2" Style="color: white;">Toplam Öğrenci</MudText>
+                                <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.TotalStudents</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <MudText Typo="Typo.body2" Style="color: white;">Burs Alan</MudText>
+                                <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.ActiveScholarships</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                                <MudText Typo="Typo.body2" Style="color: white;">Toplam Aylık Burs Tutarı</MudText>
+                                <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.TotalAmount.ToString("N0") ₺</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                <MudText Typo="Typo.body2" Style="color: white;">Mezun Sayısı</MudText>
+                                <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.GraduatedCount</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                                                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Style="color: white; margin-right: 8px;" />
+                                <MudText Typo="Typo.body2" Style="color: white;">Bağışçılar</MudText>
+                            </div>
+                                <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.TotalDonors</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                <MudText Typo="Typo.body2" Style="color: #333;">Üye Sayısı</MudText>
+                                <MudText Typo="Typo.h5" Style="color: #333;"><strong>@_stats.TotalMembers</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
+                                <MudText Typo="Typo.body2" Style="color: white;">Toplam Dönem Burs Tutarı</MudText>
+                                <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.PeriodBursTutari.ToString("N0") ₺</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); border-radius: 12px;">
+                                <MudText Typo="Typo.body2" Style="color: #333;">Taahhüt Edilen Burs Adedi</MudText>
+                                <MudText Typo="Typo.h6" Style="color: #333;"><strong>@_stats.PledgedCount</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); border-radius: 12px;">
+                                <MudText Typo="Typo.body2" Style="color: white;">Gerçekleşen Burs Adedi</MudText>
+                                <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.RealizedCount</strong></MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+<MudGrid>
+    @* Term Filter Only *@
+
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardContent>
+                <BootstrapTermSelector SelectedTermId="_filterModel.SelectedTermId" 
+                                     SelectedTermIdChanged="OnTermChanged" 
+                                     Label="Dönem Seçin" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardContent>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.PictureAsPdf" 
+                           OnClick="GeneratePdfReport" FullWidth="true"
+                           Style="height: 56px;">
+                    PDF Raporu Al
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Üyelerin Verdiği Burs Dağılımı</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_memberScholarshipDetails.Any())
+                {
+                    <MudTable Items="@_memberScholarshipDetails" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Üye Adı</MudTh>
+                            <MudTh>Taahhüt Edilen</MudTh>
+                            <MudTh>Gerçekleşen</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Üye Adı">@context.MemberName</MudTd>
+                            <MudTd DataLabel="Taahhüt Edilen">
+                                <strong>@context.PledgedCount</strong>
+                            </MudTd>
+                            <MudTd DataLabel="Gerçekleşen">
+                                <strong>@context.RealizedCount</strong>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">Veri yükleniyor...</MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Üniversiteye Göre Öğrenci Dağılımı</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_universityData.Any())
+                {
+                    <MudTable Items="@_universityData" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Üniversite</MudTh>
+                            <MudTh>Öğrenci Sayısı</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Üniversite">@context.Key</MudTd>
+                            <MudTd DataLabel="Öğrenci Sayısı">
+                                <strong>@context.Value</strong>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">Veri yükleniyor...</MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+</MudGrid>
+
+}
+
+@code {
+    private bool _loading = true;
+    private ReportFilterModel _filterModel = new();
+    private List<Term> _terms = new();
+    private int? _activeTermId; // Track active term ID from SystemSettings
+    private List<IzolluVakfi.Services.MemberScholarshipDetail> _memberScholarshipDetails = new();
+    private Dictionary<string, int> _universityData = new();
+    private ReportStats _stats = new();
+    private Data.Entities.TermScholarshipConfig? _currentTermConfig;
+
+    public class ReportFilterModel
+    {
+        public int? SelectedTermId { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to term change notifications
+        TermChangeNotifier.OnTermChanged += OnTermChangedHandler;
+        
+        // Load terms first
+        _terms = await TermService.GetAllTermsAsync();
+        
+        // Get active term from SystemSettings (not Term.IsActive)
+        _activeTermId = await SystemSettingsService.GetActiveTermIdAsync();
+        _filterModel.SelectedTermId = _activeTermId;
+        
+        await RefreshReportsAsync();
+    }
+    
+    private async Task OnTermChanged(int? termId)
+    {
+        _filterModel.SelectedTermId = termId;
+        await RefreshReportsAsync();
+    }
+    
+    private async void OnTermChangedHandler()
+    {
+        // Reload active term from SystemSettings when term changes
+        _activeTermId = await SystemSettingsService.GetActiveTermIdAsync();
+        _filterModel.SelectedTermId = _activeTermId;
+        await RefreshReportsAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        TermChangeNotifier.OnTermChanged -= OnTermChangedHandler;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Reload to ensure we have fresh data
+            await RefreshReportsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshReportsAsync()
+    {
+        _loading = true;
+        try
+        {
+            if (!_filterModel.SelectedTermId.HasValue)
+            {
+                Snackbar.Add("Lütfen bir dönem seçin", Severity.Warning);
+                _loading = false;
+                return;
+            }
+
+            // Load term scholarship configuration
+            _currentTermConfig = await TermScholarshipConfigService.GetOrCreateForTermAsync(_filterModel.SelectedTermId.Value);
+            
+            // Get selected term
+            var selectedTerm = _terms.FirstOrDefault(t => t.Id == _filterModel.SelectedTermId.Value);
+            if (selectedTerm == null)
+            {
+                _loading = false;
+                return;
+            }
+
+            _stats.ActivePeriod = selectedTerm.DisplayName;
+
+            // Get students for selected term using StudentTerm (NOT obsolete Student.Donem field)
+            var studentTerms = await StudentService.GetStudentTermsByTermAsync(_filterModel.SelectedTermId.Value);
+            var studentIds = studentTerms.Select(st => st.StudentId).ToList();
+            
+            // Load student details
+            var allStudents = await StudentService.GetAllAsync();
+            var filteredStudents = allStudents
+                .Where(s => studentIds.Contains(s.Id))
+                .ToList();
+
+            // Update basic student stats
+            _stats.TotalStudents = filteredStudents.Count;
+            _stats.ActiveScholarships = filteredStudents.Count(s => s.AktifBursMu && !s.MezunMu);
+            _stats.GraduatedCount = studentTerms.Count(st => st.IsGraduated);
+
+            // Calculate amounts using TermScholarshipConfig
+            _stats.TotalAmount = _currentTermConfig.MonthlyAmount * _stats.ActiveScholarships;
+            _stats.PeriodBursTutari = _currentTermConfig.YearlyAmount * _stats.ActiveScholarships;
+
+            // Get pledge counts from MemberScholarshipCommitment for selected term
+            var commitments = await CommitmentService.GetByTermAsync(_filterModel.SelectedTermId.Value);
+            _stats.PledgedCount = commitments.Sum(c => c.PledgedCount);
+            _stats.RealizedCount = commitments.Sum(c => c.GivenCount);
+
+            // Members and donors (not term-specific)
+            _stats.TotalMembers = await MemberService.GetTotalCountAsync();
+            // Count donors from Members table (BursVeriyor = true) to match "Bağışçılar" tab
+            _stats.TotalDonors = await MemberService.GetDonorCountAsync();
+
+            // Update charts/tables
+            await LoadChartsAndTablesAsync(filteredStudents, commitments);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadChartsAndTablesAsync(List<Student> students, List<MemberScholarshipCommitment> commitments)
+    {
+        // "Üyelerin Verdiği Burs Dağılımı" - show pledged and realized counts
+        _memberScholarshipDetails = commitments
+            .Where(c => c.Member != null)
+            .GroupBy(c => c.Member!.AdSoyad)
+            .Select(g => new IzolluVakfi.Services.MemberScholarshipDetail
+            {
+                MemberName = g.Key,
+                PledgedCount = g.Sum(c => c.PledgedCount),
+                RealizedCount = g.Sum(c => c.GivenCount)
+            })
+            .OrderByDescending(d => d.PledgedCount)
+            .ToList();
+
+        // "Üniversiteye Göre Öğrenci Dağılımı" - use filtered students
+        _universityData = students
+            .Where(s => !string.IsNullOrEmpty(s.Universite))
+            .GroupBy(s => s.Universite!)
+            .OrderByDescending(g => g.Count())
+            .Take(10)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    private class ReportStats
+    {
+        public string ActivePeriod { get; set; } = "Belirtilmemiş";
+        public int TotalStudents { get; set; }
+        public int ActiveScholarships { get; set; }
+        public int GraduatedCount { get; set; }
+        public int TotalDonors { get; set; }
+        public int TotalMembers { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal PeriodBursTutari { get; set; }
+        public int PledgedCount { get; set; }
+        public int RealizedCount { get; set; }
+    }
+
+    private async Task GeneratePdfReport()
+    {
+        try
+        {
+            var pdfBytes = PdfService.GenerateComprehensiveReport(
+                totalStudents: _stats.TotalStudents,
+                activeScholarships: _stats.ActiveScholarships,
+                graduatedCount: _stats.GraduatedCount,
+                totalDonors: _stats.TotalDonors,
+                totalMembers: _stats.TotalMembers,
+                totalAmount: _stats.TotalAmount,
+                activePeriod: _stats.ActivePeriod,
+                periodBursTutari: _stats.PeriodBursTutari,
+                universityData: _universityData,
+                memberScholarshipDetails: _memberScholarshipDetails
+            );
+            
+            await JS.InvokeVoidAsync("downloadFile", $"kapsamli_rapor_{DateTime.Now:yyyyMMdd_HHmmss}.pdf", Convert.ToBase64String(pdfBytes));
+            Snackbar.Add("Kapsamlı PDF raporu oluşturuldu.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+}

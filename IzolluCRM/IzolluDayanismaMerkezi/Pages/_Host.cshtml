@@ -1,0 +1,50 @@
+@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@namespace IzolluVakfi.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>İzollu Dayanışma Merkezi</title>
+    <base href="~/" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-b0afXuqDCt74hEYpO5rKA6JSmjP9xxPxUe/xW1k4PWgopZnTSA3Y79QJTTXAG7Wg" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css" integrity="sha384-nKcN65FWPiYBEM1sQn2n73uLMTtsoEy2Y6Kiy1lpdp1Kff/cijfF+Yqf/wNf5Bjw" crossorigin="anonymous">
+    <link href="css/site.css" rel="stylesheet" />
+</head>
+<body>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            Bir hata oluştu.
+        </environment>
+        <environment include="Development">
+            Beklenmeyen bir hata oluştu. Daha fazla bilgi için tarayıcı geliştirme araçlarına bakın.
+        </environment>
+        <a href="" class="reload">Yenile</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha384-zL2pumLtFURVEkR92pT9XyM54q9WlH0I1GtIsfRSAxEPPGjBJOCa/MEzh3+rXy6D" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-OMkUgSCxV+n6Mo+AHh+O2brfEDgWBg95+d6Wzik9AmV4Lmh0+Ok7W82dManIeZDV" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js" integrity="sha384-Ur0CuxnxOQk4LLxNT5MMuW6lRURaeprvpgPS8I36PMghU2CJpRgwiXGpxTgalyGI" crossorigin="anonymous"></script>
+    <script src="js/bootstrap-select-init.js"></script>
+    <script src="_framework/blazor.server.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        window.downloadFile = function (filename, base64String) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = "data:application/octet-stream;base64," + base64String;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+    </script>
+</body>
+</html>

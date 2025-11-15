@@ -1,0 +1,172 @@
+@inject TermService TermService
+@inject SystemSettingsService SystemSettingsService
+@inject IJSRuntime JS
+@inject TermChangeNotifier TermChangeNotifier
+@implements IDisposable
+
+<div class="form-group mb-3">
+    <label class="form-label">@Label</label>
+    <select class="selectpicker" 
+            id="term-selector-@_instanceId"
+            data-width="100%" 
+            data-style="btn-outline-primary" 
+            data-live-search="true"
+            data-show-subtext="true"
+            title="Dönem Seçiniz">
+        @if (_terms != null && _terms.Any())
+        {
+            @* Show active term first (from SystemSettings.ActiveTermId) *@
+            @if (_activeTermId.HasValue)
+            {
+                var activeTerm = _terms.FirstOrDefault(t => t.Id == _activeTermId.Value);
+                if (activeTerm != null)
+                {
+                    <option value="@activeTerm.Id" selected="@(activeTerm.Id == SelectedTermId)">
+                        @activeTerm.DisplayName (Aktif)
+                    </option>
+                }
+            }
+            @* Show other terms ordered by start date desc *@
+            @foreach (var term in _terms.Where(t => t.Id != _activeTermId).OrderByDescending(t => t.Start))
+            {
+                <option value="@term.Id" selected="@(term.Id == SelectedTermId)">
+                    @term.DisplayName
+                </option>
+            }
+        }
+        else
+        {
+            <option disabled>Dönem bulunamadı</option>
+        }
+    </select>
+</div>
+
+@code {
+    private List<Data.Entities.Term>? _terms;
+    private int? _activeTermId;
+    private bool _initialized;
+    private string _instanceId = Guid.NewGuid().ToString("N").Substring(0, 8);
+
+    [Parameter]
+    public int? SelectedTermId { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> SelectedTermIdChanged { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = "Dönem Seçin";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to term change notifications
+        TermChangeNotifier.OnTermChanged += HandleTermChanged;
+        
+        await LoadTermsAsync();
+        
+        // If no term is selected, select the active term by default
+        if (!SelectedTermId.HasValue && _terms?.Any() == true && _activeTermId.HasValue)
+        {
+            SelectedTermId = _activeTermId.Value;
+            await SelectedTermIdChanged.InvokeAsync(SelectedTermId);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            await Task.Delay(50); // Small delay to ensure DOM is ready
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task LoadTermsAsync()
+    {
+        _terms = await TermService.GetAllTermsAsync();
+        _activeTermId = await SystemSettingsService.GetActiveTermIdAsync();
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            var selectorId = $"#term-selector-{_instanceId}";
+            
+            // Initialize selectpicker
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+            
+            // Attach change event handler
+            var selectedValue = SelectedTermId?.ToString() ?? "";
+            await JS.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    var selector = $('{selectorId}');
+                    if (selector.length > 0) {{
+                        selector.on('changed.bs.select', function(e) {{
+                            var val = $(this).val();
+                            if (val) {{
+                                window.termSelectorCallback_{_instanceId}(parseInt(val));
+                            }}
+                        }});
+                        if ('{selectedValue}') {{
+                            selector.selectpicker('val', '{selectedValue}');
+                        }}
+                        selector.selectpicker('refresh');
+                    }}
+                }})();
+            ");
+
+            // Register callback
+            var dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("eval", $@"
+                window.termSelectorCallback_{_instanceId} = function(termId) {{
+                    {dotNetRef.GetType().Name}.invokeMethodAsync('OnTermChanged', termId);
+                }};
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing Bootstrap Select: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnTermChanged(int termId)
+    {
+        SelectedTermId = termId;
+        await SelectedTermIdChanged.InvokeAsync(SelectedTermId);
+    }
+
+    private async void HandleTermChanged()
+    {
+        // Reload active term from SystemSettings when term changes
+        _activeTermId = await SystemSettingsService.GetActiveTermIdAsync();
+        await LoadTermsAsync();
+        await RefreshAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task RefreshAsync()
+    {
+        await LoadTermsAsync();
+        
+        if (_initialized)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("bootstrapSelect.refresh");
+            }
+            catch
+            {
+                // Ignore errors during refresh
+            }
+        }
+        
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        TermChangeNotifier.OnTermChanged -= HandleTermChanged;
+    }
+}

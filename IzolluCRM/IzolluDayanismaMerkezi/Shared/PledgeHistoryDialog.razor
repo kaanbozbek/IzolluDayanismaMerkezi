@@ -1,0 +1,218 @@
+@inject MemberScholarshipCommitmentService CommitmentService
+@inject TermService TermService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h5">@MemberName - Taahhüt Geçmişi</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="AddNewPledge"
+                           Class="mb-3">
+                    Yeni Taahhüt Ekle
+                </MudButton>
+            </MudItem>
+
+            <MudItem xs="12">
+                @if (_loading)
+                {
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                }
+                else if (_commitments.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">Bu bağışçı için henüz taahhüt kaydı bulunmuyor.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="@_commitments" Dense="true" Hover="true" Elevation="2">
+                        <HeaderContent>
+                            <MudTh>Dönem</MudTh>
+                            <MudTh Style="text-align: right;">Taahhüt Edilen</MudTh>
+                            <MudTh Style="text-align: right;">Verilen</MudTh>
+                            <MudTh Style="text-align: right;">Kalan</MudTh>
+                            <MudTh Style="text-align: right;">Yıllık Tutar/Burs</MudTh>
+                            <MudTh Style="text-align: right;">Toplam Yıllık</MudTh>
+                            <MudTh Style="text-align: center;">İşlemler</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Dönem">
+                                <MudText Typo="Typo.body2">
+                                    <strong>@context.Term.DisplayName</strong><br />
+                                    <small style="color: gray;">@context.Term.Start.ToString("dd.MM.yyyy") - @context.Term.End.ToString("dd.MM.yyyy")</small>
+                                </MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Taahhüt Edilen" Style="text-align: right;">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.PledgedCount</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Verilen" Style="text-align: right;">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">@context.GivenCount</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Kalan" Style="text-align: right;">
+                                <MudChip T="string" Size="Size.Small" Color="@(context.RemainingCount > 0 ? Color.Warning : Color.Default)">
+                                    @context.RemainingCount
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Yıllık Tutar/Burs" Style="text-align: right;">
+                                @context.YearlyAmountPerScholarship.ToString("N0") ₺
+                            </MudTd>
+                            <MudTd DataLabel="Toplam Yıllık" Style="text-align: right;">
+                                <strong>@context.TotalYearlyAmount.ToString("N0") ₺</strong>
+                            </MudTd>
+                            <MudTd DataLabel="İşlemler" Style="text-align: center;">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                              Color="Color.Primary" 
+                                              Size="Size.Small" 
+                                              OnClick="@(() => EditPledge(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                              Color="Color.Error" 
+                                              Size="Size.Small" 
+                                              OnClick="@(() => DeletePledge(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudPaper Elevation="0" Class="mt-4 pa-3" Style="background-color: #f5f5f5;">
+                        <MudGrid>
+                            <MudItem xs="12" md="3">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">Toplam Taahhüt Edilen:</MudText>
+                                <MudText Typo="Typo.h6"><strong>@_commitments.Sum(p => p.PledgedCount)</strong></MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Success">Toplam Verilen:</MudText>
+                                <MudText Typo="Typo.h6"><strong>@_commitments.Sum(p => p.GivenCount)</strong></MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Warning">Toplam Kalan:</MudText>
+                                <MudText Typo="Typo.h6"><strong>@_commitments.Sum(p => p.RemainingCount)</strong></MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Default">Toplam Yıllık Tutar:</MudText>
+                                <MudText Typo="Typo.h6"><strong>@_commitments.Sum(p => p.TotalYearlyAmount).ToString("N0") ₺</strong></MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Kapat</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public int MemberId { get; set; }
+    [Parameter] public string MemberName { get; set; } = string.Empty;
+
+    private List<MemberScholarshipCommitment> _commitments = new();
+    private List<Term> _allTerms = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _commitments = await CommitmentService.GetByMemberAsync(MemberId);
+            _allTerms = await TermService.GetAllTermsAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task AddNewPledge()
+    {
+        // Find terms that don't have commitments yet
+        var existingTermIds = _commitments.Select(c => c.TermId).ToHashSet();
+        var availableTerms = _allTerms.Where(t => !existingTermIds.Contains(t.Id)).ToList();
+
+        if (availableTerms.Count == 0)
+        {
+            Snackbar.Add("Tüm dönemler için taahhüt zaten mevcut.", Severity.Info);
+            return;
+        }
+
+        // Use the active term or the first available term
+        var selectedTerm = availableTerms.FirstOrDefault(t => t.IsActive) ?? availableTerms.First();
+
+        var parameters = new DialogParameters
+        {
+            { "MemberId", MemberId },
+            { "TermId", selectedTerm.Id },
+            { "MemberName", MemberName },
+            { "TermDisplayName", selectedTerm.DisplayName },
+            { "ExistingTermIds", existingTermIds.ToList() },
+            { "IsEdit", false }
+        };
+
+        var dialog = await DialogService.ShowAsync<PledgeDialog>("Yeni Taahhüt Ekle", parameters, 
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task EditPledge(MemberScholarshipCommitment commitment)
+    {
+        var parameters = new DialogParameters
+        {
+            { "MemberId", MemberId },
+            { "TermId", commitment.TermId },
+            { "MemberName", MemberName },
+            { "TermDisplayName", commitment.Term.DisplayName },
+            { "IsEdit", true },
+            { "ExistingCommitment", commitment }
+        };
+
+        var dialog = await DialogService.ShowAsync<PledgeDialog>("Taahhüt Düzenle", parameters, 
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeletePledge(MemberScholarshipCommitment commitment)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Taahhüt Sil",
+            $"{commitment.Term.DisplayName} dönemi için olan taahhüdü silmek istediğinize emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            try
+            {
+                await CommitmentService.DeleteAsync(commitment.Id);
+                Snackbar.Add("Taahhüt başarıyla silindi.", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void Close() => MudDialog.Close();
+}

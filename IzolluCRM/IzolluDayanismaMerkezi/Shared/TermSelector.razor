@@ -1,0 +1,83 @@
+@inject TermService TermService
+@inject IJSRuntime JS
+@inject TermChangeNotifier TermChangeNotifier
+
+<div class="form-group">
+    <label class="form-label">Dönem</label>
+    <select class="selectpicker" 
+            data-width="100%" 
+            data-style="btn-outline-primary" 
+            data-live-search="true"
+            @ref="_selectElement"
+            @onchange="OnTermChanged"
+            title="Dönem Seçiniz">
+        @if (_terms != null)
+        {
+            @foreach (var term in _terms)
+            {
+                <option value="@term.Id" selected="@(term.Id == SelectedTermId)">
+                    @term.DisplayName @(term.IsActive ? "★ Aktif" : "")
+                </option>
+            }
+        }
+    </select>
+</div>
+
+@code {
+    private List<Data.Entities.Term>? _terms;
+    private ElementReference _selectElement;
+
+    [Parameter]
+    public int? SelectedTermId { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> SelectedTermIdChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTermsAsync();
+        
+        // If no term is selected, select the active term by default
+        if (SelectedTermId == null && _terms?.Any() == true)
+        {
+            var activeTerm = _terms.FirstOrDefault(t => t.IsActive);
+            if (activeTerm != null)
+            {
+                SelectedTermId = activeTerm.Id;
+                await SelectedTermIdChanged.InvokeAsync(SelectedTermId);
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+    }
+
+    private async Task LoadTermsAsync()
+    {
+        _terms = await TermService.GetAllTermsAsync();
+    }
+
+    private async Task OnTermChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int termId))
+        {
+            SelectedTermId = termId;
+            await SelectedTermIdChanged.InvokeAsync(SelectedTermId);
+            
+            // Notify all components that the term has changed
+            TermChangeNotifier.NotifyTermChanged();
+        }
+    }
+
+    public async Task RefreshAsync()
+    {
+        await LoadTermsAsync();
+        await JS.InvokeVoidAsync("bootstrapSelect.refresh");
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,137 @@
+@page "/donors"
+@inject DonorService DonorService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>İş Adamları - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">İş Adamları</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
+    Yeni İş Adamı Ekle
+</MudButton>
+
+<MudTable Items="@_donors" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Donor, bool>(FilterFunc)">
+    <ToolBarContent>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Adı Soyadı</MudTh>
+        <MudTh>Mesleği</MudTh>
+        <MudTh>Şirketi</MudTh>
+        <MudTh>İletişim</MudTh>
+        <MudTh>Burs Verdiği Tarih</MudTh>
+        <MudTh>Verdiği Burs Sayısı</MudTh>
+        <MudTh>Toplam Tutar</MudTh>
+        <MudTh>İşlemler</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Adı Soyadı">
+            <MudLink OnClick="@(() => OpenDetailDialog(context))">@context.AdSoyad</MudLink>
+        </MudTd>
+        <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+        <MudTd DataLabel="Şirketi">@context.Sirket</MudTd>
+        <MudTd DataLabel="İletişim">
+            <div>@context.Telefon</div>
+            <div><small>@context.Email</small></div>
+        </MudTd>
+        <MudTd DataLabel="Burs Verdiği Tarih">
+            @(context.BursVermeTarihi?.ToString("dd.MM.yyyy") ?? "-")
+        </MudTd>
+        <MudTd DataLabel="Verdiği Burs Sayısı">@context.BursAdedi</MudTd>
+        <MudTd DataLabel="Toplam Tutar">
+            <strong>@context.ToplamTutar.ToString("N0") ₺</strong>
+        </MudTd>
+        <MudTd DataLabel="İşlemler">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteDonor(context.Id))" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Donor> _donors = new();
+    private bool _loading = true;
+    private string _searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _donors = await DonorService.GetAllAsync();
+        _loading = false;
+    }
+
+    private bool FilterFunc(Donor donor)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (donor.AdSoyad.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (donor.Sirket?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (donor.Sektor?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters { ["IsEdit"] = false };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<DonorDialog>("İş Adamı Ekle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("İş adamı başarıyla eklendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Donor donor)
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["IsEdit"] = true,
+            ["Donor"] = donor
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<DonorDialog>("İş Adamı Düzenle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("İş adamı başarıyla güncellendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenDetailDialog(Donor donor)
+    {
+        var parameters = new DialogParameters { ["Donor"] = donor };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        await DialogService.ShowAsync<DonorDetailDialog>("İş Adamı Detayı", parameters, options);
+    }
+
+    private async Task DeleteDonor(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            "Bu iş adamını silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            await DonorService.DeleteAsync(id);
+            await LoadData();
+            Snackbar.Add("İş adamı silindi.", Severity.Info);
+        }
+    }
+}

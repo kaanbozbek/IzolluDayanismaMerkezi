@@ -1,0 +1,75 @@
+@page "/maintenance"
+@inject TranscriptService TranscriptService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Bakım - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Bakım</MudText>
+
+<MudAlert Severity="Severity.Warning" Class="mb-4">
+    <strong>Dikkat!</strong> Bu sayfadaki işlemler veritabanı üzerinde değişiklik yapar. Lütfen dikkatli kullanın.
+</MudAlert>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Transkript Kontrolü</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2" Class="mb-4">
+                    GNO'su 2.0'ın altında olan öğrencilerin bursları otomatik olarak kesilecektir.
+                    Bu işlem geri alınamaz.
+                </MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Warning" 
+                           StartIcon="@Icons.Material.Filled.Warning"
+                           OnClick="RunTranscriptCheck" FullWidth="true">
+                    Transkript Kontrolünü Çalıştır
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Sistem Bilgileri</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2"><strong>Uygulama:</strong> İzollu Dayanışma Merkezi</MudText>
+                <MudText Typo="Typo.body2"><strong>Versiyon:</strong> 1.0.0</MudText>
+                <MudText Typo="Typo.body2"><strong>Tarih:</strong> @DateTime.Now.ToString("dd MMMM yyyy HH:mm")</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private async Task RunTranscriptCheck()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Transkript Kontrolü",
+            "2'nin altında GNO'su olan öğrenciler için burs kontrolü yapılıyor. Emin misiniz?",
+            yesText: "Evet, Çalıştır",
+            cancelText: "İptal",
+            options: new DialogOptions { MaxWidth = MaxWidth.Small });
+
+        if (result == true)
+        {
+            try
+            {
+                await TranscriptService.CheckAndUpdateScholarshipsAsync();
+                Snackbar.Add("Transkript kontrolü başarıyla tamamlandı.", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

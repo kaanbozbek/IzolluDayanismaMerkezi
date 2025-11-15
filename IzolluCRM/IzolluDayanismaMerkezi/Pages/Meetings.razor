@@ -1,0 +1,392 @@
+@page "/meetings"
+@inject MeetingService MeetingService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Toplantılar - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Toplantılar</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Yeni toplantılar ekleyebilir ve mevcut toplantılar için öğrenci katılımlarını takip edebilirsiniz.
+</MudText>
+
+<MudPaper Class="pa-4 mb-6" Elevation="2">
+    <MudText Typo="Typo.h6" Class="mb-4">Yeni Toplantı Oluştur</MudText>
+    <MudForm @ref="_formRef" Model="_formModel">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_formModel.ToplantiAdi" Label="Toplantı Adı" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <label class="form-label">Toplantı Türü</label>
+                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
+                        value="@_formModel.ToplantiTuru" @onchange="OnMeetingTypeChanged" title="Seçiniz">
+                    @foreach (var type in _meetingTypes)
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <label class="form-label">Toplantı Lokasyonu</label>
+                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary" data-live-search="true"
+                        value="@_formModel.Konum" @onchange="OnLocationChanged" title="Seçiniz">
+                    @foreach (var loc in _locations)
+                    {
+                        <option value="@loc">@loc</option>
+                    }
+                </select>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <label class="form-label">Toplantı Tarihi</label>
+                <InputDate @bind-Value="_formModel.Tarih" class="form-control" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <label class="form-label">Başlangıç Saati</label>
+                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
+                        value="@_formModel.BaslangicSaatiStr" @onchange="OnStartTimeChanged" title="Seçiniz">
+                    @foreach (var time in _timeOptions)
+                    {
+                        <option value="@time">@time</option>
+                    }
+                </select>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <label class="form-label">Bitiş Saati</label>
+                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
+                        value="@_formModel.BitisSaatiStr" @onchange="OnEndTimeChanged" title="Seçiniz">
+                    @foreach (var time in _timeOptions)
+                    {
+                        <option value="@time">@time</option>
+                    }
+                </select>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_formModel.Not" Label="Toplantı Notu" Lines="3" />
+            </MudItem>
+        </MudGrid>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.EventAvailable"
+                   OnClick="CreateMeeting" Class="mt-4">
+            Toplantıyı Kaydet
+        </MudButton>
+    </MudForm>
+</MudPaper>
+
+<MudPaper Elevation="2" Class="pa-4">
+    <MudText Typo="Typo.h6" Class="mb-4">Öğrenci Katılım Listeleri</MudText>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (!_meetings.Any())
+    {
+        <MudAlert Severity="Severity.Info">Henüz toplantı oluşturulmadı.</MudAlert>
+    }
+    else
+    {
+        <MudList T="string" Dense="true">
+            @foreach (var meeting in _meetings)
+            {
+                var attendances = GetOrderedAttendances(meeting).ToList();
+                var attended = attendances.Count(a => a.Katildi);
+                var isExpanded = _expandedMeetingId == meeting.Id;
+                
+                <MudListItem T="string" OnClick="@(() => ToggleMeeting(meeting.Id))">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <div>
+                            <MudText Typo="Typo.subtitle1"><strong>@meeting.Baslik</strong></MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                @meeting.ToplantiTuru • @meeting.Tarih.ToString("dd.MM.yyyy HH:mm") - @meeting.BitisTarihi.ToString("HH:mm")
+                                @if (!string.IsNullOrEmpty(meeting.Konum))
+                                {
+                                    <text> • @meeting.Konum</text>
+                                }
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                Katılım: @attended / @attendances.Count
+                            </MudText>
+                        </div>
+                        <MudIcon Icon="@(isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" />
+                    </MudStack>
+                </MudListItem>
+
+                @if (isExpanded)
+                {
+                    <div class="pa-4" style="background-color: #f5f5f5;">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.subtitle2">Katılımcı Listesi</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                               OnClick="@(() => DeleteMeeting(meeting.Id))" />
+                            </MudStack>
+                            <MudTable T="StudentMeetingAttendance" Items="@attendances" Dense="true">
+                                <HeaderContent>
+                                    <MudTh>Öğrenci</MudTh>
+                                    <MudTh>Durum</MudTh>
+                                    <MudTh>Güncelle</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Öğrenci">@context.Student.AdSoyad</MudTd>
+                                    <MudTd DataLabel="Durum">
+                                        <MudChip T="string" Color="@(context.Katildi ? Color.Success : Color.Error)" Size="Size.Small">
+                                            @(context.Katildi ? "Katıldı" : "Katılmadı")
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Güncelle">
+                                        <MudSwitch T="bool" Color="Color.Primary"
+                                                   Value="@context.Katildi"
+                                                   ValueChanged="@(async (bool value) => await ToggleAttendanceAsync(context, value))" />
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </MudStack>
+                    </div>
+                }
+
+                <MudDivider />
+            }
+        </MudList>
+    }
+</MudPaper>
+
+@code {
+    private readonly string[] _meetingTypes = new[]
+    {
+        "Yönetim Kurulu",
+        "Mütevelli Heyeti",
+        "Burs Komitesi",
+        "Genel Toplantı"
+    };
+
+    private readonly string[] _locations = new[]
+    {
+        "Online – Zoom",
+        "Online – Teams",
+        "Merkez Ofis",
+        "Dernek Salonu"
+    };
+
+    private readonly string[] _timeOptions = new[]
+    {
+        "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+        "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+        "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+        "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+        "20:00", "20:30", "21:00", "21:30", "22:00"
+    };
+
+    private List<Meeting> _meetings = new();
+    private bool _loading = true;
+    private readonly MeetingInput _formModel = new();
+    private MudForm? _formRef;
+    private bool _selectPickerReady;
+    private int? _expandedMeetingId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _formModel.InitializeDefaults(_meetingTypes.First(), _locations.First());
+        await LoadMeetings();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeSelectPickersAsync();
+            _selectPickerReady = true;
+        }
+    }
+
+    private async Task InitializeSelectPickersAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("bootstrapSelect.init");
+        await JSRuntime.InvokeVoidAsync("bootstrapSelect.refresh");
+    }
+
+    private Task RefreshSelectPickersAsync()
+    {
+        if (!_selectPickerReady)
+        {
+            return Task.CompletedTask;
+        }
+
+        return JSRuntime.InvokeVoidAsync("bootstrapSelect.refresh").AsTask();
+    }
+
+    private async Task OnMeetingTypeChanged(ChangeEventArgs args)
+    {
+        _formModel.ToplantiTuru = args.Value?.ToString() ?? string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnLocationChanged(ChangeEventArgs args)
+    {
+        _formModel.Konum = args.Value?.ToString() ?? string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnStartTimeChanged(ChangeEventArgs args)
+    {
+        _formModel.BaslangicSaatiStr = args.Value?.ToString() ?? string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnEndTimeChanged(ChangeEventArgs args)
+    {
+        _formModel.BitisSaatiStr = args.Value?.ToString() ?? string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadMeetings()
+    {
+        _loading = true;
+        _meetings = await MeetingService.GetAllAsync();
+        _loading = false;
+    }
+
+    private async Task CreateMeeting()
+    {
+        if (_formRef is not null)
+        {
+            await _formRef.Validate();
+            if (!_formRef.IsValid)
+            {
+                Snackbar.Add("Lütfen zorunlu alanları doldurun.", Severity.Warning);
+                return;
+            }
+        }
+
+        if (_formModel.Tarih is null || string.IsNullOrEmpty(_formModel.BaslangicSaatiStr) || string.IsNullOrEmpty(_formModel.BitisSaatiStr))
+        {
+            Snackbar.Add("Lütfen toplantı tarihi ve saatlerini belirtin.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_formModel.ToplantiAdi))
+        {
+            Snackbar.Add("Lütfen toplantı adını girin.", Severity.Warning);
+            return;
+        }
+
+        if (!TimeSpan.TryParse(_formModel.BaslangicSaatiStr, out var baslangicTime) || !TimeSpan.TryParse(_formModel.BitisSaatiStr, out var bitisTime))
+        {
+            Snackbar.Add("Geçersiz saat formatı.", Severity.Warning);
+            return;
+        }
+
+        var baslangic = _formModel.Tarih.Value.Date + baslangicTime;
+        var bitis = _formModel.Tarih.Value.Date + bitisTime;
+
+        if (bitis <= baslangic)
+        {
+            Snackbar.Add("Bitiş saati başlangıç saatinden sonra olmalıdır.", Severity.Warning);
+            return;
+        }
+
+        var note = string.IsNullOrWhiteSpace(_formModel.Not) ? null : _formModel.Not?.Trim();
+
+        await MeetingService.CreateAsync(new Meeting
+        {
+            Baslik = _formModel.ToplantiAdi.Trim(),
+            ToplantiTuru = _formModel.ToplantiTuru,
+            Konum = string.IsNullOrWhiteSpace(_formModel.Konum) ? null : _formModel.Konum.Trim(),
+            Tarih = baslangic,
+            BitisTarihi = bitis,
+            Aciklama = note
+        });
+
+        _formModel.Reset(_meetingTypes.First(), _locations.First());
+        await RefreshSelectPickersAsync();
+        await LoadMeetings();
+        Snackbar.Add("Toplantı kaydedildi ve tüm öğrenciler katıldı olarak işaretlendi.", Severity.Success);
+    }
+
+    private async Task DeleteMeeting(int meetingId)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Toplantıyı Sil",
+            "Bu toplantıyı silmek istediğinizden emin misiniz?",
+            yesText: "Sil",
+            cancelText: "İptal");
+
+        if (confirm == true)
+        {
+            await MeetingService.DeleteAsync(meetingId);
+            await LoadMeetings();
+            Snackbar.Add("Toplantı silindi.", Severity.Info);
+        }
+    }
+
+    private IEnumerable<StudentMeetingAttendance> GetOrderedAttendances(Meeting meeting)
+    {
+        return (meeting.Attendances ?? Enumerable.Empty<StudentMeetingAttendance>())
+            .Where(a => a.Student != null)
+            .OrderBy(a => a.Student.AdSoyad);
+    }
+
+    private static string GetMeetingTitle(Meeting meeting) => $"{meeting.ToplantiTuru} • {meeting.Tarih:dd.MM.yyyy}";
+
+    private static string GetMeetingSubText(Meeting meeting)
+    {
+        var timeRange = $"{meeting.Tarih:HH:mm} - {meeting.BitisTarihi:HH:mm}";
+        var location = string.IsNullOrWhiteSpace(meeting.Konum) ? "Lokasyon belirtilmedi" : meeting.Konum;
+        if (string.IsNullOrWhiteSpace(meeting.Aciklama))
+        {
+            return $"{timeRange} • {location}";
+        }
+
+        return $"{timeRange} • {location} • {meeting.Aciklama}";
+    }
+
+    private async Task ToggleAttendanceAsync(StudentMeetingAttendance attendance, bool katildi)
+    {
+        await MeetingService.UpdateAttendanceAsync(attendance.Id, katildi);
+        attendance.Katildi = katildi;
+        Snackbar.Add("Katılım durumu güncellendi.", Severity.Success);
+    }
+
+    private void ToggleMeeting(int meetingId)
+    {
+        if (_expandedMeetingId == meetingId)
+        {
+            _expandedMeetingId = null;
+        }
+        else
+        {
+            _expandedMeetingId = meetingId;
+        }
+    }
+
+    private class MeetingInput
+    {
+        public DateTime? Tarih { get; set; }
+        public string BaslangicSaatiStr { get; set; } = string.Empty;
+        public string BitisSaatiStr { get; set; } = string.Empty;
+        public string Not { get; set; } = string.Empty;
+        public string ToplantiTuru { get; set; } = string.Empty;
+        public string Konum { get; set; } = string.Empty;
+        public string ToplantiAdi { get; set; } = string.Empty;
+
+        public void InitializeDefaults(string defaultType, string defaultLocation)
+        {
+            Tarih = DateTime.Today;
+            BaslangicSaatiStr = "18:00";
+            BitisSaatiStr = "20:00";
+            ToplantiTuru = defaultType;
+            Konum = defaultLocation;
+            ToplantiAdi = string.Empty;
+            Not = string.Empty;
+        }
+
+        public void Reset(string defaultType, string defaultLocation)
+        {
+            InitializeDefaults(defaultType, defaultLocation);
+        }
+    }
+}

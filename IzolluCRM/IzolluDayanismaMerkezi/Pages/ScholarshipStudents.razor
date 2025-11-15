@@ -1,0 +1,140 @@
+@page "/scholarship-students"
+@inject StudentService StudentService
+@inject TermService TermService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject TermChangeNotifier TermChangeNotifier
+@implements IDisposable
+
+<PageTitle>Burs Alan Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Burs Alan Öğrenciler</MudText>
+
+<MudTable Items="@_students" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Student, bool>(FilterFunc)">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Toplam: @_students.Count öğrenci</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Sicil No</MudTh>
+        <MudTh>Adı Soyadı</MudTh>
+        <MudTh>Mesleği</MudTh>
+        <MudTh>Okulu</MudTh>
+        <MudTh>Yaşı</MudTh>
+        <MudTh>Cinsiyeti</MudTh>
+        <MudTh>Adresi</MudTh>
+        <MudTh>Dönem</MudTh>
+        <MudTh>Burs Durumu</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Sicil No">@(!string.IsNullOrWhiteSpace(context.SicilNumarasi) ? context.SicilNumarasi : "-")</MudTd>
+        <MudTd DataLabel="Adı Soyadı">
+            <MudLink OnClick="@(() => OpenDetailDialog(context))">@context.AdSoyad</MudLink>
+        </MudTd>
+        <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+        <MudTd DataLabel="Okulu">@context.Universite</MudTd>
+        <MudTd DataLabel="Yaşı">@(context.Yas?.ToString() ?? "-")</MudTd>
+        <MudTd DataLabel="Cinsiyeti">@(string.IsNullOrWhiteSpace(context.Cinsiyet) ? "-" : context.Cinsiyet)</MudTd>
+        <MudTd DataLabel="Adresi">@(context.Adres?.Length > 30 ? context.Adres.Substring(0, 30) + "..." : context.Adres)</MudTd>
+        <MudTd DataLabel="Dönem">@context.Donem</MudTd>
+        <MudTd DataLabel="Burs Durumu">
+            <MudChip T="string" Color="@(context.AktifBursMu ? Color.Success : Color.Error)" Size="Size.Small">
+                @(context.AktifBursMu ? "Burs Alıyor" : "Burs Almıyor")
+            </MudChip>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Student> _students = new();
+    private bool _loading = true;
+    private string _searchString = "";
+    private int? _selectedTermId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to term change notifications
+        TermChangeNotifier.OnTermChanged += OnTermChangedHandler;
+        
+        // Always use active term from Settings
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _selectedTermId = activeTerm?.Id;
+        
+        await LoadData();
+    }
+    
+    private async void OnTermChangedHandler()
+    {
+        // Reload active term and data when term changes
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _selectedTermId = activeTerm?.Id;
+        await LoadData();
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        TermChangeNotifier.OnTermChanged -= OnTermChangedHandler;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload data when term changes
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        // Always use active term from Settings
+        var activeTerm = await TermService.GetActiveTermAsync();
+        _selectedTermId = activeTerm?.Id;
+        
+        if (_selectedTermId.HasValue)
+        {
+            // Use term-based queries
+            _students = await StudentService.GetScholarshipStudentsByTermAsync(_selectedTermId.Value);
+        }
+        else
+        {
+            // Fallback to legacy queries if no term selected
+            _students = await StudentService.GetActiveScholarshipStudentsAsync();
+        }
+        
+        _loading = false;
+    }
+
+    private bool FilterFunc(Student student)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (student.AdSoyad.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (student.Universite?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (student.Cinsiyet?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        return false;
+    }
+
+    private async Task OpenDetailDialog(Student student)
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["StudentId"] = student.Id,
+            ["ShowGraduateButton"] = true
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ScholarshipStudentDetailDialog>("Öğrenci Detayı", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("İşlem başarıyla tamamlandı.", Severity.Success);
+        }
+    }
+}
