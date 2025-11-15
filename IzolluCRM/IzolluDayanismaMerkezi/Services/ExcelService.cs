@@ -103,11 +103,10 @@ public class ExcelService
             worksheet.Cell(row, 18).Value = student.AylikTutar;
             worksheet.Cell(row, 19).Value = student.BursBaslangicTarihi?.ToString("dd.MM.yyyy") ?? "";
             worksheet.Cell(row, 20).Value = student.BursBitisTarihi?.ToString("dd.MM.yyyy") ?? "";
-            worksheet.Cell(row, 21).Value = student.Donem ?? "";
-            worksheet.Cell(row, 22).Value = student.SicilNumarasi ?? "";
-            worksheet.Cell(row, 23).Value = student.IBAN ?? "";
-            worksheet.Cell(row, 24).Value = student.MezunMu ? "Evet" : "Hayır";
-            worksheet.Cell(row, 25).Value = student.MezuniyetTarihi?.ToString("dd.MM.yyyy") ?? "";
+            worksheet.Cell(row, 21).Value = student.SicilNumarasi ?? "";
+            worksheet.Cell(row, 22).Value = student.IBAN ?? "";
+            worksheet.Cell(row, 23).Value = student.MezunMu ? "Evet" : "Hayır";
+            worksheet.Cell(row, 24).Value = student.MezuniyetTarihi?.ToString("dd.MM.yyyy") ?? "";
             worksheet.Cell(row, 26).Value = student.AktifBursMu ? "Evet" : "Hayır";
             worksheet.Cell(row, 27).Value = student.TranskriptNotu ?? "";
         }
@@ -172,7 +171,6 @@ public class ExcelService
                     BagisciAdi = row.Cell(17).GetString(),
                     AylikTutar = ParseDecimal(row.Cell(18).GetString()),
                     BursBaslangicTarihi = ParseDate(row.Cell(19).GetString()),
-                    Donem = string.IsNullOrWhiteSpace(row.Cell(20).GetString()) ? activePeriod : row.Cell(20).GetString(),
                     AktifBursMu = !string.IsNullOrWhiteSpace(row.Cell(17).GetString()), // Bağışçı varsa aktif
                     OlusturmaTarihi = DateTime.Now
                 };

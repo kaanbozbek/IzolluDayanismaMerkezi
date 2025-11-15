@@ -1,5 +1,4 @@
 @inject MemberScholarshipCommitmentService CommitmentService
-@inject TermService TermService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -32,7 +31,6 @@
                 {
                     <MudTable Items="@_commitments" Dense="true" Hover="true" Elevation="2">
                         <HeaderContent>
-                            <MudTh>Dönem</MudTh>
                             <MudTh Style="text-align: right;">Taahhüt Edilen</MudTh>
                             <MudTh Style="text-align: right;">Verilen</MudTh>
                             <MudTh Style="text-align: right;">Kalan</MudTh>
@@ -41,12 +39,6 @@
                             <MudTh Style="text-align: center;">İşlemler</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Dönem">
-                                <MudText Typo="Typo.body2">
-                                    <strong>@context.Term.DisplayName</strong><br />
-                                    <small style="color: gray;">@context.Term.Start.ToString("dd.MM.yyyy") - @context.Term.End.ToString("dd.MM.yyyy")</small>
-                                </MudText>
-                            </MudTd>
                             <MudTd DataLabel="Taahhüt Edilen" Style="text-align: right;">
                                 <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.PledgedCount</MudChip>
                             </MudTd>
@@ -113,7 +105,6 @@
     [Parameter] public string MemberName { get; set; } = string.Empty;
 
     private List<MemberScholarshipCommitment> _commitments = new();
-    private List<Term> _allTerms = new();
     private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -127,7 +118,6 @@
         try
         {
             _commitments = await CommitmentService.GetByMemberAsync(MemberId);
-            _allTerms = await TermService.GetAllTermsAsync();
         }
         finally
         {
@@ -137,26 +127,10 @@
 
     private async Task AddNewPledge()
     {
-        // Find terms that don't have commitments yet
-        var existingTermIds = _commitments.Select(c => c.TermId).ToHashSet();
-        var availableTerms = _allTerms.Where(t => !existingTermIds.Contains(t.Id)).ToList();
-
-        if (availableTerms.Count == 0)
-        {
-            Snackbar.Add("Tüm dönemler için taahhüt zaten mevcut.", Severity.Info);
-            return;
-        }
-
-        // Use the active term or the first available term
-        var selectedTerm = availableTerms.FirstOrDefault(t => t.IsActive) ?? availableTerms.First();
-
         var parameters = new DialogParameters
         {
             { "MemberId", MemberId },
-            { "TermId", selectedTerm.Id },
             { "MemberName", MemberName },
-            { "TermDisplayName", selectedTerm.DisplayName },
-            { "ExistingTermIds", existingTermIds.ToList() },
             { "IsEdit", false }
         };
 
@@ -175,9 +149,7 @@
         var parameters = new DialogParameters
         {
             { "MemberId", MemberId },
-            { "TermId", commitment.TermId },
             { "MemberName", MemberName },
-            { "TermDisplayName", commitment.Term.DisplayName },
             { "IsEdit", true },
             { "ExistingCommitment", commitment }
         };
@@ -196,7 +168,7 @@
     {
         bool? result = await DialogService.ShowMessageBox(
             "Taahhüt Sil",
-            $"{commitment.Term.DisplayName} dönemi için olan taahhüdü silmek istediğinize emin misiniz?",
+            $"Bu taahhüdü silmek istediğinize emin misiniz?",
             yesText: "Sil", cancelText: "İptal");
 
         if (result == true)

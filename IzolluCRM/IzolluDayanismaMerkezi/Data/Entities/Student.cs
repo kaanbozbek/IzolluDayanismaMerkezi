@@ -24,18 +24,6 @@ public class Student
     [StringLength(500)]
     public string? Adres { get; set; }
 
-    [Obsolete("Use StudentTerm entity for term-specific data. This field is kept for backward compatibility only.")]
-    [StringLength(50)]
-    public string? Donem { get; set; }
-
-    [Obsolete("Use StudentTerm entity for term-specific data. This field is kept for backward compatibility only.")]
-    [StringLength(500)]
-    public string? KayitliDonemler { get; set; } // Virgülle ayrılmış dönem listesi
-
-    [Obsolete("Use StudentTerm.IsGraduated for term-specific graduation status. This field is kept for backward compatibility only.")]
-    [StringLength(50)]
-    public string? MezunOlduguDonem { get; set; }
-
     [StringLength(50)]
     public string? SicilNumarasi { get; set; }
 
@@ -103,10 +91,5 @@ public class Student
     // Navigation properties
     public virtual ICollection<TranscriptRecord> Transcripts { get; set; } = new List<TranscriptRecord>();
     public virtual ICollection<StudentMeetingAttendance> MeetingAttendances { get; set; } = new List<StudentMeetingAttendance>();
-    
-    /// <summary>
-    /// Collection of term snapshots for this student.
-    /// Each StudentTerm represents this student's state for a specific academic period.
-    /// </summary>
-    public virtual ICollection<StudentTerm> Terms { get; set; } = new List<StudentTerm>();
+    public virtual ICollection<ScholarshipPayment> ScholarshipPayments { get; set; } = new List<ScholarshipPayment>();
 }

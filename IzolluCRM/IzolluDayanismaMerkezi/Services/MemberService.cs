@@ -8,13 +8,11 @@ public class MemberService
 {
     private readonly ApplicationDbContext _context;
     private readonly ActivityLogService _logService;
-    private readonly TermService _termService;
 
-    public MemberService(ApplicationDbContext context, ActivityLogService logService, TermService termService)
+    public MemberService(ApplicationDbContext context, ActivityLogService logService)
     {
         _context = context;
         _logService = logService;
-        _termService = termService;
     }
 
     // Legacy methods - kept for backward compatibility
@@ -41,91 +39,6 @@ public class MemberService
             .ToListAsync();
     }
 
-    // Term-based query methods
-    public async Task<List<Member>> GetMembersByTermAsync(int termId)
-    {
-        var memberIds = await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId)
-            .Select(mtr => mtr.MemberId)
-            .Distinct()
-            .ToListAsync();
-
-        return await _context.Members
-            .Where(m => memberIds.Contains(m.Id))
-            .OrderBy(m => m.AdSoyad)
-            .ToListAsync();
-    }
-
-    public async Task<List<Member>> GetActiveMembersByTermAsync(int termId)
-    {
-        var memberIds = await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsActive)
-            .Select(mtr => mtr.MemberId)
-            .Distinct()
-            .ToListAsync();
-
-        return await _context.Members
-            .Where(m => memberIds.Contains(m.Id))
-            .OrderBy(m => m.AdSoyad)
-            .ToListAsync();
-    }
-
-    public async Task<List<Member>> GetBoardOfTrusteesByTermAsync(int termId)
-    {
-        var memberIds = await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsBoardOfTrustees && mtr.IsActive)
-            .Select(mtr => mtr.MemberId)
-            .ToListAsync();
-
-        return await _context.Members
-            .Where(m => memberIds.Contains(m.Id))
-            .OrderBy(m => m.AdSoyad)
-            .ToListAsync();
-    }
-
-    public async Task<List<Member>> GetExecutiveBoardByTermAsync(int termId)
-    {
-        var memberIds = await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsExecutiveBoard && mtr.IsActive)
-            .Select(mtr => mtr.MemberId)
-            .ToListAsync();
-
-        return await _context.Members
-            .Where(m => memberIds.Contains(m.Id))
-            .OrderBy(m => m.AdSoyad)
-            .ToListAsync();
-    }
-
-    public async Task<List<Member>> GetScholarshipProvidersByTermAsync(int termId)
-    {
-        var memberIds = await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsProvidingScholarship && mtr.IsActive)
-            .Select(mtr => mtr.MemberId)
-            .ToListAsync();
-
-        return await _context.Members
-            .Where(m => memberIds.Contains(m.Id))
-            .OrderBy(m => m.AdSoyad)
-            .ToListAsync();
-    }
-
-    public async Task<MemberTermRole?> GetMemberTermRoleAsync(int memberId, int termId)
-    {
-        return await _context.MemberTermRoles
-            .Include(mtr => mtr.Member)
-            .Include(mtr => mtr.Term)
-            .FirstOrDefaultAsync(mtr => mtr.MemberId == memberId && mtr.TermId == termId);
-    }
-
-    public async Task<List<MemberTermRole>> GetMemberTermRolesByTermAsync(int termId)
-    {
-        return await _context.MemberTermRoles
-            .Include(mtr => mtr.Member)
-            .Where(mtr => mtr.TermId == termId)
-            .OrderBy(mtr => mtr.Member.AdSoyad)
-            .ToListAsync();
-    }
-
     public async Task<Member?> GetByIdAsync(int id)
     {
         return await _context.Members.FindAsync(id);
@@ -148,26 +61,6 @@ public class MemberService
 
         _context.Members.Add(member);
         await _context.SaveChangesAsync();
-
-        // Create MemberTermRole record for active term
-        var activeTerm = await _termService.GetActiveTermAsync();
-        if (activeTerm != null)
-        {
-            var memberRole = new MemberTermRole
-            {
-                MemberId = member.Id,
-                TermId = activeTerm.Id,
-                Role = member.Meslek ?? "Üye",
-                IsActive = true,
-                IsBoardOfTrustees = member.IsMutevelli,
-                IsExecutiveBoard = member.IsYonetimKurulu,
-                IsAuditCommittee = member.IsDenetimKurulu,
-                IsProvidingScholarship = member.BursVeriyor,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.MemberTermRoles.Add(memberRole);
-            await _context.SaveChangesAsync();
-        }
 
         await _logService.LogAsync("UyeEkle", $"Yeni üye eklendi: {member.AdSoyad}");
 
@@ -252,37 +145,6 @@ public class MemberService
     public async Task<int> GetDonorCountAsync()
     {
         return await GetBursVerenCountAsync();
-    }
-
-    // Term-based count methods
-    public async Task<int> GetMemberCountByTermAsync(int termId)
-    {
-        return await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsActive)
-            .Select(mtr => mtr.MemberId)
-            .Distinct()
-            .CountAsync();
-    }
-
-    public async Task<int> GetBoardOfTrusteesCountByTermAsync(int termId)
-    {
-        return await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsBoardOfTrustees && mtr.IsActive)
-            .CountAsync();
-    }
-
-    public async Task<int> GetExecutiveBoardCountByTermAsync(int termId)
-    {
-        return await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsExecutiveBoard && mtr.IsActive)
-            .CountAsync();
-    }
-
-    public async Task<int> GetScholarshipProvidersCountByTermAsync(int termId)
-    {
-        return await _context.MemberTermRoles
-            .Where(mtr => mtr.TermId == termId && mtr.IsProvidingScholarship && mtr.IsActive)
-            .CountAsync();
     }
 
     public async Task<Dictionary<string, decimal>> GetTotalScholarshipByMemberAsync()

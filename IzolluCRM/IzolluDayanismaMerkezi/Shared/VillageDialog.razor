@@ -1,0 +1,102 @@
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject VillageService VillageService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_village.Ad" Label="Köy Adı" Required="true" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_village.Nufus" Label="Nüfus" Min="0" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_village.MuhtarAdi" Label="Muhtar Adı" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_village.MuhtarTelefon" Label="Muhtar Telefon" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mt-2 mb-2"><strong>Öğrenci Sayıları</strong></MudText>
+                    <MudDivider />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_village.IlkokulOgrenciSayisi" Label="İlkokul Öğrenci Sayısı" Min="0" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_village.OrtaokulOgrenciSayisi" Label="Ortaokul Öğrenci Sayısı" Min="0" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_village.LiseOgrenciSayisi" Label="Lise Öğrenci Sayısı" Min="0" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_village.UniversiteOgrenciSayisi" Label="Üniversite Öğrenci Sayısı" Min="0" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_village.Notlar" Label="Notlar" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)">Kaydet</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public Village Village { get; set; } = new();
+
+    private MudForm _form = null!;
+    private bool _success;
+    private Village _village = new();
+
+    protected override void OnInitialized()
+    {
+        if (IsEdit && Village != null)
+        {
+            _village = Village;
+        }
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (_success)
+        {
+            try
+            {
+                if (IsEdit)
+                {
+                    await VillageService.UpdateAsync(_village);
+                }
+                else
+                {
+                    await VillageService.CreateAsync(_village);
+                }
+
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,7 +1,8 @@
+@using IzolluVakfi.Services
 @inject MemberScholarshipCommitmentService CommitmentService
-@inject TermService TermService
-@inject TermScholarshipConfigService TermScholarshipConfigService
+@inject SettingsService SettingsService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <MudDialog>
     <DialogContent>
@@ -10,40 +11,27 @@
                 <MudItem xs="12">
                     <MudText Typo="Typo.body1"><strong>Üye:</strong> @MemberName</MudText>
                 </MudItem>
-
-                @if (!IsEdit)
-                {
-                    <MudItem xs="12" Class="mt-2">
-                        <MudSelect T="int" 
-                                   Value="_selectedTermId" 
-                                   ValueChanged="OnTermChanged"
-                                   Label="Dönem Seçiniz" 
-                                   Variant="Variant.Outlined"
-                                   Required="true"
-                                   AnchorOrigin="Origin.BottomCenter">
-                            @foreach (var term in _availableTerms)
-                            {
-                                <MudSelectItem Value="@term.Id">
-                                    @term.DisplayName (@term.Start.ToString("dd.MM.yyyy") - @term.End.ToString("dd.MM.yyyy"))
-                                </MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                }
-                else
-                {
-                    <MudItem xs="12" Class="mt-2">
-                        <MudText Typo="Typo.body2"><strong>Dönem:</strong> @TermDisplayName</MudText>
-                    </MudItem>
-                }
                 
                 <MudItem xs="12" Class="mt-4">
+                    <label class="form-label">Dönem *</label>
+                    <select id="period-selector-@_instanceId" class="selectpicker" data-width="100%" 
+                            data-style="btn-outline-primary" data-live-search="true"
+                            value="@_selectedPeriod" @onchange="OnPeriodChanged" title="Dönem Seçiniz">
+                        @foreach (var year in _academicYears)
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    </select>
+                    <small class="form-text text-muted">Taahhüdün geçerli olduğu akademik dönem</small>
+                </MudItem>
+                
+                <MudItem xs="12">
                     <MudNumericField @bind-Value="_commitment.PledgedCount" 
                                     Label="Taahhüt Edilen Burs Adedi" 
                                     Min="0" 
                                     Required="true"
                                     Variant="Variant.Outlined"
-                                    HelperText="Bu üyenin bu dönemde vermeyi taahhüt ettiği toplam burs sayısı" />
+                                    HelperText="Bu üyenin vermeyi taahhüt ettiği toplam burs sayısı" />
                 </MudItem>
 
                 <MudItem xs="12">
@@ -135,24 +123,35 @@
     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
     
     [Parameter] public int MemberId { get; set; }
-    [Parameter] public int TermId { get; set; }
     [Parameter] public string MemberName { get; set; } = string.Empty;
-    [Parameter] public string TermDisplayName { get; set; } = string.Empty;
     [Parameter] public bool IsEdit { get; set; }
-    [Parameter] public List<int> ExistingTermIds { get; set; } = new();
     [Parameter] public MemberScholarshipCommitment? ExistingCommitment { get; set; }
 
     private MudForm _form = null!;
     private bool _success;
     private MemberScholarshipCommitment _commitment = new();
-    private List<Term> _availableTerms = new();
-    private int _selectedTermId;
+    private List<string> _academicYears = new();
+    private string _selectedPeriod = "2025-2026";
+    private string _instanceId = Guid.NewGuid().ToString("N");
+    private bool _isRendered;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load all terms
-        var allTerms = await TermService.GetAllTermsAsync();
-        
+        // Load periods from settings first
+        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
+        if (periodsFromSettings.Count > 0)
+        {
+            _academicYears = periodsFromSettings.OrderByDescending(p => p).ToList();
+        }
+        else
+        {
+            // Fallback: Generate academic years from 2025-2026 to 2039-2040
+            for (int startYear = 2025; startYear <= 2039; startYear++)
+            {
+                _academicYears.Add($"{startYear}-{startYear + 1}");
+            }
+        }
+
         if (IsEdit && ExistingCommitment != null)
         {
             // Edit mode - load existing commitment
@@ -160,51 +159,82 @@
             {
                 Id = ExistingCommitment.Id,
                 MemberId = ExistingCommitment.MemberId,
-                TermId = ExistingCommitment.TermId,
                 PledgedCount = ExistingCommitment.PledgedCount,
                 GivenCount = ExistingCommitment.GivenCount,
                 YearlyAmountPerScholarship = ExistingCommitment.YearlyAmountPerScholarship,
+                AcademicYear = ExistingCommitment.AcademicYear,
                 Notes = ExistingCommitment.Notes
             };
-            _selectedTermId = ExistingCommitment.TermId;
+            _selectedPeriod = ExistingCommitment.AcademicYear ?? _academicYears.FirstOrDefault() ?? "2025-2026";
         }
         else
         {
-            // New commitment - show only terms that don't have commitments yet
-            _availableTerms = allTerms.Where(t => !ExistingTermIds.Contains(t.Id)).ToList();
-            
-            // Select active term or first available
-            var activeTerm = _availableTerms.FirstOrDefault(t => t.IsActive);
-            _selectedTermId = activeTerm?.Id ?? _availableTerms.FirstOrDefault()?.Id ?? 0;
-            
-            // Initialize commitment
+            // Initialize commitment with default values
             _commitment.MemberId = MemberId;
-            _commitment.TermId = _selectedTermId;
             _commitment.GivenCount = 0;
+            _selectedPeriod = _academicYears.FirstOrDefault() ?? "2025-2026";
+            _commitment.AcademicYear = _selectedPeriod;
             
-            // Load burs tutarı from TermScholarshipConfig for selected term
-            await LoadTermScholarshipAmount();
+            // Try to load scholarship amount from settings for default period
+            await LoadScholarshipAmountForPeriod(_selectedPeriod);
         }
     }
 
-    private async Task LoadTermScholarshipAmount()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_selectedTermId == 0) return;
-        
-        _commitment.TermId = _selectedTermId;
-        
-        // Get TermScholarshipConfig for this term
-        var config = await TermScholarshipConfigService.GetOrCreateForTermAsync(_selectedTermId);
-        
-        // Use the yearly amount from config
-        _commitment.YearlyAmountPerScholarship = config.YearlyAmount;
+        if (firstRender)
+        {
+            _isRendered = true;
+            await InitializeSelectPickerAsync();
+        }
     }
 
-    private async Task OnTermChanged(int newTermId)
+    private async Task InitializeSelectPickerAsync()
     {
-        _selectedTermId = newTermId;
-        await LoadTermScholarshipAmount();
-        StateHasChanged();
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async Task OnPeriodChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string newPeriod && !string.IsNullOrWhiteSpace(newPeriod))
+        {
+            _selectedPeriod = newPeriod;
+            _commitment.AcademicYear = newPeriod;
+            await LoadScholarshipAmountForPeriod(newPeriod);
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadScholarshipAmountForPeriod(string period)
+    {
+        try
+        {
+            var scholarshipAmounts = await SettingsService.GetScholarshipAmountsAsync();
+            var matchingAmount = scholarshipAmounts.FirstOrDefault(a => a.Period == period);
+            
+            if (matchingAmount != null)
+            {
+                // Convert monthly amount to yearly (12 months)
+                _commitment.YearlyAmountPerScholarship = matchingAmount.Amount * 12;
+            }
+            else
+            {
+                // Default value if no setting found
+                _commitment.YearlyAmountPerScholarship = 36000;
+            }
+        }
+        catch
+        {
+            // Fallback to default
+            _commitment.YearlyAmountPerScholarship = 36000;
+        }
     }
 
     private async Task Submit()

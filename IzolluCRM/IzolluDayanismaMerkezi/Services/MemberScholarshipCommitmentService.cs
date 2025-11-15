@@ -18,39 +18,25 @@ public class MemberScholarshipCommitmentService
     }
 
     /// <summary>
-    /// Get all commitments for a specific term
-    /// </summary>
-    public async Task<List<MemberScholarshipCommitment>> GetByTermAsync(int termId)
-    {
-        return await _context.MemberScholarshipCommitments
-            .Include(c => c.Member)
-            .Include(c => c.Term)
-            .Where(c => c.TermId == termId)
-            .OrderBy(c => c.Member.AdSoyad)
-            .ToListAsync();
-    }
-
-    /// <summary>
-    /// Get commitment for a specific member in a specific term
-    /// </summary>
-    public async Task<MemberScholarshipCommitment?> GetByMemberAndTermAsync(int memberId, int termId)
-    {
-        return await _context.MemberScholarshipCommitments
-            .Include(c => c.Member)
-            .Include(c => c.Term)
-            .FirstOrDefaultAsync(c => c.MemberId == memberId && c.TermId == termId);
-    }
-
-    /// <summary>
-    /// Get all commitments for a specific member across all terms
+    /// Get all commitments for a specific member
     /// </summary>
     public async Task<List<MemberScholarshipCommitment>> GetByMemberAsync(int memberId)
     {
         return await _context.MemberScholarshipCommitments
             .Include(c => c.Member)
-            .Include(c => c.Term)
             .Where(c => c.MemberId == memberId)
-            .OrderByDescending(c => c.Term.Start)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Get all commitments
+    /// </summary>
+    public async Task<List<MemberScholarshipCommitment>> GetAllAsync()
+    {
+        return await _context.MemberScholarshipCommitments
+            .Include(c => c.Member)
+            .OrderBy(c => c.Member.AdSoyad)
             .ToListAsync();
     }
 
@@ -59,21 +45,12 @@ public class MemberScholarshipCommitmentService
     /// </summary>
     public async Task<MemberScholarshipCommitment> CreateAsync(MemberScholarshipCommitment commitment)
     {
-        // Check if commitment already exists for this member+term
-        var existing = await _context.MemberScholarshipCommitments
-            .FirstOrDefaultAsync(c => c.MemberId == commitment.MemberId && c.TermId == commitment.TermId);
-
-        if (existing != null)
-        {
-            throw new InvalidOperationException("Bu üye için bu dönemde zaten bir taahhüt kaydı mevcut.");
-        }
-
         commitment.CreatedAt = DateTime.UtcNow;
         _context.MemberScholarshipCommitments.Add(commitment);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Created commitment: MemberId={MemberId}, TermId={TermId}, PledgedCount={Count}",
-            commitment.MemberId, commitment.TermId, commitment.PledgedCount);
+        _logger.LogInformation("Created commitment: MemberId={MemberId}, PledgedCount={Count}",
+            commitment.MemberId, commitment.PledgedCount);
 
         return commitment;
     }
@@ -119,12 +96,11 @@ public class MemberScholarshipCommitmentService
     }
 
     /// <summary>
-    /// Get total scholarship statistics for a term
+    /// Get total scholarship statistics
     /// </summary>
-    public async Task<(int DonorCount, decimal TotalMonthly, decimal TotalYearly, int TotalPledged, int TotalGiven)> GetTermStatisticsAsync(int termId)
+    public async Task<(int DonorCount, decimal TotalMonthly, decimal TotalYearly, int TotalPledged, int TotalGiven)> GetStatisticsAsync()
     {
         var commitments = await _context.MemberScholarshipCommitments
-            .Where(c => c.TermId == termId)
             .ToListAsync();
 
         if (!commitments.Any())
@@ -139,14 +115,5 @@ public class MemberScholarshipCommitmentService
         var totalGiven = commitments.Sum(c => c.GivenCount);
 
         return (donorCount, totalMonthly, totalYearly, totalPledged, totalGiven);
-    }
-
-    /// <summary>
-    /// Check if a member has any commitment for a specific term
-    /// </summary>
-    public async Task<bool> HasCommitmentForTermAsync(int memberId, int termId)
-    {
-        return await _context.MemberScholarshipCommitments
-            .AnyAsync(c => c.MemberId == memberId && c.TermId == termId);
     }
 }

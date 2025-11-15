@@ -43,8 +43,4 @@ public class Term
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
-
-    // Navigation properties
-    public virtual ICollection<StudentTerm> StudentTerms { get; set; } = new List<StudentTerm>();
-    public virtual ICollection<MemberTermRole> MemberTermRoles { get; set; } = new List<MemberTermRole>();
 }

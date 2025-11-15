@@ -1,0 +1,214 @@
+@page "/villages"
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject VillageService VillageService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Köyler - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Köyler</MudText>
+
+    @* Statistics Cards *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Köy</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_villages.Count</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.LocationCity" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Nüfus</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_totalPopulation.ToString("N0")</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Öğrenci</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_totalStudents.ToString("N0")</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Ortalama Nüfus</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_averagePopulation.ToString("N0")</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
+        Köy Ekle
+    </MudButton>
+
+    <MudTable Items="@_villages" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Village, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Köy Adı</MudTh>
+            <MudTh>Nüfus</MudTh>
+            <MudTh>İlkokul</MudTh>
+            <MudTh>Ortaokul</MudTh>
+            <MudTh>Lise</MudTh>
+            <MudTh>Üniversite</MudTh>
+            <MudTh>Toplam Öğrenci</MudTh>
+            <MudTh>Muhtar</MudTh>
+            <MudTh>İşlemler</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Köy Adı">
+                <MudLink Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))">
+                    <strong>@context.Ad</strong>
+                </MudLink>
+            </MudTd>
+            <MudTd DataLabel="Nüfus">
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                    @(context.Nufus?.ToString("N0") ?? "-")
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="İlkokul">@(context.IlkokulOgrenciSayisi ?? 0)</MudTd>
+            <MudTd DataLabel="Ortaokul">@(context.OrtaokulOgrenciSayisi ?? 0)</MudTd>
+            <MudTd DataLabel="Lise">@(context.LiseOgrenciSayisi ?? 0)</MudTd>
+            <MudTd DataLabel="Üniversite">@(context.UniversiteOgrenciSayisi ?? 0)</MudTd>
+            <MudTd DataLabel="Toplam Öğrenci">
+                <strong>
+                    @((context.IlkokulOgrenciSayisi ?? 0) + 
+                      (context.OrtaokulOgrenciSayisi ?? 0) + 
+                      (context.LiseOgrenciSayisi ?? 0) + 
+                      (context.UniversiteOgrenciSayisi ?? 0))
+                </strong>
+            </MudTd>
+            <MudTd DataLabel="Muhtar">
+                @if (!string.IsNullOrWhiteSpace(context.MuhtarAdi))
+                {
+                    <div>@context.MuhtarAdi</div>
+                    @if (!string.IsNullOrWhiteSpace(context.MuhtarTelefon))
+                    {
+                        <small>@context.MuhtarTelefon</small>
+                    }
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </MudTd>
+            <MudTd DataLabel="İşlemler">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteVillage(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private List<Village> _villages = new();
+    private bool _loading = true;
+    private string _searchString = "";
+    private int _totalPopulation = 0;
+    private int _totalStudents = 0;
+    private int _averagePopulation = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _villages = await VillageService.GetAllAsync();
+        _totalPopulation = await VillageService.GetTotalPopulationAsync();
+        _totalStudents = await VillageService.GetTotalStudentsAsync();
+        _averagePopulation = _villages.Any() ? _totalPopulation / _villages.Count : 0;
+        _loading = false;
+    }
+
+    private bool FilterFunc(Village village)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (village.Ad.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (village.MuhtarAdi?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["IsEdit"] = false,
+            ["Village"] = new Village()
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<VillageDialog>("Yeni Köy Ekle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Köy başarıyla eklendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Village village)
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["IsEdit"] = true,
+            ["Village"] = village
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<VillageDialog>("Köy Düzenle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Köy başarıyla güncellendi.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteVillage(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            "Bu köyü silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            await VillageService.DeleteAsync(id);
+            await LoadData();
+            Snackbar.Add("Köy silindi.", Severity.Info);
+        }
+    }
+}

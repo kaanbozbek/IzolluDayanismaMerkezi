@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace IzolluVakfi.Data.Entities;
 
 /// <summary>
-/// Represents a Member's scholarship pledge/commitment for a specific Term.
+/// Represents a Member's scholarship pledge/commitment.
 /// This tracks how many scholarships a member pledged to provide and how many were actually given.
 /// </summary>
 public class MemberScholarshipCommitment
@@ -13,30 +13,34 @@ public class MemberScholarshipCommitment
 
     // Foreign Keys
     public int MemberId { get; set; }
-    public int TermId { get; set; }
 
     // Navigation properties
     public virtual Member Member { get; set; } = default!;
-    public virtual Term Term { get; set; } = default!;
 
     /// <summary>
-    /// Number of scholarships this member pledged to provide in this term
+    /// Number of scholarships this member pledged to provide
     /// </summary>
     [Required]
     public int PledgedCount { get; set; }
 
     /// <summary>
-    /// Number of scholarships actually given/assigned in this term
+    /// Number of scholarships actually given/assigned
     /// </summary>
     public int GivenCount { get; set; }
 
     /// <summary>
-    /// Yearly amount per scholarship for this term
+    /// Yearly amount per scholarship
     /// (e.g., 36000 TL per year per scholarship)
     /// </summary>
     [Required]
     [Column(TypeName = "decimal(18,2)")]
     public decimal YearlyAmountPerScholarship { get; set; }
+
+    /// <summary>
+    /// Academic year/period (e.g., "2025-2026")
+    /// </summary>
+    [StringLength(50)]
+    public string? AcademicYear { get; set; }
 
     /// <summary>
     /// Computed: Remaining scholarships not yet assigned

@@ -1,0 +1,99 @@
+@using IzolluVakfi.Data.Models
+@inject IJSRuntime JS
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <div class="mb-3">
+                <label class="form-label">Dönem *</label>
+                <select id="period-selector-@_instanceId" class="selectpicker" data-width="100%" 
+                        data-style="btn-outline-primary" data-live-search="true"
+                        value="@_selectedPeriod" @onchange="OnPeriodChanged" title="Dönem Seçiniz"
+                        disabled="@IsEdit">
+                    @foreach (var period in Periods)
+                    {
+                        <option value="@period">@period</option>
+                    }
+                </select>
+            </div>
+            <MudNumericField @bind-Value="_amount" Label="Aylık Burs Tutarı (₺)" Required="true" Min="0" Format="N2" />
+            <MudText Typo="Typo.body2" Color="Color.Info" Class="mt-2">
+                Yıllık Tutar: @((_amount * 12).ToString("N2")) ₺
+            </MudText>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Güncelle" : "Ekle")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public List<string> Periods { get; set; } = new();
+    [Parameter] public ScholarshipAmountModel? Amount { get; set; }
+    [Parameter] public bool IsEdit { get; set; }
+
+    private MudForm _form = null!;
+    private string _selectedPeriod = string.Empty;
+    private decimal _amount = 0;
+    private string _instanceId = Guid.NewGuid().ToString("N");
+
+    protected override void OnInitialized()
+    {
+        if (Amount != null && IsEdit)
+        {
+            _selectedPeriod = Amount.Period;
+            _amount = Amount.Amount;
+        }
+        else if (Periods.Count > 0)
+        {
+            _selectedPeriod = Periods.First();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private void OnPeriodChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string period && !string.IsNullOrWhiteSpace(period))
+        {
+            _selectedPeriod = period;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (_form.IsValid)
+        {
+            var result = new ScholarshipAmountModel
+            {
+                Period = _selectedPeriod,
+                Amount = _amount
+            };
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+    }
+}

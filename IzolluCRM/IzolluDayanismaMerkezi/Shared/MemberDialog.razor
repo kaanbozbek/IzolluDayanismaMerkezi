@@ -18,6 +18,9 @@
                     <MudTextField @bind-Value="_member.Meslek" Label="Meslek" />
                 </MudItem>
                 <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_member.Firma" Label="Firma" />
+                </MudItem>
+                <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_member.SicilNumarasi" Label="Sicil Numarası" />
                 </MudItem>
                 <MudItem xs="12" md="6">
@@ -87,9 +90,8 @@
                         }
                         else
                         {
-                            <MudTable Items="@_pledgeHistory" Dense="true" Hover="true">
+                            <MudTable Items="@_member.ScholarshipCommitments" Dense="true" Hover="true" Elevation="2">
                                 <HeaderContent>
-                                    <MudTh>Dönem</MudTh>
                                     <MudTh Style="text-align: right;">Taahhüt Edilen</MudTh>
                                     <MudTh Style="text-align: right;">Ödenen</MudTh>
                                     <MudTh Style="text-align: right;">Kalan</MudTh>
@@ -97,12 +99,6 @@
                                     <MudTh Style="text-align: right;">Toplam Taahhüt Tutarı</MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
-                                    <MudTd DataLabel="Dönem">
-                                        <MudText Typo="Typo.body2">
-                                            <strong>@context.Term.DisplayName</strong><br />
-                                            <small style="color: gray;">@context.Term.Start.ToString("dd.MM.yyyy") - @context.Term.End.ToString("dd.MM.yyyy")</small>
-                                        </MudText>
-                                    </MudTd>
                                     <MudTd DataLabel="Taahhüt Edilen" Style="text-align: right;">
                                         <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.PledgedCount</MudChip>
                                     </MudTd>
@@ -189,7 +185,13 @@
                     <MudTextField @bind-Value="_member.Meslek" Label="Meslek" />
                 </MudItem>
                 <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_member.Firma" Label="Firma" />
+                </MudItem>
+                <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_member.SicilNumarasi" Label="Sicil Numarası" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_member.Email" Label="Email" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_member.Email" Label="Email" />

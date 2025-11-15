@@ -13,6 +13,9 @@ public class Member
     [StringLength(100)]
     public string? Meslek { get; set; }
 
+    [StringLength(200)]
+    public string? Firma { get; set; }
+
     [StringLength(20)]
     public string? Telefon { get; set; }
 
@@ -64,12 +67,6 @@ public class Member
     public DateTime? GuncellemeTarihi { get; set; }
 
     // Navigation properties
-    /// <summary>
-    /// Collection of term roles for this member.
-    /// Each MemberTermRole represents this member's role/position for a specific term.
-    /// </summary>
-    public virtual ICollection<MemberTermRole> TermRoles { get; set; } = new List<MemberTermRole>();
-
     /// <summary>
     /// Collection of scholarship commitments for this member.
     /// Each commitment represents pledged scholarships for a specific term.

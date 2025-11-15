@@ -1,5 +1,4 @@
 @inject StudentService StudentService
-@inject TermService TermService
 @inject SettingsService SettingsService
 @inject ISnackbar Snackbar
 
@@ -113,9 +112,6 @@
                     <InputDate @bind-Value="_bursBitis" class="form-control" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="_student.Donem" Label="Dönem" Disabled="true" />
-                </MudItem>
-                <MudItem xs="12" md="6">
                     <MudTextField @bind-Value="_student.SicilNumarasi" Label="Sicil Numarası" />
                 </MudItem>
                 <MudItem xs="12" md="6">
@@ -196,8 +192,6 @@
         }
         else
         {
-            var activeTerm = await TermService.GetActiveTermAsync();
-            _student.Donem = activeTerm?.DisplayName ?? DateTime.Now.Year + "-" + (DateTime.Now.Year + 1);
             _student.Meslek = "Öğrenci";
             
             // Load default scholarship amount from settings

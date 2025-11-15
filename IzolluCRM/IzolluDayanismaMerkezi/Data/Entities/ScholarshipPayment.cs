@@ -5,7 +5,7 @@ namespace IzolluVakfi.Data.Entities;
 
 /// <summary>
 /// Represents an actual scholarship payment made to a student,
-/// linked to a member's commitment for a specific term.
+/// linked to a member's commitment.
 /// </summary>
 public class ScholarshipPayment
 {
@@ -22,15 +22,9 @@ public class ScholarshipPayment
     /// </summary>
     public int StudentId { get; set; }
 
-    /// <summary>
-    /// The term this payment belongs to
-    /// </summary>
-    public int TermId { get; set; }
-
     // Navigation properties
     public virtual MemberScholarshipCommitment Commitment { get; set; } = default!;
     public virtual Student Student { get; set; } = default!;
-    public virtual Term Term { get; set; } = default!;
 
     /// <summary>
     /// When the payment was made

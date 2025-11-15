@@ -1,18 +1,54 @@
 @page "/students"
 @using IzolluVakfi.Models
 @inject StudentService StudentService
-@inject TermService TermService
 @inject MeetingService MeetingService
 @inject ExcelService ExcelService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
-@inject TermChangeNotifier TermChangeNotifier
-@implements IDisposable
 
 <PageTitle>Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">Öğrenciler</MudText>
+
+@* STATISTICS CARDS *@
+<MudGrid Class="mb-4">
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: bold;">@TotalStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Toplam Öğrenci</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Large" Style="color: rgba(255,255,255,0.8);" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: bold;">@ActiveScholarshipStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Aktif Burs Alan</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Payments" Size="Size.Large" Style="color: rgba(255,255,255,0.8);" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: bold;">@GraduatedStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Mezun Öğrenci</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Style="color: rgba(255,255,255,0.8);" />
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
 <MudTabs Rounded="true" Elevation="2">
     <MudTabPanel Text="Öğrenciler" Icon="@Icons.Material.Filled.School">
@@ -418,7 +454,6 @@
     private bool _loading = false;
     private bool _graduatedLoading = false;
     private bool _filterDrawerOpen = false;
-    private int? _selectedTermId;
     private string _graduatedSearchString = string.Empty;
 
     // Filter options (extracted from all students)
@@ -436,17 +471,15 @@
     // Meeting attendance cache
     private Dictionary<int, StudentMeetingAttendance?> _lastMeetingAttendances = new();
 
+    // Statistics Properties
+    private int TotalStudents => _allStudents.Count;
+    private int ActiveScholarshipStudents => _allStudents.Count(s => s.AktifBursMu);
+    private int GraduatedStudents => _graduatedStudents.Count;
+
     protected override async Task OnInitializedAsync()
     {
-        TermChangeNotifier.OnTermChanged += HandleTermChange;
         await LoadData();
         await LoadFilterOptions();
-    }
-
-    private async void HandleTermChange()
-    {
-        await LoadData();
-        StateHasChanged();
     }
 
     private async Task LoadData()
@@ -456,18 +489,8 @@
 
         try
         {
-            var activeTerm = await TermService.GetActiveTermAsync();
-            if (activeTerm != null)
-            {
-                _selectedTermId = activeTerm.Id;
-                _allStudents = await StudentService.GetActiveStudentsByTermAsync(activeTerm.Id);
-                _graduatedStudents = await StudentService.GetGraduatedStudentsByTermAsync(activeTerm.Id);
-            }
-            else
-            {
-                _allStudents = await StudentService.GetCurrentStudentsAsync();
-                _graduatedStudents = await StudentService.GetGraduatedStudentsAsync();
-            }
+            _allStudents = await StudentService.GetCurrentStudentsAsync();
+            _graduatedStudents = await StudentService.GetGraduatedStudentsAsync();
 
             await LoadLastMeetingAttendances();
 
@@ -895,10 +918,5 @@
         {
             Snackbar.Add($"Excel'e aktarma hatası: {ex.Message}", Severity.Error);
         }
-    }
-
-    public void Dispose()
-    {
-        TermChangeNotifier.OnTermChanged -= HandleTermChange;
     }
 }

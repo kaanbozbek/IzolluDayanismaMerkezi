@@ -10,17 +10,6 @@ public class SystemSettings
     public int Id { get; set; }
 
     /// <summary>
-    /// The currently active term ID for the application.
-    /// This is used as the default term for reports and dashboards.
-    /// </summary>
-    public int? ActiveTermId { get; set; }
-
-    /// <summary>
-    /// Navigation property to the active term
-    /// </summary>
-    public virtual Term? ActiveTerm { get; set; }
-
-    /// <summary>
     /// Application version or other metadata
     /// </summary>
     [StringLength(50)]

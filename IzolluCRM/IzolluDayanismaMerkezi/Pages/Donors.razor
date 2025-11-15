@@ -5,11 +5,51 @@
 
 <PageTitle>İş Adamları - İzollu Dayanışma Merkezi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">İş Adamları</MudText>
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">İş Adamları</MudText>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
-    Yeni İş Adamı Ekle
-</MudButton>
+    @* Statistics Cards *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Bağışçı</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalDonors</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Burs Sayısı</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalScholarships</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Tutar</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalAmount.ToString("N0") ₺</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
+        Yeni İş Adamı Ekle
+    </MudButton>
 
 <MudTable Items="@_donors" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Donor, bool>(FilterFunc)">
     <ToolBarContent>
@@ -51,10 +91,17 @@
     </RowTemplate>
 </MudTable>
 
+</MudContainer>
+
 @code {
     private List<Donor> _donors = new();
     private bool _loading = true;
     private string _searchString = "";
+
+    // Statistics properties
+    private int TotalDonors => _donors.Count;
+    private int TotalScholarships => _donors.Sum(d => d.BursAdedi);
+    private decimal TotalAmount => _donors.Sum(d => d.ToplamTutar);
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,7 +111,9 @@
     private async Task LoadData()
     {
         _loading = true;
-        _donors = await DonorService.GetAllAsync();
+        var allDonors = await DonorService.GetAllAsync();
+        // Son eklenenler üstte olsun
+        _donors = allDonors.OrderByDescending(d => d.Id).ToList();
         _loading = false;
     }
 

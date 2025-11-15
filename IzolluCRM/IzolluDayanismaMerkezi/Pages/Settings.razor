@@ -1,13 +1,11 @@
 @page "/settings"
+@using IzolluVakfi.Data.Models
 @inject SettingsService SettingsService
-@inject TermService TermService
-@inject TermScholarshipConfigService TermScholarshipConfigService
 @inject SystemSettingsService SystemSettingsService
 @inject TranscriptService TranscriptService
 @inject MeetingService MeetingService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-@inject TermChangeNotifier TermChangeNotifier
 
 <PageTitle>Ayarlar - İzollu Dayanışma Merkezi</PageTitle>
 
@@ -68,106 +66,6 @@
                         <span>Toplantı Kontrolü Başlat</span>
                     }
                 </MudButton>
-            </MudCardContent>
-        </MudCard>
-    </MudTabPanel>
-
-    <MudTabPanel Text="Burs Tutarı">
-        <MudCard Class="mt-4">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Dönem Bazlı Burs Tutarı Ayarları</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-2">
-                        Her dönem için farklı burs tutarları belirleyebilirsiniz.
-                    </MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardContent>
-                <BootstrapTermSelector SelectedTermId="_selectedTermId" 
-                                     SelectedTermIdChanged="OnTermSelected" 
-                                     Label="Dönem Seçin" />
-
-                @if (_selectedTermId.HasValue && _currentTermConfig != null)
-                {
-                    <MudGrid>
-                        <MudItem xs="12" md="6">
-                            <MudNumericField @bind-Value="_currentYearlyAmount" 
-                                           Label="Yıllık Burs Tutarı (TL)" 
-                                           Min="0" 
-                                           Step="1000M"
-                                           Variant="Variant.Outlined" 
-                                           Class="mb-4"
-                                           Adornment="Adornment.Start"
-                                           AdornmentIcon="@Icons.Material.Filled.CurrencyLira" />
-                        </MudItem>
-                        <MudItem xs="12" md="6">
-                            <MudNumericField @bind-Value="_currentMonthlyAmount" 
-                                           Label="Aylık Burs Tutarı (TL)" 
-                                           Min="0" 
-                                           Step="100M"
-                                           Variant="Variant.Outlined" 
-                                           Class="mb-4"
-                                           Adornment="Adornment.Start"
-                                           AdornmentIcon="@Icons.Material.Filled.CurrencyLira" />
-                        </MudItem>
-                    </MudGrid>
-
-                    <MudText Typo="Typo.caption" Class="mb-2">
-                        Not: Yıllık tutarı değiştirdiğinizde aylık tutar otomatik hesaplanır (Yıllık ÷ 12).
-                        Aylık tutarı değiştirdiğinizde yıllık tutar otomatik hesaplanır (Aylık × 12).
-                    </MudText>
-
-                    @if (_currentTermConfig.LastUpdatedAt != default)
-                    {
-                        <MudText Typo="Typo.caption" Class="mb-4">
-                            Son Güncelleme: @_currentTermConfig.LastUpdatedAt.ToString("dd.MM.yyyy HH:mm")
-                        </MudText>
-                    }
-
-                    <MudButton Variant="Variant.Filled" 
-                              Color="Color.Primary" 
-                              OnClick="SaveTermScholarshipAmount"
-                              StartIcon="@Icons.Material.Filled.Save">
-                        Kaydet
-                    </MudButton>
-                }
-                else if (_selectedTermId.HasValue)
-                {
-                    <MudProgressCircular Indeterminate="true" />
-                }
-            </MudCardContent>
-        </MudCard>
-
-        <MudCard Class="mt-4">
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Geçmiş Dönem Burs Tutarları</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudTable Items="@_allTermConfigs" Dense="true" Hover="true" Loading="@_configsLoading" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Dönem</MudTh>
-                        <MudTh>Yıllık Tutar (TL)</MudTh>
-                        <MudTh>Aylık Tutar (TL)</MudTh>
-                        <MudTh>Son Güncelleme</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Dönem">
-                            <strong>@context.Term?.DisplayName</strong>
-                            @if (_activeTermId.HasValue && context.Term?.Id == _activeTermId.Value)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Class="ms-2">Aktif</MudChip>
-                            }
-                        </MudTd>
-                        <MudTd DataLabel="Yıllık Tutar">@context.YearlyAmount.ToString("N2")</MudTd>
-                        <MudTd DataLabel="Aylık Tutar">@context.MonthlyAmount.ToString("N2")</MudTd>
-                        <MudTd DataLabel="Son Güncelleme">@context.LastUpdatedAt.ToString("dd.MM.yyyy HH:mm")</MudTd>
-                    </RowTemplate>
-                    <NoRecordsContent>
-                        <MudText>Henüz hiçbir dönem için burs tutarı ayarlanmamış.</MudText>
-                    </NoRecordsContent>
-                </MudTable>
             </MudCardContent>
         </MudCard>
     </MudTabPanel>
@@ -281,63 +179,58 @@
         <MudCard Class="mt-4">
             <MudCardHeader>
                 <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Dönem Yönetimi (Term-Based Snapshots)</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-2">
-                        Yeni dönem açıldığında, tüm aktif öğrenciler ve üyelerin o döneme ait kopyaları oluşturulur.
-                    </MudText>
+                    <MudText Typo="Typo.h6">Dönem Yönetimi</MudText>
                 </CardHeaderContent>
                 <CardHeaderActions>
-                    <MudButton Variant="Variant.Filled"
-                              Color="Color.Primary"
-                              StartIcon="@Icons.Material.Filled.Add"
-                              OnClick="OpenAddTermDialog">
-                        Yeni Dönem Aç
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddPeriodDialog">
+                        Yeni Dönem Ekle
                     </MudButton>
                 </CardHeaderActions>
             </MudCardHeader>
             <MudCardContent>
-                <MudTable Items="@_terms" Dense="true" Hover="true" Loading="@_termLoading">
+                <MudTable Items="@_periods" Hover="true" Dense="true">
                     <HeaderContent>
-                        <MudTh>Dönem Adı</MudTh>
-                        <MudTh>Başlangıç Tarihi</MudTh>
-                        <MudTh>Bitiş Tarihi</MudTh>
-                        <MudTh>Açıklama</MudTh>
-                        <MudTh>Durum</MudTh>
-                        <MudTh style="width: 200px;">İşlemler</MudTh>
+                        <MudTh>Dönem</MudTh>
+                        <MudTh>İşlemler</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Dönem Adı"><strong>@context.DisplayName</strong></MudTd>
-                        <MudTd DataLabel="Başlangıç Tarihi">@context.Start.ToString("dd.MM.yyyy")</MudTd>
-                        <MudTd DataLabel="Bitiş Tarihi">@context.End.ToString("dd.MM.yyyy")</MudTd>
-                        <MudTd DataLabel="Açıklama">@(context.Description ?? "-")</MudTd>
-                        <MudTd DataLabel="Durum">
-                            @{
-                                var isActiveTerm = _activeTermId.HasValue && context.Id == _activeTermId.Value;
-                            }
-                            <MudChip T="string" Color="@(isActiveTerm ? Color.Success : Color.Default)" Size="Size.Small" Icon="@(isActiveTerm ? Icons.Material.Filled.Star : "")">
-                                @(isActiveTerm ? "Aktif" : "Pasif")
-                            </MudChip>
-                        </MudTd>
+                        <MudTd DataLabel="Dönem">@context</MudTd>
                         <MudTd DataLabel="İşlemler">
-                            @{
-                                var isActive = _activeTermId.HasValue && context.Id == _activeTermId.Value;
-                            }
-                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(() => OpenEditTermDialog(context))" StartIcon="@Icons.Material.Filled.Edit">
-                                Düzenle
-                            </MudButton>
-                            @if (!isActive)
-                            {
-                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" OnClick="@(() => SetActiveTerm(context.Id))" Class="ms-2">
-                                    Aktif Yap
-                                </MudButton>
-                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => DeleteTerm(context.Id))" Class="ms-2">
-                                    Sil
-                                </MudButton>
-                            }
-                            else
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Class="ms-2">Aktif Dönem</MudChip>
-                            }
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeletePeriod(context))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Burs Tutarları">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Dönem Bazlı Burs Tutarları</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddScholarshipDialog">
+                        Yeni Burs Tutarı Ekle
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTable Items="@_scholarshipAmounts" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Dönem</MudTh>
+                        <MudTh>Aylık Burs Tutarı</MudTh>
+                        <MudTh>Yıllık Tutar</MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Dönem">@context.Period</MudTd>
+                        <MudTd DataLabel="Aylık Burs Tutarı">@context.Amount.ToString("N2") ₺</MudTd>
+                        <MudTd DataLabel="Yıllık Tutar">@((context.Amount * 12).ToString("N2")) ₺</MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenEditScholarshipDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteScholarshipAmount(context))" />
                         </MudTd>
                     </RowTemplate>
                 </MudTable>
@@ -347,116 +240,142 @@
 </MudTabs>
 
 @code {
-    private decimal _defaultBursTutari = 3000;
     private List<string> _sektorler = new();
     private List<string> _universiteler = new();
     private List<string> _bolumler = new();
-    private List<Data.Entities.Term> _terms = new();
-    private int? _activeTermId; // Track active term from SystemSettings
-    private bool _termLoading;
+    private List<string> _periods = new();
+    private List<ScholarshipAmountModel> _scholarshipAmounts = new();
     private bool _processingTranscript;
     private bool _processingMeeting;
-
-    // Term-based scholarship configuration
-    private int? _selectedTermId;
-    private Data.Entities.TermScholarshipConfig? _currentTermConfig;
-    private List<Data.Entities.TermScholarshipConfig> _allTermConfigs = new();
-    private bool _configsLoading;
-    private decimal _currentYearlyAmount;
-    private decimal _currentMonthlyAmount;
-    private decimal _previousYearlyAmount;
-    private decimal _previousMonthlyAmount;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadSettings();
-        await LoadTerms();
-        await LoadAllTermConfigs();
-
-        // Auto-select the active term from SystemSettings (NOT Term.IsActive)
-        var activeTermId = await SystemSettingsService.GetActiveTermIdAsync();
-        if (activeTermId.HasValue)
-        {
-            _selectedTermId = activeTermId.Value;
-            await OnTermSelected();
-        }
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (_selectedTermId.HasValue)
-        {
-            await OnTermSelected();
-        }
-    }
-
-    private async Task OnTermSelected()
-    {
-        if (!_selectedTermId.HasValue) return;
-
-        _currentTermConfig = await TermScholarshipConfigService.GetOrCreateForTermAsync(_selectedTermId.Value);
-        _currentYearlyAmount = _currentTermConfig.YearlyAmount;
-        _currentMonthlyAmount = _currentTermConfig.MonthlyAmount;
-        _previousYearlyAmount = _currentYearlyAmount;
-        _previousMonthlyAmount = _currentMonthlyAmount;
-        StateHasChanged();
-    }
-
-    private async Task LoadAllTermConfigs()
-    {
-        _configsLoading = true;
-        _allTermConfigs = await TermScholarshipConfigService.GetAllAsync();
-        _configsLoading = false;
-    }
-
-    private async Task SaveTermScholarshipAmount()
-    {
-        if (!_selectedTermId.HasValue)
-        {
-            Snackbar.Add("Lütfen bir dönem seçin", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            // Determine which field was changed and update accordingly
-            if (_currentYearlyAmount != _previousYearlyAmount)
-            {
-                // User changed yearly amount - update yearly and recalculate monthly
-                await TermScholarshipConfigService.UpdateAsync(_selectedTermId.Value, _currentYearlyAmount);
-            }
-            else if (_currentMonthlyAmount != _previousMonthlyAmount)
-            {
-                // User changed monthly amount - update monthly and recalculate yearly
-                await TermScholarshipConfigService.UpdateByMonthlyAmountAsync(_selectedTermId.Value, _currentMonthlyAmount);
-            }
-
-            Snackbar.Add("Burs tutarı başarıyla kaydedildi", Severity.Success);
-            
-            // Reload configs to show updated values
-            await LoadAllTermConfigs();
-            await OnTermSelected();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
-        }
     }
 
     private async Task LoadSettings()
     {
-        _defaultBursTutari = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
         _sektorler = await SettingsService.GetListValueAsync("Sektorler");
         _universiteler = await SettingsService.GetListValueAsync("Universiteler");
         _bolumler = await SettingsService.GetListValueAsync("Bolumler");
+        _periods = await SettingsService.GetListValueAsync("AcademicPeriods");
+        
+        // Load scholarship amounts
+        var amountsJson = await SettingsService.GetValueAsync("ScholarshipAmountsByPeriod");
+        if (!string.IsNullOrWhiteSpace(amountsJson))
+        {
+            try
+            {
+                _scholarshipAmounts = System.Text.Json.JsonSerializer.Deserialize<List<ScholarshipAmountModel>>(amountsJson) ?? new();
+            }
+            catch
+            {
+                _scholarshipAmounts = new();
+            }
+        }
     }
 
-    private async Task LoadTerms()
+    private async Task OpenAddPeriodDialog()
     {
-        _termLoading = true;
-        _terms = await TermService.GetAllTermsAsync();
-        _activeTermId = await SystemSettingsService.GetActiveTermIdAsync();
-        _termLoading = false;
+        var parameters = new DialogParameters<SimpleInputDialog>
+        {
+            { x => x.Title, "Yeni Dönem Ekle" },
+            { x => x.Label, "Dönem (örn: 2025-2026)" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Yeni Dönem", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string newPeriod && !string.IsNullOrWhiteSpace(newPeriod))
+        {
+            if (!_periods.Contains(newPeriod))
+            {
+                _periods.Add(newPeriod);
+                _periods = _periods.OrderByDescending(p => p).ToList();
+                await SettingsService.SetListValueAsync("AcademicPeriods", _periods, "Akademik dönemler listesi");
+                Snackbar.Add("Dönem eklendi", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Bu dönem zaten mevcut", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task DeletePeriod(string period)
+    {
+        bool? result = await DialogService.ShowMessageBox("Uyarı", $"'{period}' dönemini silmek istediğinize emin misiniz?", yesText: "Sil", cancelText: "İptal");
+        if (result == true)
+        {
+            _periods.Remove(period);
+            await SettingsService.SetListValueAsync("AcademicPeriods", _periods, "Akademik dönemler listesi");
+            Snackbar.Add("Dönem silindi", Severity.Info);
+        }
+    }
+
+    private async Task OpenAddScholarshipDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            ["Periods"] = _periods,
+            ["IsEdit"] = false
+        };
+        var dialog = await DialogService.ShowAsync<ScholarshipAmountDialog>("Yeni Burs Tutarı Ekle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ScholarshipAmountModel newAmount)
+        {
+            var existing = _scholarshipAmounts.FirstOrDefault(x => x.Period == newAmount.Period);
+            if (existing != null)
+            {
+                Snackbar.Add("Bu dönem için zaten bir tutar mevcut!", Severity.Warning);
+                return;
+            }
+            
+            _scholarshipAmounts.Add(newAmount);
+            await SaveScholarshipAmounts();
+            Snackbar.Add("Burs tutarı eklendi", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditScholarshipDialog(ScholarshipAmountModel amount)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Periods"] = _periods,
+            ["Amount"] = amount,
+            ["IsEdit"] = true
+        };
+        var dialog = await DialogService.ShowAsync<ScholarshipAmountDialog>("Burs Tutarını Düzenle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ScholarshipAmountModel updatedAmount)
+        {
+            var existing = _scholarshipAmounts.FirstOrDefault(x => x.Period == amount.Period);
+            if (existing != null)
+            {
+                existing.Amount = updatedAmount.Amount;
+                await SaveScholarshipAmounts();
+                Snackbar.Add("Burs tutarı güncellendi", Severity.Success);
+            }
+        }
+    }
+
+    private async Task DeleteScholarshipAmount(ScholarshipAmountModel amount)
+    {
+        bool? result = await DialogService.ShowMessageBox("Uyarı", $"'{amount.Period}' dönemi için burs tutarını silmek istediğinize emin misiniz?", yesText: "Sil", cancelText: "İptal");
+        if (result == true)
+        {
+            _scholarshipAmounts.Remove(amount);
+            await SaveScholarshipAmounts();
+            Snackbar.Add("Burs tutarı silindi", Severity.Info);
+        }
+    }
+
+    private async Task SaveScholarshipAmounts()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(_scholarshipAmounts);
+        await SettingsService.SetValueAsync("ScholarshipAmountsByPeriod", json, "Dönem bazlı burs tutarları");
     }
 
     private async Task AddSektor()
@@ -633,117 +552,6 @@
         finally
         {
             _processingMeeting = false;
-        }
-    }
-
-    // Term management methods
-    private async Task OpenAddTermDialog()
-    {
-        var dialog = DialogService.Show<AddTermDialog>("Yeni Dönem", new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await LoadTerms();
-            Snackbar.Add("Yeni dönem başarıyla açıldı ve veriler kopyalandı.", Severity.Success);
-            
-            // Notify all components that a new term was created
-            TermChangeNotifier.NotifyTermChanged();
-        }
-    }
-
-    private async Task OpenEditTermDialog(Data.Entities.Term term)
-    {
-        var parameters = new DialogParameters<EditTermDialog>
-        {
-            { x => x.Term, term }
-        };
-
-        var dialog = DialogService.Show<EditTermDialog>("Dönem Düzenle", parameters, new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await LoadTerms();
-            Snackbar.Add("Dönem başarıyla güncellendi.", Severity.Success);
-            
-            // Notify all components that a term was updated
-            TermChangeNotifier.NotifyTermChanged();
-        }
-    }
-
-    private async Task SetActiveTerm(int termId)
-    {
-        var term = _terms.FirstOrDefault(t => t.Id == termId);
-        bool? result = await DialogService.ShowMessageBox(
-            "Aktif Dönem Değiştir",
-            $"'{term?.DisplayName}' dönemini aktif yapmak istediğinizden emin misiniz? Önceki aktif dönem pasif olacaktır.",
-            yesText: "Evet, Değiştir", cancelText: "İptal");
-
-        if (result == true)
-        {
-            try
-            {
-                // Use SystemSettingsService to change active term (centralized, does NOT mutate person data)
-                await SystemSettingsService.SetActiveTermAsync(termId);
-                await LoadTerms();
-                Snackbar.Add("Aktif dönem başarıyla değiştirildi.", Severity.Success);
-                
-                // Notify all components that the active term has changed
-                TermChangeNotifier.NotifyTermChanged();
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
-            }
-        }
-    }
-
-    private async Task DeleteTerm(int termId)
-    {
-        var term = _terms.FirstOrDefault(t => t.Id == termId);
-        if (term == null)
-            return;
-
-        // Show password confirmation dialog
-        var parameters = new DialogParameters<SimpleInputDialog>
-        {
-            { x => x.Title, "Dönem Silme Onayı" },
-            { x => x.Label, "Parolayı Girin" },
-            { x => x.InputType, InputType.Password }
-        };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Parola Gerekli", parameters, options);
-        var result = await dialog.Result;
-
-        if (result.Canceled || result.Data is not string password)
-            return;
-
-        // Check password
-        if (password != "Malatya44@@")
-        {
-            Snackbar.Add("Hatalı parola!", Severity.Error);
-            return;
-        }
-
-        // Confirm deletion
-        bool? confirmResult = await DialogService.ShowMessageBox(
-            "Dönem Silme Onayı",
-            $"'{term.DisplayName}' dönemi ve bu döneme ait TÜM VERİLER (öğrenciler, üyeler) silinecektir. Bu işlem geri alınamaz! Emin misiniz?",
-            yesText: "Evet, Sil", cancelText: "İptal");
-
-        if (confirmResult != true)
-            return;
-
-        try
-        {
-            await TermService.DeleteTermAsync(termId);
-            await LoadTerms();
-            Snackbar.Add($"'{term.DisplayName}' dönemi başarıyla silindi.", Severity.Info);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
         }
     }
 }

@@ -4,17 +4,54 @@
 @using IzolluVakfi.Models
 @using MudBlazor
 @inject MemberService MemberService
-@inject TermService TermService
 @inject DonorService DonorService
 @inject MemberScholarshipCommitmentService CommitmentService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-@inject TermChangeNotifier TermChangeNotifier
 
 <PageTitle>Üyeler</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
     <MudText Typo="Typo.h4" GutterBottom="true">Üyeler</MudText>
+
+    @* Statistics Cards *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Üye</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalMembers</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Aktif Üyeler</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@ActiveMembers</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Burs Verenler</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@ScholarshipGivers</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
     <MudGrid>
         @* LEFT COLUMN: Members table and controls *@
@@ -131,6 +168,7 @@
                         <MudTh>Sicil No</MudTh>
                         <MudTh>Adı Soyadı</MudTh>
                         <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
                         <MudTh>İletişim</MudTh>
                         <MudTh>Roller</MudTh>
                         <MudTh>Durum</MudTh>
@@ -147,6 +185,7 @@
                             </MudLink>
                         </MudTd>
                         <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
                         <MudTd DataLabel="İletişim">
                             @if (!string.IsNullOrWhiteSpace(context.Telefon))
                             {
@@ -212,7 +251,9 @@
                         <MudTh>Sicil No</MudTh>
                         <MudTh>Adı Soyadı</MudTh>
                         <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
                         <MudTh>İletişim</MudTh>
+                        <MudTh>Dönem</MudTh>
                         <MudTh>Taahhüt</MudTh>
                         <MudTh>Verilen</MudTh>
                         <MudTh>Kalan</MudTh>
@@ -230,6 +271,7 @@
                             </MudLink>
                         </MudTd>
                         <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
                         <MudTd DataLabel="İletişim">
                             @if (!string.IsNullOrWhiteSpace(context.Telefon))
                             {
@@ -238,6 +280,16 @@
                             @if (!string.IsNullOrWhiteSpace(context.Email))
                             {
                                 <div>@context.Email</div>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Dönem">
+                            @if (_memberCommitmentsWithYear.ContainsKey(context.Id))
+                            {
+                                @_memberCommitmentsWithYear[context.Id]
+                            }
+                            else
+                            {
+                                <span>-</span>
                             }
                         </MudTd>
                         <MudTd DataLabel="Taahhüt">
@@ -317,6 +369,7 @@
                         <MudTh>Sicil No</MudTh>
                         <MudTh>Adı Soyadı</MudTh>
                         <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
                         <MudTh>İletişim</MudTh>
                         <MudTh>Roller</MudTh>
                         <MudTh>Durum</MudTh>
@@ -333,6 +386,7 @@
                             </MudLink>
                         </MudTd>
                         <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
                         <MudTd DataLabel="İletişim">
                             @if (!string.IsNullOrWhiteSpace(context.Telefon))
                             {
@@ -398,6 +452,7 @@
                         <MudTh>Sicil No</MudTh>
                         <MudTh>Adı Soyadı</MudTh>
                         <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
                         <MudTh>İletişim</MudTh>
                         <MudTh>Roller</MudTh>
                         <MudTh>Durum</MudTh>
@@ -414,6 +469,7 @@
                             </MudLink>
                         </MudTd>
                         <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
                         <MudTd DataLabel="İletişim">
                             @if (!string.IsNullOrWhiteSpace(context.Telefon))
                             {
@@ -632,10 +688,10 @@
     private List<Member> _allMembers = new();
     private List<Member> _filteredMembers = new();
     private Dictionary<int, (int PledgedCount, int GivenCount, int RemainingCount)> _memberCommitments = new();
+    private Dictionary<int, string> _memberCommitmentsWithYear = new();
     private bool _loading = true;
     private bool _showFilters = true;
     private int _activeTabIndex = 0;
-    private int? _selectedTermId;
 
     // Filter Options
     private List<string> _allProfessions = new();
@@ -650,23 +706,14 @@
     private bool _disposed = false;
     private Member? _selectedMember;
 
+    // Statistics properties
+    private int TotalMembers => _allMembers.Count;
+    private int ActiveMembers => _allMembers.Count(m => m.AktifMi);
+    private int ScholarshipGivers => _allMembers.Count(m => m.BursVeriyor && m.AktifMi);
+
     protected override async Task OnInitializedAsync()
     {
-        TermChangeNotifier.OnTermChanged += HandleTermChanged;
         await LoadData();
-    }
-
-    private async void HandleTermChanged()
-    {
-        if (_disposed) return;
-        
-        await InvokeAsync(async () =>
-        {
-            if (_disposed) return;
-            
-            await LoadData();
-            StateHasChanged();
-        });
     }
 
     private async Task LoadData()
@@ -674,17 +721,7 @@
         _loading = true;
         try
         {
-            var activeTerm = await TermService.GetActiveTermAsync();
-            _selectedTermId = activeTerm?.Id;
-
-            if (_selectedTermId.HasValue)
-            {
-                _allMembers = await MemberService.GetActiveMembersByTermAsync(_selectedTermId.Value);
-            }
-            else
-            {
-                _allMembers = await MemberService.GetAllAsync();
-            }
+            _allMembers = await MemberService.GetAllAsync();
 
             await LoadFilterOptions();
             await LoadMemberCommitments();
@@ -726,9 +763,13 @@
 
     private async Task LoadMemberCommitments()
     {
-        if (!_selectedTermId.HasValue) return;
-
-        var allCommitments = await CommitmentService.GetByTermAsync(_selectedTermId.Value);
+        // Load commitments for all members across all terms
+        var allMemberIds = _allMembers.Select(m => m.Id).ToList();
+        var commitmentTasks = allMemberIds.Select(memberId => CommitmentService.GetByMemberAsync(memberId));
+        var commitmentResults = await Task.WhenAll(commitmentTasks);
+        
+        var allCommitments = commitmentResults.SelectMany(c => c).ToList();
+        
         _memberCommitments = allCommitments
             .GroupBy(c => c.MemberId)
             .ToDictionary(
@@ -738,6 +779,15 @@
                     GivenCount: g.Sum(c => c.GivenCount),
                     RemainingCount: g.Sum(c => c.RemainingCount)
                 )
+            );
+        
+        // Load most recent academic year for each member
+        _memberCommitmentsWithYear = allCommitments
+            .Where(c => !string.IsNullOrWhiteSpace(c.AcademicYear))
+            .GroupBy(c => c.MemberId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(c => c.AcademicYear).First().AcademicYear ?? "-"
             );
     }
 
@@ -1131,9 +1181,5 @@
         }
     }
 
-    public void Dispose()
-    {
-        _disposed = true;
-        TermChangeNotifier.OnTermChanged -= HandleTermChanged;
-    }
+}
 }

@@ -2,7 +2,6 @@
 @inject ExcelService ExcelService
 @inject StudentService StudentService
 @inject MemberService MemberService
-@inject TermService TermService
 @inject SettingsService SettingsService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
@@ -18,10 +17,6 @@
                 <MudText Typo="Typo.h6" Class="mb-4">Öğrenci Verilerini Yükle</MudText>
                 
                 <MudGrid>
-                    <MudItem xs="12">
-                        <MudText Typo="Typo.body2" Class="mb-2"><strong>Aktif Dönem:</strong> @_activeTermName</MudText>
-                    </MudItem>
-                    
                     <MudItem xs="12" md="6">
                         <MudButton Variant="Variant.Outlined" Color="Color.Info" 
                                    StartIcon="@Icons.Material.Filled.Download" 
@@ -126,7 +121,6 @@
 </MudTabs>
 
 @code {
-    private string _activeTermName = "";
     private bool _uploadingStudents = false;
     private string _studentUploadResult = "";
     private Severity _studentUploadSeverity = Severity.Info;
@@ -134,12 +128,6 @@
     private bool _uploadingMembers = false;
     private string _memberUploadResult = "";
     private Severity _memberUploadSeverity = Severity.Info;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var activeTerm = await TermService.GetActiveTermAsync();
-        _activeTermName = activeTerm?.DisplayName ?? "Aktif dönem bulunamadı";
-    }
 
     private async Task DownloadStudentTemplate()
     {
@@ -180,14 +168,6 @@
 
         try
         {
-            var activeTerm = await TermService.GetActiveTermAsync();
-            if (activeTerm == null)
-            {
-                _studentUploadResult = "Aktif dönem bulunamadı. Lütfen önce bir dönem oluşturun.";
-                _studentUploadSeverity = Severity.Warning;
-                return;
-            }
-
             // Asenkron stream'i MemoryStream'e kopyala
             using var memoryStream = new MemoryStream();
             using (var fileStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
@@ -196,17 +176,13 @@
             }
             memoryStream.Position = 0;
             
-            var students = ExcelService.ImportStudents(memoryStream, activeTerm.DisplayName);
+            var students = ExcelService.ImportStudents(memoryStream, "Genel");
 
             // Get default scholarship amount from settings
             var defaultMonthlyAmount = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
             
             foreach (var student in students)
             {
-                if (string.IsNullOrWhiteSpace(student.Donem))
-                {
-                    student.Donem = activeTerm.DisplayName;
-                }
                 if (student.AylikTutar <= 0)
                 {
                     student.AylikTutar = defaultMonthlyAmount;
@@ -269,14 +245,6 @@
 
         try
         {
-            var activeTerm = await TermService.GetActiveTermAsync();
-            if (activeTerm == null)
-            {
-                _memberUploadResult = "Aktif dönem bulunamadı. Lütfen önce bir dönem oluşturun.";
-                _memberUploadSeverity = Severity.Error;
-                return;
-            }
-
             // Asenkron stream'i MemoryStream'e kopyala
             using var memoryStream = new MemoryStream();
             using (var fileStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))

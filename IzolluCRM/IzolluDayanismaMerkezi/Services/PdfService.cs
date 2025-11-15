@@ -77,8 +77,6 @@ public class PdfService
                                 table.Cell().Element(CellStyle).Text(student.Universite ?? "-");
                                 table.Cell().Element(CellStyle).Text(student.Bolum ?? "-");
                                 table.Cell().Element(CellStyle).Text(student.Sinif.ToString());
-                                table.Cell().Element(CellStyle).Text(student.Donem ?? "-");
-
                                 static IContainer CellStyle(IContainer container)
                                 {
                                     return container.Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5);

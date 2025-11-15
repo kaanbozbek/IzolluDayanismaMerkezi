@@ -527,4 +527,27 @@ public class SettingsService
 
         return result;
     }
+
+    public async Task<List<Data.Models.ScholarshipAmountModel>> GetScholarshipAmountsAsync()
+    {
+        var json = await GetValueAsync("ScholarshipAmountsByPeriod");
+        if (string.IsNullOrWhiteSpace(json))
+            return new List<Data.Models.ScholarshipAmountModel>();
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<Data.Models.ScholarshipAmountModel>>(json) 
+                ?? new List<Data.Models.ScholarshipAmountModel>();
+        }
+        catch
+        {
+            return new List<Data.Models.ScholarshipAmountModel>();
+        }
+    }
+
+    public async Task SetScholarshipAmountsAsync(List<Data.Models.ScholarshipAmountModel> amounts)
+    {
+        var json = JsonSerializer.Serialize(amounts);
+        await SetValueAsync("ScholarshipAmountsByPeriod", json, "Dönem bazlı burs tutarları");
+    }
 }

@@ -1,11 +1,8 @@
 @page "/graduated-students"
 @inject StudentService StudentService
-@inject TermService TermService
 @inject MemberService MemberService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-@inject TermChangeNotifier TermChangeNotifier
-@implements IDisposable
 
 <PageTitle>Mezun Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
 
@@ -119,59 +116,18 @@
     private List<Student> _students = new();
     private bool _loading = true;
     private string _searchString = "";
-    private int? _selectedTermId;
     private HashSet<int> _memberStudentIds = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Subscribe to term change notifications
-        TermChangeNotifier.OnTermChanged += OnTermChangedHandler;
-        
-        // Always use active term from Settings
-        var activeTerm = await TermService.GetActiveTermAsync();
-        _selectedTermId = activeTerm?.Id;
-        
         await LoadData();
-    }
-    
-    protected override async Task OnParametersSetAsync()
-    {
-        // Reload data when term changes
-        await LoadData();
-    }
-    
-    private async void OnTermChangedHandler()
-    {
-        // Reload active term and data when term changes
-        var activeTerm = await TermService.GetActiveTermAsync();
-        _selectedTermId = activeTerm?.Id;
-        await LoadData();
-        await InvokeAsync(StateHasChanged);
-    }
-    
-    public void Dispose()
-    {
-        TermChangeNotifier.OnTermChanged -= OnTermChangedHandler;
     }
 
     private async Task LoadData()
     {
         _loading = true;
         
-        // Always use active term from Settings
-        var activeTerm = await TermService.GetActiveTermAsync();
-        _selectedTermId = activeTerm?.Id;
-        
-        if (_selectedTermId.HasValue)
-        {
-            // Use term-based queries
-            _students = await StudentService.GetGraduatedStudentsByTermAsync(_selectedTermId.Value);
-        }
-        else
-        {
-            // Fallback to legacy queries
-            _students = await StudentService.GetGraduatedStudentsAsync();
-        }
+        _students = await StudentService.GetGraduatedStudentsAsync();
         
         // Load member IDs to check if student is already a member
         await LoadMemberStudentIds();

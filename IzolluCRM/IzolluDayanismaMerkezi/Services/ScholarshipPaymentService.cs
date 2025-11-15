@@ -28,7 +28,6 @@ public class ScholarshipPaymentService
         // Validate commitment exists
         var commitment = await _context.MemberScholarshipCommitments
             .Include(c => c.Member)
-            .Include(c => c.Term)
             .FirstOrDefaultAsync(c => c.Id == payment.CommitmentId);
 
         if (commitment == null)
@@ -43,13 +42,6 @@ public class ScholarshipPaymentService
             throw new ArgumentException($"Student with ID {payment.StudentId} not found.", nameof(payment.StudentId));
         }
 
-        // Validate term exists
-        var termExists = await _context.Terms.AnyAsync(t => t.Id == payment.TermId);
-        if (!termExists)
-        {
-            throw new ArgumentException($"Term with ID {payment.TermId} not found.", nameof(payment.TermId));
-        }
-
         payment.CreatedAt = DateTime.UtcNow;
         payment.Status = string.IsNullOrEmpty(payment.Status) ? "Completed" : payment.Status;
 
@@ -57,8 +49,8 @@ public class ScholarshipPaymentService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Created payment: Amount={Amount}, Student={StudentId}, Commitment={CommitmentId}, Term={TermId}",
-            payment.Amount, payment.StudentId, payment.CommitmentId, payment.TermId);
+            "Created payment: Amount={Amount}, Student={StudentId}, Commitment={CommitmentId}",
+            payment.Amount, payment.StudentId, payment.CommitmentId);
 
         return payment;
     }
@@ -70,7 +62,6 @@ public class ScholarshipPaymentService
     {
         return await _context.ScholarshipPayments
             .Include(p => p.Student)
-            .Include(p => p.Term)
             .Where(p => p.CommitmentId == commitmentId)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync();
@@ -84,22 +75,7 @@ public class ScholarshipPaymentService
         return await _context.ScholarshipPayments
             .Include(p => p.Commitment)
                 .ThenInclude(c => c.Member)
-            .Include(p => p.Term)
             .Where(p => p.StudentId == studentId)
-            .OrderByDescending(p => p.PaymentDate)
-            .ToListAsync();
-    }
-
-    /// <summary>
-    /// Gets all payments for a specific term.
-    /// </summary>
-    public async Task<List<ScholarshipPayment>> GetPaymentsByTermAsync(int termId)
-    {
-        return await _context.ScholarshipPayments
-            .Include(p => p.Student)
-            .Include(p => p.Commitment)
-                .ThenInclude(c => c.Member)
-            .Where(p => p.TermId == termId)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync();
     }
@@ -113,7 +89,6 @@ public class ScholarshipPaymentService
             .Include(p => p.Student)
             .Include(p => p.Commitment)
                 .ThenInclude(c => c.Member)
-            .Include(p => p.Term)
             .Where(p => p.PaymentDate >= startDate && p.PaymentDate <= endDate)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync();
@@ -132,26 +107,10 @@ public class ScholarshipPaymentService
     /// <summary>
     /// Gets total amount paid to a student across all commitments.
     /// </summary>
-    public async Task<decimal> GetTotalPaidToStudentAsync(int studentId, int? termId = null)
-    {
-        var query = _context.ScholarshipPayments
-            .Where(p => p.StudentId == studentId && p.Status == "Completed");
-
-        if (termId.HasValue)
-        {
-            query = query.Where(p => p.TermId == termId.Value);
-        }
-
-        return await query.SumAsync(p => p.Amount);
-    }
-
-    /// <summary>
-    /// Gets total amount paid in a term.
-    /// </summary>
-    public async Task<decimal> GetTotalPaidInTermAsync(int termId)
+    public async Task<decimal> GetTotalPaidToStudentAsync(int studentId)
     {
         return await _context.ScholarshipPayments
-            .Where(p => p.TermId == termId && p.Status == "Completed")
+            .Where(p => p.StudentId == studentId && p.Status == "Completed")
             .SumAsync(p => p.Amount);
     }
 

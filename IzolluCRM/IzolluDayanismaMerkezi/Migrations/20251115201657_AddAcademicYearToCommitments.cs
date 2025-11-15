@@ -5,16 +5,16 @@
 namespace IzolluVakfi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddStudentTranscriptNote : Migration
+    public partial class AddAcademicYearToCommitments : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "TranskriptNotu",
-                table: "Students",
+                name: "AcademicYear",
+                table: "MemberScholarshipCommitments",
                 type: "TEXT",
-                maxLength: 500,
+                maxLength: 50,
                 nullable: true);
         }
 
@@ -22,8 +22,8 @@ namespace IzolluVakfi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "TranskriptNotu",
-                table: "Students");
+                name: "AcademicYear",
+                table: "MemberScholarshipCommitments");
         }
     }
 }

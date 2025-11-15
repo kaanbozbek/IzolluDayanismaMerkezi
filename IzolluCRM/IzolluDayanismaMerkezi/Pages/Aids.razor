@@ -1,0 +1,203 @@
+@page "/aids"
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject AidService AidService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Yardımlar</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Yardımlar</MudText>
+
+    <!-- İstatistik Kartları -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <MudCardContent>
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.h3">@_totalAids</MudText>
+                            <MudText Typo="Typo.body1">Toplam Yardım</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <MudCardContent>
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.h3">@_izolluluCount</MudText>
+                            <MudText Typo="Typo.body1">İzollulu</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Large" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="2" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <MudCardContent>
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.h3">@_nonIzolluluCount</MudText>
+                            <MudText Typo="Typo.body1">Dışarıdan</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Large" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudCard>
+        <MudCardContent>
+            <div class="d-flex justify-space-between align-center mb-4">
+                <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="max-width: 400px;" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenAddDialog" StartIcon="@Icons.Material.Filled.Add">
+                    Yeni Yardım Ekle
+                </MudButton>
+            </div>
+
+            <MudTable Items="@_aids" Filter="new Func<Aid,bool>(FilterFunc)" Hover="true" Striped="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Ad</MudTh>
+                    <MudTh>Telefon</MudTh>
+                    <MudTh>Adres</MudTh>
+                    <MudTh>Refere Eden</MudTh>
+                    <MudTh>Durum</MudTh>
+                    <MudTh>Konum</MudTh>
+                    <MudTh>İşlemler</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Ad">@context.Ad</MudTd>
+                    <MudTd DataLabel="Telefon">@context.Telefon</MudTd>
+                    <MudTd DataLabel="Adres">@context.Adres</MudTd>
+                    <MudTd DataLabel="Refere Eden">@context.RefereEden</MudTd>
+                    <MudTd DataLabel="Durum">
+                        @if (context.IsIzollulu)
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">İzollulu</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small">Dışarıdan</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Konum">
+                        @if (context.IsIzollulu)
+                        {
+                            <span>@context.Koy</span>
+                        }
+                        else
+                        {
+                            <span>@context.Sehir</span>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="İşlemler">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => OpenEditDialog(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteAid(context.Id))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private List<Aid> _aids = new();
+    private string _searchString = "";
+    private int _totalAids = 0;
+    private int _izolluluCount = 0;
+    private int _nonIzolluluCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _aids = await AidService.GetAllAsync();
+        _totalAids = await AidService.GetTotalCountAsync();
+        _izolluluCount = await AidService.GetIzolluluCountAsync();
+        _nonIzolluluCount = await AidService.GetNonIzolluluCountAsync();
+    }
+
+    private bool FilterFunc(Aid aid)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (aid.Ad?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Telefon?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Adres?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.RefereEden?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Koy?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Sehir?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters<AidDialog>
+        {
+            { x => x.Aid, new Aid() }
+        };
+
+        var dialog = await DialogService.ShowAsync<AidDialog>("Yeni Yardım Ekle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Yardım başarıyla eklendi", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Aid aid)
+    {
+        var parameters = new DialogParameters<AidDialog>
+        {
+            { x => x.Aid, aid },
+            { x => x.IsEdit, true }
+        };
+
+        var dialog = await DialogService.ShowAsync<AidDialog>("Yardım Düzenle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Yardım başarıyla güncellendi", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAid(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Uyarı",
+            "Bu yardımı silmek istediğinize emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            await AidService.DeleteAsync(id);
+            await LoadData();
+            Snackbar.Add("Yardım başarıyla silindi", Severity.Success);
+        }
+    }
+}

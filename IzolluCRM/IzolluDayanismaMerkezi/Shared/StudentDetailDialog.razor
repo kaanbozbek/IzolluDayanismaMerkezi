@@ -175,28 +175,6 @@
                                 <strong>Mezuniyet Tarihi:</strong> @_student.MezuniyetTarihi?.ToString("dd.MM.yyyy")
                             </MudAlert>
                             
-                            <MudPaper Elevation="2" Class="pa-4 mb-4">
-                                <MudText Typo="Typo.h6" Class="mb-2">Dönem Bilgileri</MudText>
-                                @if (!string.IsNullOrEmpty(_student.MezunOlduguDonem))
-                                {
-                                    <MudText Typo="Typo.body2">
-                                        <strong>Mezun Olduğu Dönem:</strong> @_student.MezunOlduguDonem
-                                    </MudText>
-                                }
-                                @if (!string.IsNullOrEmpty(_student.KayitliDonemler))
-                                {
-                                    <MudText Typo="Typo.body2" Class="mt-2">
-                                        <strong>Kayıtlı Olduğu Dönemler:</strong>
-                                    </MudText>
-                                    <MudChipSet T="string" ReadOnly="true" Class="mt-1">
-                                        @foreach (var donem in _student.KayitliDonemler.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                        {
-                                            <MudChip T="string" Color="Color.Info">@donem.Trim()</MudChip>
-                                        }
-                                    </MudChipSet>
-                                }
-                            </MudPaper>
-
                             <MudText Typo="Typo.body2">Bu öğrenci mezun olmuştur.</MudText>
                         }
                         else
@@ -204,19 +182,6 @@
                             <MudAlert Severity="Severity.Info" Class="mb-4">
                                 Bu öğrenci henüz mezun olmamıştır.
                             </MudAlert>
-                            
-                            @if (!string.IsNullOrEmpty(_student.KayitliDonemler))
-                            {
-                                <MudPaper Elevation="2" Class="pa-4 mb-4">
-                                    <MudText Typo="Typo.h6" Class="mb-2">Kayıtlı Olduğu Dönemler</MudText>
-                                    <MudChipSet T="string" ReadOnly="true">
-                                        @foreach (var donem in _student.KayitliDonemler.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                        {
-                                            <MudChip T="string" Color="Color.Info">@donem.Trim()</MudChip>
-                                        }
-                                    </MudChipSet>
-                                </MudPaper>
-                            }
                             
                             <MudButton Variant="Variant.Filled" 
                                        Color="Color.Success" 

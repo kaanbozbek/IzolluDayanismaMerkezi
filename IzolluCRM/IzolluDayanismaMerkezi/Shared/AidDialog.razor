@@ -1,0 +1,192 @@
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject AidService AidService
+@inject VillageService VillageService
+@inject IJSRuntime JS
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudTextField @bind-Value="Aid.Ad" Label="İsim" Required="true" RequiredError="İsim gereklidir" />
+            
+            <MudTextField @bind-Value="Aid.Telefon" Label="Telefon" Class="mt-3" />
+            
+            <MudTextField @bind-Value="Aid.Adres" Label="Adres" Lines="2" Class="mt-3" />
+            
+            <MudTextField @bind-Value="Aid.RefereEden" Label="Refere Eden" Class="mt-3" />
+            
+            <MudCheckBox @bind-Value="Aid.IsIzollulu" Label="İzollulu" Color="Color.Primary" Class="mt-3" @onclick="OnIzollululChanged" />
+
+            @if (Aid.IsIzollulu)
+            {
+                <div class="mt-3">
+                    <label class="form-label">Köy</label>
+                    <select id="village-selector-@_instanceId" class="selectpicker" data-width="100%" 
+                            data-style="btn-outline-primary" data-live-search="true"
+                            value="@_selectedVillage" @onchange="OnVillageChanged" title="Köy Seçiniz">
+                        @foreach (var village in _villages)
+                        {
+                            <option value="@village.Ad">@village.Ad</option>
+                        }
+                    </select>
+                </div>
+            }
+            else
+            {
+                <div class="mt-3">
+                    <label class="form-label">Şehir</label>
+                    <select id="city-selector-@_instanceId" class="selectpicker" data-width="100%" 
+                            data-style="btn-outline-primary" data-live-search="true"
+                            value="@_selectedCity" @onchange="OnCityChanged" title="Şehir Seçiniz">
+                        @foreach (var city in _turkishCities)
+                        {
+                            <option value="@city">@city</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <MudTextField @bind-Value="Aid.Notlar" Label="Notlar" Lines="3" Class="mt-3" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)">
+            @(IsEdit ? "Güncelle" : "Ekle")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public Aid Aid { get; set; } = new();
+
+    [Parameter]
+    public bool IsEdit { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private List<Village> _villages = new();
+    private string _instanceId = Guid.NewGuid().ToString("N");
+    private string _selectedVillage = string.Empty;
+    private string _selectedCity = string.Empty;
+    private bool _isRendered;
+
+    private readonly List<string> _turkishCities = new()
+    {
+        "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya",
+        "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik",
+        "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum",
+        "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir",
+        "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Iğdır", "Isparta", "İstanbul",
+        "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis",
+        "Kırıkkale", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa",
+        "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Osmaniye",
+        "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas", "Şırnak",
+        "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _villages = await VillageService.GetAllAsync();
+        
+        // Initialize selected values from Aid entity
+        if (IsEdit)
+        {
+            _selectedVillage = Aid.Koy ?? string.Empty;
+            _selectedCity = Aid.Sehir ?? string.Empty;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isRendered = true;
+            await InitializeSelectPickersAsync();
+        }
+        else if (_isRendered)
+        {
+            // Reinitialize when IsIzollulu changes
+            await InitializeSelectPickersAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickersAsync()
+    {
+        try
+        {
+            await Task.Delay(100); // Small delay to ensure DOM is ready
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async Task OnIzollululChanged()
+    {
+        await Task.Delay(10); // Allow checkbox to update
+        StateHasChanged();
+        await Task.Delay(50); // Wait for DOM update
+        await InitializeSelectPickersAsync();
+    }
+
+    private void OnVillageChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string village)
+        {
+            _selectedVillage = village;
+            Aid.Koy = village;
+            Aid.Sehir = null;
+        }
+    }
+
+    private void OnCityChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string city)
+        {
+            _selectedCity = city;
+            Aid.Sehir = city;
+            Aid.Koy = null;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+
+        if (_success)
+        {
+            // Clear the unused location field
+            if (Aid.IsIzollulu)
+            {
+                Aid.Sehir = null;
+            }
+            else
+            {
+                Aid.Koy = null;
+            }
+
+            if (IsEdit)
+            {
+                await AidService.UpdateAsync(Aid);
+            }
+            else
+            {
+                await AidService.CreateAsync(Aid);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+}

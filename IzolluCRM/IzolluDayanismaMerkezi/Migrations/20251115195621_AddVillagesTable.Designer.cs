@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IzolluVakfi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251114163449_AddStudentIBAN")]
-    partial class AddStudentIBAN
+    [Migration("20251115195621_AddVillagesTable")]
+    partial class AddVillagesTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -191,10 +191,17 @@ namespace IzolluVakfi.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Firma")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("GuncellemeTarihi")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDenetimKurulu")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsIzollulu")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsMutevelli")
@@ -248,42 +255,103 @@ namespace IzolluVakfi.Migrations
                     b.ToTable("Members");
                 });
 
-            modelBuilder.Entity("IzolluVakfi.Data.Entities.Period", b =>
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.MemberScholarshipCommitment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Aciklama")
-                        .HasMaxLength(500)
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Ad")
-                        .IsRequired()
+                    b.Property<int>("GivenCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PledgedCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("YearlyAmountPerScholarship")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("MemberScholarshipCommitments");
+                });
+
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.ScholarshipPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CommitmentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentType")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReferenceNumber")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("AktifMi")
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StudentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("BaslangicTarihi")
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("StudentId1")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("BitisTarihi")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("BursTutari")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("GuncellemeTarihi")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("OlusturmaTarihi")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Periods");
+                    b.HasIndex("CommitmentId")
+                        .HasDatabaseName("IX_ScholarshipPayments_CommitmentId");
+
+                    b.HasIndex("PaymentDate")
+                        .HasDatabaseName("IX_ScholarshipPayments_PaymentDate");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("IX_ScholarshipPayments_StudentId");
+
+                    b.HasIndex("StudentId1");
+
+                    b.ToTable("ScholarshipPayments");
                 });
 
             modelBuilder.Entity("IzolluVakfi.Data.Entities.Settings", b =>
@@ -359,10 +427,6 @@ namespace IzolluVakfi.Migrations
                     b.Property<DateTime?>("DogumTarihi")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Donem")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("EbeveynAdi")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
@@ -382,9 +446,8 @@ namespace IzolluVakfi.Migrations
                         .HasMaxLength(34)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("KayitliDonemler")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                    b.Property<bool>("IsIzollulu")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Koy")
                         .HasMaxLength(100)
@@ -396,10 +459,6 @@ namespace IzolluVakfi.Migrations
 
                     b.Property<bool>("MezunMu")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("MezunOlduguDonem")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("MezuniyetTarihi")
                         .HasColumnType("TEXT");
@@ -480,6 +539,28 @@ namespace IzolluVakfi.Migrations
                     b.ToTable("StudentMeetingAttendances");
                 });
 
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.SystemSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AppVersion")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
+                });
+
             modelBuilder.Entity("IzolluVakfi.Data.Entities.TranscriptRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -508,6 +589,89 @@ namespace IzolluVakfi.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("TranscriptRecords");
+                });
+
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.Village", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Ad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("GuncellemeTarihi")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("IlkokulOgrenciSayisi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("LiseOgrenciSayisi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MuhtarAdi")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MuhtarTelefon")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notlar")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Nufus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("OlusturmaTarihi")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("OrtaokulOgrenciSayisi")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("UniversiteOgrenciSayisi")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Villages");
+                });
+
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.MemberScholarshipCommitment", b =>
+                {
+                    b.HasOne("IzolluVakfi.Data.Entities.Member", "Member")
+                        .WithMany("ScholarshipCommitments")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.ScholarshipPayment", b =>
+                {
+                    b.HasOne("IzolluVakfi.Data.Entities.MemberScholarshipCommitment", "Commitment")
+                        .WithMany()
+                        .HasForeignKey("CommitmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IzolluVakfi.Data.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IzolluVakfi.Data.Entities.Student", null)
+                        .WithMany("ScholarshipPayments")
+                        .HasForeignKey("StudentId1");
+
+                    b.Navigation("Commitment");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("IzolluVakfi.Data.Entities.StudentMeetingAttendance", b =>
@@ -545,9 +709,16 @@ namespace IzolluVakfi.Migrations
                     b.Navigation("Attendances");
                 });
 
+            modelBuilder.Entity("IzolluVakfi.Data.Entities.Member", b =>
+                {
+                    b.Navigation("ScholarshipCommitments");
+                });
+
             modelBuilder.Entity("IzolluVakfi.Data.Entities.Student", b =>
                 {
                     b.Navigation("MeetingAttendances");
+
+                    b.Navigation("ScholarshipPayments");
 
                     b.Navigation("Transcripts");
                 });
