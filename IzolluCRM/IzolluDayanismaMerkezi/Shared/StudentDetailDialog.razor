@@ -4,6 +4,7 @@
 @inject ISnackbar Snackbar
 @inject MeetingService MeetingService
 @inject ActivityLogService ActivityLogService
+@implements IDisposable
 
 <MudDialog>
     <DialogContent>
@@ -285,36 +286,51 @@
     private List<StudentMeetingAttendance> _meetingAttendances = new();
     private List<ActivityLog> _activityLogs = new();
     private bool _loading = true;
-    private bool _dataLoaded = false;
+    private bool _disposed = false;
     private int _activePanelIndex = 0;
     private string _latestTranscriptNote = string.Empty;
-    private bool _hasChanges = false;
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        if (!_dataLoaded && StudentId > 0)
+        if (StudentId > 0)
         {
-            _loading = true;
-            try
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (_disposed) return;
+        
+        _loading = true;
+        try
+        {
+            _student = await StudentService.GetByIdAsync(StudentId);
+            if (_student != null && !_disposed)
             {
-                _student = await StudentService.GetByIdAsync(StudentId);
-                if (_student != null)
-                {
-                    _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
-                    var latestTranscript = _transcripts.FirstOrDefault();
-                    _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
-                    _meetingAttendances = await MeetingService.GetAttendancesForStudentAsync(StudentId);
-                    _activityLogs = await ActivityLogService.GetByPersonNameAsync(_student.AdSoyad);
-                }
+                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                var latestTranscript = _transcripts.FirstOrDefault();
+                _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                _meetingAttendances = await MeetingService.GetAttendancesForStudentAsync(StudentId);
+                _activityLogs = await ActivityLogService.GetByPersonNameAsync(_student.AdSoyad);
             }
-            catch (Exception)
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component disposed during async operation, ignore
+        }
+        catch (Exception ex)
+        {
+            if (!_disposed)
             {
-                // Handle disposed context gracefully
+                Snackbar?.Add($"Veri yüklenirken hata: {ex.Message}", Severity.Error);
             }
-            finally
+        }
+        finally
+        {
+            if (!_disposed)
             {
                 _loading = false;
-                _dataLoaded = true;
             }
         }
     }
@@ -344,13 +360,30 @@
         var dialog = await DialogService.ShowAsync<TranscriptDialog>("Transkript Ekle", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (!result.Canceled && !_disposed)
         {
-            _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
-            var latestTranscript = _transcripts.FirstOrDefault();
-            _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
-            _hasChanges = true;
-            StateHasChanged();
+            try
+            {
+                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                var latestTranscript = _transcripts.FirstOrDefault();
+                _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                
+                if (!_disposed)
+                {
+                    StateHasChanged();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed, ignore
+            }
+            catch (Exception ex)
+            {
+                if (!_disposed)
+                {
+                    Snackbar?.Add($"Transkript yenilenirken hata: {ex.Message}", Severity.Error);
+                }
+            }
         }
     }
 
@@ -361,14 +394,31 @@
             "Bu transkript kaydını silmek istediğinizden emin misiniz?",
             yesText: "Sil", cancelText: "İptal");
 
-        if (result == true)
+        if (result == true && !_disposed)
         {
-            await TranscriptService.DeleteAsync(transcriptId);
-            _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
-            var latestTranscript = _transcripts.FirstOrDefault();
-            _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
-            _hasChanges = true;
-            StateHasChanged();
+            try
+            {
+                await TranscriptService.DeleteAsync(transcriptId);
+                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                var latestTranscript = _transcripts.FirstOrDefault();
+                _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                
+                if (!_disposed)
+                {
+                    StateHasChanged();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed, ignore
+            }
+            catch (Exception ex)
+            {
+                if (!_disposed)
+                {
+                    Snackbar?.Add($"Transkript silinirken hata: {ex.Message}", Severity.Error);
+                }
+            }
         }
     }
 
@@ -389,14 +439,13 @@
 
     private void Close()
     {
-        if (_hasChanges)
-        {
-            MudDialog.Close(DialogResult.Ok(true));
-        }
-        else
-        {
-            MudDialog.Close();
-        }
+        _disposed = true;
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    
+    public void Dispose()
+    {
+        _disposed = true;
     }
 
     private async Task UpdateAttendanceAsync(StudentMeetingAttendance attendance, bool katildi)

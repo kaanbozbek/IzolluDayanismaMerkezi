@@ -876,9 +876,9 @@
 
     private async Task OpenGraduateDetailDialog(Student student)
     {
-        var parameters = new DialogParameters { ["Student"] = student };
+        var parameters = new DialogParameters { ["StudentId"] = student.Id };
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
-        await DialogService.ShowAsync<GraduateStudentDialog>("Mezun Öğrenci Detayları", parameters, options);
+        await DialogService.ShowAsync<StudentDetailDialog>("Mezun Öğrenci Detayları", parameters, options);
     }
 
     private async Task DeleteStudent(int studentId)
@@ -903,9 +903,9 @@
         var dialog = await DialogService.ShowAsync<GraduateStudentDialog>("Öğrenciyi Mezun Et", parameters: new DialogParameters(), options);
         var result = await dialog.Result;
 
-        if (result != null && !result.Canceled && result.Data is DateTime mezuniyetTarihi)
+        if (result != null && !result.Canceled && result.Data is GraduateStudentDialog.GraduationResult graduationResult)
         {
-            await StudentService.GraduateStudentAsync(student.Id, mezuniyetTarihi);
+            await StudentService.GraduateStudentAsync(student.Id, graduationResult.MezuniyetTarihi, graduationResult.Meslek, graduationResult.Firma);
             await LoadData();
             await LoadFilterOptions();
             Snackbar.Add($"{student.AdSoyad} mezun edildi.", Severity.Success);

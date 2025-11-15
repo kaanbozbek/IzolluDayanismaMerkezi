@@ -7,8 +7,18 @@
                 Öğrenci mezun edildiğinde aktif burs durumu otomatik olarak sonlandırılacaktır.
             </MudAlert>
 
-            <label class="form-label">Mezuniyet Tarihi</label>
-            <InputDate @bind-Value="_mezuniyetTarihi" class="form-control" max="@_todayIso" />
+            <MudTextField Label="Mezuniyet Tarihi" 
+                          @bind-Value="_mezuniyetTarihi" 
+                          InputType="InputType.Date" 
+                          Required="true" />
+            
+            <MudTextField Label="Meslek" 
+                          @bind-Value="_meslek" 
+                          Placeholder="Örn: Yazılım Geliştirici, Doktor, Öğretmen" />
+            
+            <MudTextField Label="Çalıştığı Firma" 
+                          @bind-Value="_firma" 
+                          Placeholder="Örn: ABC Yazılım A.Ş., XYZ Hastanesi" />
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -20,19 +30,34 @@
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
 
-    private DateTime? _mezuniyetTarihi = DateTime.Now;
-    private readonly string _todayIso = DateTime.Now.ToString("yyyy-MM-dd");
+    private string _mezuniyetTarihi = DateTime.Now.ToString("yyyy-MM-dd");
+    private string _meslek = string.Empty;
+    private string _firma = string.Empty;
 
     private async Task Graduate()
     {
-        if (!_mezuniyetTarihi.HasValue)
+        if (string.IsNullOrWhiteSpace(_mezuniyetTarihi))
         {
             Snackbar.Add("Lütfen mezuniyet tarihi seçiniz", Severity.Warning);
             return;
         }
 
-        MudDialog.Close(DialogResult.Ok(_mezuniyetTarihi.Value));
+        var result = new GraduationResult
+        {
+            MezuniyetTarihi = DateTime.Parse(_mezuniyetTarihi),
+            Meslek = string.IsNullOrWhiteSpace(_meslek) ? null : _meslek,
+            Firma = string.IsNullOrWhiteSpace(_firma) ? null : _firma
+        };
+
+        MudDialog.Close(DialogResult.Ok(result));
     }
 
     private void Cancel() => MudDialog.Cancel();
+
+    public class GraduationResult
+    {
+        public DateTime MezuniyetTarihi { get; set; }
+        public string? Meslek { get; set; }
+        public string? Firma { get; set; }
+    }
 }

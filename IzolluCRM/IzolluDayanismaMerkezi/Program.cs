@@ -45,6 +45,11 @@ builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<MeetingService>();
 builder.Services.AddScoped<VillageService>();
 builder.Services.AddScoped<AidService>();
+builder.Services.AddScoped<TermService>();
+builder.Services.AddScoped<TermReportService>();
+
+// Add Singleton Services
+builder.Services.AddSingleton<TermChangeNotifier>(); // Cross-component event notifications
 
 var app = builder.Build();
 

@@ -72,7 +72,7 @@ else
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                                 <MudText Typo="Typo.body2" Style="color: white;">Taahhüt Toplam Dönem Burs Tutarı</MudText>
                                 <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.PeriodBursTutari.ToString("N0") ₺</strong></MudText>
                             </MudPaper>
@@ -134,87 +134,96 @@ else
         </MudItem>
     </MudGrid>
 
-<MudGrid>
-    <MudItem xs="12" md="6">
-        <MudCard>
-            <MudCardContent>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.PictureAsPdf" 
-                           OnClick="GeneratePdfReport" FullWidth="true"
-                           Style="height: 56px;">
-                    PDF Raporu Al
-                </MudButton>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+    <!-- PDF Raporu Butonu -->
+    <MudGrid Class="mt-4 mb-4">
+        <MudItem xs="12" Class="d-flex justify-center">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Warning" 
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf" 
+                       OnClick="GeneratePdfReport"
+                       Size="Size.Large"
+                       Style="padding: 12px 48px;">
+                PDF RAPORU AL
+            </MudButton>
+        </MudItem>
+    </MudGrid>
 
-    <MudItem xs="12" md="6">
-        <MudCard>
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Üyelerin Verdiği Burs Dağılımı</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardContent>
-                @if (_memberScholarshipDetails.Any())
-                {
-                    <MudTable Items="@_memberScholarshipDetails" Dense="true" Hover="true">
-                        <HeaderContent>
-                            <MudTh>Üye Adı</MudTh>
-                            <MudTh>Taahhüt Edilen</MudTh>
-                            <MudTh>Gerçekleşen</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Üye Adı">@context.MemberName</MudTd>
-                            <MudTd DataLabel="Taahhüt Edilen">
-                                <strong>@context.PledgedCount</strong>
-                            </MudTd>
-                            <MudTd DataLabel="Gerçekleşen">
-                                <strong>@context.RealizedCount</strong>
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                }
-                else
-                {
-                    <MudText Typo="Typo.body2">Veri yükleniyor...</MudText>
-                }
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+    <!-- Dağılım Tabloları -->
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.School" Class="mr-2" />
+                            Üniversiteye Göre Öğrenci Dağılımı
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_universityData.Any())
+                    {
+                        <MudTable Items="@_universityData" Dense="true" Hover="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Üniversite</MudTh>
+                                <MudTh>Öğrenci Sayısı</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Üniversite">@context.Key</MudTd>
+                                <MudTd DataLabel="Öğrenci Sayısı">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.Value</MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Class="ml-2">Veri yükleniyor...</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-    <MudItem xs="12" md="6">
-        <MudCard>
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Üniversiteye Göre Öğrenci Dağılımı</MudText>
-                </CardHeaderContent>
-            </MudCardHeader>
-            <MudCardContent>
-                @if (_universityData.Any())
-                {
-                    <MudTable Items="@_universityData" Dense="true" Hover="true">
-                        <HeaderContent>
-                            <MudTh>Üniversite</MudTh>
-                            <MudTh>Öğrenci Sayısı</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Üniversite">@context.Key</MudTd>
-                            <MudTd DataLabel="Öğrenci Sayısı">
-                                <strong>@context.Value</strong>
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                }
-                else
-                {
-                    <MudText Typo="Typo.body2">Veri yükleniyor...</MudText>
-                }
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-
-</MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-2" />
+                            Üyelerin Verdiği Burs Dağılımı
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_memberScholarshipDetails.Any())
+                    {
+                        <MudTable Items="@_memberScholarshipDetails" Dense="true" Hover="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Üye Adı</MudTh>
+                                <MudTh>Taahhüt Edilen</MudTh>
+                                <MudTh>Gerçekleşen</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Üye Adı">@context.MemberName</MudTd>
+                                <MudTd DataLabel="Taahhüt Edilen">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.PledgedCount</MudChip>
+                                </MudTd>
+                                <MudTd DataLabel="Gerçekleşen">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success">@context.RealizedCount</MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Class="ml-2">Veri yükleniyor...</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
 }
 

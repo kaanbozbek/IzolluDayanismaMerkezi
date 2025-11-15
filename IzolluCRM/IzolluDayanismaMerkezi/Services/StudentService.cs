@@ -131,7 +131,7 @@ public class StudentService
         }
     }
 
-    public async Task GraduateStudentAsync(int id, DateTime graduationDate)
+    public async Task GraduateStudentAsync(int id, DateTime graduationDate, string? meslek = null, string? firma = null)
     {
         var student = await _context.Students.FindAsync(id);
         if (student != null)
@@ -139,11 +139,19 @@ public class StudentService
             student.MezunMu = true;
             student.MezuniyetTarihi = graduationDate;
             student.AktifBursMu = false;
+            
+            // Mezuniyet sırasında girilen meslek ve firma bilgilerini kaydet
+            if (!string.IsNullOrWhiteSpace(meslek))
+                student.Meslek = meslek;
+            
+            if (!string.IsNullOrWhiteSpace(firma))
+                student.Firma = firma;
+            
             student.GuncellemeTarihi = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
-            await _logService.LogAsync("OgrenciMezun", $"Öğrenci mezun edildi: {student.AdSoyad}");
+            await _logService.LogAsync("OgrenciMezun", $"Öğrenci mezun edildi: {student.AdSoyad} - Meslek: {student.Meslek ?? "Belirtilmedi"} - Firma: {student.Firma ?? "Belirtilmedi"}");
         }
     }
 

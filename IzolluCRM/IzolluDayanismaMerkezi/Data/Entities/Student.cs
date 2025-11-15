@@ -14,6 +14,9 @@ public class Student
     public string? Meslek { get; set; }
 
     [StringLength(200)]
+    public string? Firma { get; set; }
+
+    [StringLength(200)]
     public string? Universite { get; set; }
 
     [StringLength(20)]
