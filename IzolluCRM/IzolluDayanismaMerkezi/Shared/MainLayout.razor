@@ -29,11 +29,11 @@
         </MudStack>
         <MudText Typo="Typo.body2" Class="ml-4">@DateTime.Now.ToString("dd MMMM yyyy")</MudText>
     </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer @bind-Open="@_drawerOpen" 
+               ClipMode="DrawerClipMode.Always" 
+               Elevation="2"
+               Variant="@DrawerVariant.Responsive">
         <NavMenu />
-        <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(calc(-50% - 1cm)); text-align: center;">
-            <img src="/izollu-vakfi.png" alt="Logo" style="max-width: 140%; height: auto;" />
-        </div>
     </MudDrawer>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">

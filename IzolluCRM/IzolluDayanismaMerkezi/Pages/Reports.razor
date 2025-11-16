@@ -20,7 +20,7 @@
 }
 else
 {
-    <!-- Dönem Filtresi -->
+    <!-- Dönem Filtresi ve PDF Butonu -->
     <MudGrid Class="mb-4">
         <MudItem xs="12" md="4">
             <MudCard Elevation="2">
@@ -36,6 +36,16 @@ else
                     </select>
                 </MudCardContent>
             </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="8" Style="display: flex; align-items: center; justify-content: flex-end;">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Warning" 
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf" 
+                       OnClick="GeneratePdfReport"
+                       Size="Size.Large"
+                       Style="padding: 12px 48px;">
+                PDF RAPORU AL
+            </MudButton>
         </MudItem>
     </MudGrid>
 
@@ -54,76 +64,76 @@ else
                 <MudCardContent>
                     <MudGrid>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Aktif Dönem</MudText>
                                 <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.ActivePeriod</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Toplam Öğrenci</MudText>
                                 <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.TotalStudents</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Burs Alan</MudText>
                                 <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.ActiveScholarships</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Taahhüt Toplam Dönem Burs Tutarı</MudText>
                                 <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.PeriodBursTutari.ToString("N0") ₺</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Mezun Sayısı</MudText>
                                 <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.GraduatedCount</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
-                                                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Style="color: white; margin-right: 8px;" />
-                                <MudText Typo="Typo.body2" Style="color: white;">Bağışçılar</MudText>
-                            </div>
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div style="display: flex; align-items: center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Style="color: white; margin-right: 8px;" />
+                                    <MudText Typo="Typo.body2" Style="color: white;">Bağışçılar</MudText>
+                                </div>
                                 <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.TotalDonors</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="0" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: #333;">Üye Sayısı</MudText>
                                 <MudText Typo="Typo.h5" Style="color: #333;"><strong>@_stats.TotalMembers</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Toplam Dönem Burs Tutarı</MudText>
                                 <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.PeriodBursTutari.ToString("N0") ₺</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); border-radius: 12px;">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: #333;">Taahhüt Edilen Burs Adedi</MudText>
                                 <MudText Typo="Typo.h6" Style="color: #333;"><strong>@_stats.PledgedCount</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); border-radius: 12px;">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Gerçekleşen Burs Adedi</MudText>
                                 <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.RealizedCount</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 12px;">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: white;">Toplam Yardım Sayısı</MudText>
                                 <MudText Typo="Typo.h6" Style="color: white;"><strong>@_stats.TotalAidsCount</strong></MudText>
                             </MudPaper>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
-                            <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 12px;">
+                            <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
                                 <MudText Typo="Typo.body2" Style="color: #333;">Köy Sayısı</MudText>
                                 <MudText Typo="Typo.h6" Style="color: #333;"><strong>@_stats.VillageCount</strong></MudText>
                             </MudPaper>
@@ -134,24 +144,12 @@ else
         </MudItem>
     </MudGrid>
 
-    <!-- PDF Raporu Butonu -->
-    <MudGrid Class="mt-4 mb-4">
-        <MudItem xs="12" Class="d-flex justify-center">
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Warning" 
-                       StartIcon="@Icons.Material.Filled.PictureAsPdf" 
-                       OnClick="GeneratePdfReport"
-                       Size="Size.Large"
-                       Style="padding: 12px 48px;">
-                PDF RAPORU AL
-            </MudButton>
-        </MudItem>
-    </MudGrid>
+
 
     <!-- Dağılım Tabloları -->
     <MudGrid>
         <MudItem xs="12" md="6">
-            <MudCard Elevation="3">
+            <MudCard Elevation="3" Style="border-radius: 12px;">
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">
@@ -186,7 +184,7 @@ else
         </MudItem>
 
         <MudItem xs="12" md="6">
-            <MudCard Elevation="3">
+            <MudCard Elevation="3" Style="border-radius: 12px;">
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">
@@ -373,13 +371,16 @@ else
             .OrderByDescending(d => d.PledgedCount)
             .ToList();
 
-        // "Üniversiteye Göre Öğrenci Dağılımı" - use all students with active scholarships
-        _universityData = students
-            .Where(s => s.AktifBursMu && !string.IsNullOrEmpty(s.Universite))
+        // "Üniversiteye Göre Öğrenci Dağılımı" - dönem bağımsız tüm öğrenciler
+        var allStudentsForUniversity = await StudentService.GetAllAsync();
+        _universityData = allStudentsForUniversity
+            .Where(s => !string.IsNullOrEmpty(s.Universite))
             .GroupBy(s => s.Universite!)
             .OrderByDescending(g => g.Count())
             .Take(10)
             .ToDictionary(g => g.Key, g => g.Count());
+        
+        await Task.CompletedTask;
     }
 
     private class ReportStats

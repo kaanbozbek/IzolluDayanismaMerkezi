@@ -9,10 +9,8 @@
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 100vh;">
     <MudPaper Elevation="24" Class="pa-10 login-card" Style="width: 100%; max-width: 420px; border-radius: 18px; background-color: #fffbf3; box-shadow: 0 18px 45px rgba(0,0,0,0.35); transition: transform 0.2s ease, box-shadow 0.2s ease;">
         <div class="d-flex flex-column align-center mb-6">
-            <div style="background-color: #f59e0b; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                <MudIcon Icon="@Icons.Material.Filled.AccountCircle" 
-                         Size="Size.Large" 
-                         Style="font-size: 64px; color: white;" />
+            <div style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <img src="/izollu-vakfi.png" alt="İzollu Vakfı Logo" style="width: 100%; height: 100%; object-fit: contain;" />
             </div>
             <MudText Typo="Typo.h4" Align="Align.Center" Style="font-weight: 700; color: #f59e0b; font-size: 1.7rem;">
                 İzollu Dayanışma Merkezi
@@ -32,6 +30,8 @@
         <MudForm @ref="_form" @bind-IsValid="@_isValid">
             <MudTextField @bind-Value="_username"
                           Label="Kullanıcı Adı"
+                          For="@(() => _username)"
+                          Placeholder="Kullanıcı adınızı girin"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
                           Required="true"
@@ -45,6 +45,8 @@
 
             <MudTextField @bind-Value="_password"
                           Label="Şifre"
+                          For="@(() => _password)"
+                          Placeholder="Şifrenizi girin"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
                           InputType="@_passwordInput"
