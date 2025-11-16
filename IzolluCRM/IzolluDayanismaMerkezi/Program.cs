@@ -3,8 +3,17 @@ using MudBlazor.Services;
 using IzolluVakfi.Data;
 using IzolluVakfi.Services;
 using QuestPDF.Infrastructure;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Kestrel to listen on all network interfaces
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5000); // HTTP
+    // Uncomment for HTTPS: serverOptions.ListenAnyIP(5001, listenOptions => { listenOptions.UseHttps(); });
+});
 
 // Configure QuestPDF License
 QuestPDF.Settings.License = LicenseType.Community;
@@ -98,4 +107,50 @@ using (var scope = app.Services.CreateScope())
     await systemSettingsService.GetOrCreateSettingsAsync();
 }
 
+// Open browser automatically after startup (only when running locally)
+if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("OPEN_BROWSER") == "true")
+{
+    var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+    lifetime.ApplicationStarted.Register(() =>
+    {
+        Task.Run(async () =>
+        {
+            try
+            {
+                // Wait for server to be fully ready
+                await Task.Delay(1500);
+                OpenBrowser("http://localhost:5000");
+            }
+            catch (Exception ex)
+            {
+                // Silently fail if browser can't open
+                Debug.WriteLine($"Failed to open browser: {ex.Message}");
+            }
+        });
+    });
+}
+
 app.Run();
+
+static void OpenBrowser(string url)
+{
+    try
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Process.Start("xdg-open", url);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Process.Start("open", url);
+        }
+    }
+    catch
+    {
+        // Browser açılamazsa sessizce devam et
+    }
+}

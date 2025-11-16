@@ -172,7 +172,7 @@
         {
             try
             {
-                await JS.InvokeVoidAsync("eval", "$('.selectpicker').selectpicker();");
+                await JS.InvokeVoidAsync("eval", "if (typeof jQuery !== 'undefined') { jQuery('.selectpicker').selectpicker(); }");
             }
             catch (JSDisconnectedException)
             {

@@ -10,6 +10,10 @@ x86/
 bld/
 [Bb]uild/
 
+# Publish folder
+publish/
+[Pp]ublish/
+
 # Visual Studio cache/options
 .vs/
 .vscode/
