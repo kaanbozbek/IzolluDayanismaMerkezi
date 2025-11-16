@@ -86,16 +86,18 @@
                     ActiveClass="nav-item-active">
             Aktivite Logları
         </MudNavLink>
+        
+        <MudNavLink Href="/settings" 
+                    Match="NavLinkMatch.Prefix" 
+                    Icon="@Icons.Material.Filled.Settings" 
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
+            Ayarlar
+        </MudNavLink>
     </MudNavMenu>
 
     <!-- Footer Section -->
     <div class="nav-footer">
-        <MudNavLink Href="/settings" 
-                    Icon="@Icons.Material.Filled.Settings" 
-                    Class="nav-footer-link"
-                    ActiveClass="nav-item-active">
-            Ayarlar
-        </MudNavLink>
         <div class="nav-footer-link logout-link" @onclick="HandleLogoutClick">
             <MudIcon Icon="@Icons.Material.Filled.Logout" Style="font-size: 20px; margin-right: 0.5rem;" />
             <span>Çıkış Yap</span>
@@ -200,10 +202,10 @@
     }
     
     .nav-footer-link {
-        border-radius: 8px;
-        margin: 3px 0;
-        padding: 10px 12px;
-        font-size: 0.85rem;
+        border-radius: 999px !important;
+        margin: 3px 4px !important;
+        padding: 10px 14px !important;
+        font-size: 0.9rem;
         transition: all 0.2s ease;
         display: flex;
         align-items: center;
@@ -213,13 +215,13 @@
     
     .nav-footer-link .mud-icon-root {
         font-size: 20px;
-        margin-right: 0.5rem;
+        margin-right: 0.6rem;
         color: #6b7280;
     }
     
     .nav-footer-link:hover {
-        background: #f3f4f6;
-        transform: translateX(2px);
+        background: #f3f4f6 !important;
+        transform: translateX(4px);
     }
     
     .logout-link {

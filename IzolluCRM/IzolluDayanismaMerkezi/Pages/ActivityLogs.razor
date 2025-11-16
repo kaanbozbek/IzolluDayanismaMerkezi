@@ -1,35 +1,59 @@
 @page "/activity-logs"
 @inject ActivityLogService LogService
+@inject IJSRuntime JS
 
 <PageTitle>Aktivite Logları - İzollu Dayanışma Merkezi</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
     <MudCard Class="mb-4">
-    <MudCardContent>
-        <MudGrid>
-            <MudItem xs="12" md="4">
-                <MudDateRangePicker @bind-DateRange="_dateRange" Label="Tarih Aralığı" />
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudSelect @bind-Value="_selectedType" Label="İşlem Tipi" T="string" Variant="Variant.Outlined">
-                    <MudSelectItem T="string" Value="@("Tümü")">Tümü</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("OgrenciEkle")">Öğrenci Ekle</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("OgrenciGuncelle")">Öğrenci Güncelle</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("OgrenciSil")">Öğrenci Sil</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("OgrenciMezun")">Öğrenci Mezun</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("BursKesildi")">Burs Kesildi</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("IsAdamiEkle")">İş Adamı Ekle</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("DonemAc")">Dönem Aç</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FilterLogs" FullWidth="true">
-                    Filtrele
-                </MudButton>
-            </MudItem>
-        </MudGrid>
-    </MudCardContent>
-</MudCard>
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-4">Filtreler</MudText>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Başlangıç Tarihi</strong></MudText>
+                    <MudDatePicker @bind-Date="_startDate" 
+                                   Label="Başlangıç" 
+                                   Variant="Variant.Outlined"
+                                   DateFormat="dd.MM.yyyy" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Bitiş Tarihi</strong></MudText>
+                    <MudDatePicker @bind-Date="_endDate" 
+                                   Label="Bitiş" 
+                                   Variant="Variant.Outlined"
+                                   DateFormat="dd.MM.yyyy" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>İşlem Tipi</strong></MudText>
+                    <div>
+                        <select id="activity-type-filter" class="selectpicker" data-width="100%" 
+                                data-style="btn-outline-primary" data-live-search="true"
+                                @onchange="OnTypeChanged" title="Tümü">
+                            <option value="Tümü">Tümü</option>
+                            <option value="OgrenciEkle">Öğrenci Ekle</option>
+                            <option value="OgrenciGuncelle">Öğrenci Güncelle</option>
+                            <option value="OgrenciSil">Öğrenci Sil</option>
+                            <option value="OgrenciMezun">Öğrenci Mezun</option>
+                            <option value="BursKesildi">Burs Kesildi</option>
+                            <option value="IsAdamiEkle">İş Adamı Ekle</option>
+                            <option value="UyeEkle">Üye Ekle</option>
+                            <option value="DonemAc">Dönem Aç</option>
+                        </select>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="2" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               OnClick="FilterLogs" 
+                               FullWidth="true"
+                               Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.FilterAlt">
+                        Filtrele
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
 
 <MudTable Items="@_logs" Dense="true" Hover="true" Loading="@_loading">
     <HeaderContent>
@@ -54,12 +78,36 @@
 @code {
     private List<ActivityLog> _logs = new();
     private bool _loading = true;
-    private DateRange? _dateRange;
+    private DateTime? _startDate;
+    private DateTime? _endDate;
     private string _selectedType = "Tümü";
+    private bool _selectPickerInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || !_selectPickerInitialized)
+        {
+            await Task.Delay(200);
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", "if (typeof jQuery !== 'undefined') { jQuery('.selectpicker').selectpicker('refresh'); }");
+            _selectPickerInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
     }
 
     private async Task LoadData()
@@ -69,13 +117,18 @@
         _loading = false;
     }
 
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        _selectedType = e.Value?.ToString() ?? "Tümü";
+    }
+
     private async Task FilterLogs()
     {
         _loading = true;
 
-        if (_dateRange?.Start != null && _dateRange?.End != null)
+        if (_startDate != null && _endDate != null)
         {
-            _logs = await LogService.GetByDateRangeAsync(_dateRange.Start.Value, _dateRange.End.Value);
+            _logs = await LogService.GetByDateRangeAsync(_startDate.Value, _endDate.Value);
         }
         else
         {

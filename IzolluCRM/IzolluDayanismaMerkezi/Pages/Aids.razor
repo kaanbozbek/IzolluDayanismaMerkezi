@@ -5,108 +5,103 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
-<PageTitle>Yardımlar</PageTitle>
+<PageTitle>Yardımlar - İzollu Dayanışma Merkezi</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
 
-    <!-- İstatistik Kartları -->
+    @* Statistics Cards *@
     <MudGrid Class="mb-4">
         <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="2" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px;">
-                <MudCardContent>
-                    <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.h3">@_totalAids</MudText>
-                            <MudText Typo="Typo.body1">Toplam Yardım</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" />
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Yardım</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_totalAids</MudText>
                     </div>
-                </MudCardContent>
-            </MudCard>
+                    <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
         </MudItem>
+
         <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="2" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 16px;">
-                <MudCardContent>
-                    <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.h3">@_izolluluCount</MudText>
-                            <MudText Typo="Typo.body1">İzollulu</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Large" />
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">İzollulu</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_izolluluCount</MudText>
                     </div>
-                </MudCardContent>
-            </MudCard>
+                    <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
         </MudItem>
+
         <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="2" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 16px;">
-                <MudCardContent>
-                    <div class="d-flex justify-space-between align-center">
-                        <div>
-                            <MudText Typo="Typo.h3">@_nonIzolluluCount</MudText>
-                            <MudText Typo="Typo.body1">Dışarıdan</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Large" />
+            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 15px;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Dışarıdan</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_nonIzolluluCount</MudText>
                     </div>
-                </MudCardContent>
-            </MudCard>
+                    <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Large" Style="opacity: 0.8;" />
+                </MudStack>
+            </MudPaper>
         </MudItem>
     </MudGrid>
 
-    <MudCard>
-        <MudCardContent>
-            <div class="d-flex justify-space-between align-center mb-4">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenAddDialog" StartIcon="@Icons.Material.Filled.Add">
-                    Yeni Yardım Ekle
-                </MudButton>
-                <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="max-width: 400px;" />
-            </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
+        Yeni Yardım Ekle
+    </MudButton>
 
-            <MudTable Items="@_aids" Filter="new Func<Aid,bool>(FilterFunc)" Hover="true" Striped="true" Dense="true" SortLabel="Sırala">
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Ad)">Ad</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Telefon ?? string.Empty)">Telefon</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Adres ?? string.Empty)">Adres</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.RefereEden ?? string.Empty)">Refere Eden</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.IsIzollulu)">Durum</MudTableSortLabel></MudTh>
-                    <MudTh>Konum</MudTh>
-                    <MudTh>İşlemler</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Ad">@context.Ad</MudTd>
-                    <MudTd DataLabel="Telefon">@context.Telefon</MudTd>
-                    <MudTd DataLabel="Adres">@context.Adres</MudTd>
-                    <MudTd DataLabel="Refere Eden">@context.RefereEden</MudTd>
-                    <MudTd DataLabel="Durum">
-                        @if (context.IsIzollulu)
-                        {
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small">İzollulu</MudChip>
-                        }
-                        else
-                        {
-                            <MudChip T="string" Color="Color.Info" Size="Size.Small">Dışarıdan</MudChip>
-                        }
-                    </MudTd>
-                    <MudTd DataLabel="Konum">
-                        @if (context.IsIzollulu)
-                        {
-                            <span>@context.Koy</span>
-                        }
-                        else
-                        {
-                            <span>@context.Sehir</span>
-                        }
-                    </MudTd>
-                    <MudTd DataLabel="İşlemler">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
-                                       OnClick="@(() => OpenEditDialog(context))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                       OnClick="@(() => DeleteAid(context.Id))" />
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-        </MudCardContent>
-    </MudCard>
+    <MudTable Items="@_aids" Dense="true" Hover="true" Filter="new Func<Aid, bool>(FilterFunc)" SortLabel="Sırala">
+        <ToolBarContent>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Ad)">Ad</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Telefon ?? string.Empty)">Telefon</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Adres ?? string.Empty)">Adres</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.RefereEden ?? string.Empty)">Refere Eden</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.IsIzollulu)">Durum</MudTableSortLabel></MudTh>
+            <MudTh>Konum</MudTh>
+            <MudTh>İşlemler</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Ad">
+                <MudLink Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))">
+                    <strong>@context.Ad</strong>
+                </MudLink>
+            </MudTd>
+            <MudTd DataLabel="Telefon">@context.Telefon</MudTd>
+            <MudTd DataLabel="Adres">@context.Adres</MudTd>
+            <MudTd DataLabel="Refere Eden">@context.RefereEden</MudTd>
+            <MudTd DataLabel="Durum">
+                @if (context.IsIzollulu)
+                {
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small">İzollulu</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Info" Size="Size.Small">Dışarıdan</MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Konum">
+                @if (context.IsIzollulu)
+                {
+                    <span>@context.Koy</span>
+                }
+                else
+                {
+                    <span>@context.Sehir</span>
+                }
+            </MudTd>
+            <MudTd DataLabel="İşlemler">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteAid(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
 </MudContainer>
 
 @code {

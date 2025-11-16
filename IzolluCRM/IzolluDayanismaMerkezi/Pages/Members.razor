@@ -82,8 +82,14 @@
     <MudGrid>
         @* LEFT COLUMN: Members table and controls *@
         <MudItem xs="12" md="@(_showFilters ? 8 : 12)" lg="@(_showFilters ? 9 : 12)">
-            @* Excel Export Button *@
-            <div class="d-flex justify-space-between align-center mb-3">
+            @* Action Buttons *@
+            <div class="d-flex gap-2 mb-3">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add" 
+                           OnClick="OpenAddDialog">
+                    Üye Ekle
+                </MudButton>
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Success"
                            StartIcon="@Icons.Material.Outlined.FileDownload"
@@ -190,14 +196,6 @@
         @* Tab 1: Tüm Üyeler *@
         <MudTabPanel Text="Tüm Üyeler" Icon="@Icons.Material.Filled.Group">
             <MudPaper Elevation="2" Class="pa-4 mt-4">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Add" 
-                           OnClick="OpenAddDialog" 
-                           Class="mb-4">
-                    Üye Ekle
-                </MudButton>
-
                 <MudTable Items="@GetFilteredMembersForAllTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading"
                           @bind-SelectedItem="_selectedMember" RowsPerPage="50" SortLabel="Sırala">
                     <HeaderContent>
@@ -274,14 +272,6 @@
         @* Tab 2: Bağışçılar *@
         <MudTabPanel Text="Bağışçılar" Icon="@Icons.Material.Filled.VolunteerActivism">
             <MudPaper Elevation="2" Class="pa-4 mt-4">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Add" 
-                           OnClick="OpenAddDialog" 
-                           Class="mb-4">
-                    Üye Ekle
-                </MudButton>
-
                 <MudTable Items="@GetFilteredMembersForDonorsTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
                     <HeaderContent>
                         <MudTh>Sicil No</MudTh>
@@ -393,14 +383,6 @@
         @* Tab 3: Mütevelli Heyeti *@
         <MudTabPanel Text="Mütevelli Heyeti" Icon="@Icons.Material.Filled.AdminPanelSettings">
             <MudPaper Elevation="2" Class="pa-4 mt-4">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Add" 
-                           OnClick="OpenAddDialog" 
-                           Class="mb-4">
-                    Üye Ekle
-                </MudButton>
-
                 <MudTable Items="@GetFilteredMembersForMutevelliTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
                     <HeaderContent>
                         <MudTh>Sicil No</MudTh>
@@ -476,14 +458,6 @@
         @* Tab 4: Yönetim Kurulu *@
         <MudTabPanel Text="Yönetim Kurulu" Icon="@Icons.Material.Filled.BusinessCenter">
             <MudPaper Elevation="2" Class="pa-4 mt-4">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Add" 
-                           OnClick="OpenAddDialog" 
-                           Class="mb-4">
-                    Üye Ekle
-                </MudButton>
-
                 <MudTable Items="@GetFilteredMembersForYonetimTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
                     <HeaderContent>
                         <MudTh>Sicil No</MudTh>
