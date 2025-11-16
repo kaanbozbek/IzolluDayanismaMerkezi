@@ -83,46 +83,50 @@
     <MudGrid>
         @* LEFT COLUMN: Members table and controls *@
         <MudItem xs="12" md="@(_showFilters ? 8 : 12)" lg="@(_showFilters ? 9 : 12)">
-            @* Top Bar: Search + Filtreler Button + Clear Button *@
-            <MudPaper Elevation="2" Class="pa-4 mb-4">
-                <MudGrid>
-                    <MudItem xs="12" md="6">
-                        <MudTextField @bind-Value="_filters.SearchText" 
-                                      Label="Ara (İsim, Meslek, Sicil No)" 
-                                      Variant="Variant.Outlined" 
-                                      Adornment="Adornment.Start" 
-                                      AdornmentIcon="@Icons.Material.Filled.Search"
-                                      DebounceInterval="300"
-                                      OnDebounceIntervalElapsed="ApplyFilters"
-                                      Immediate="false" />
-                    </MudItem>
-                    <MudItem xs="12" md="6" Class="d-flex align-center justify-end gap-2">
-                        <MudButton Variant="Variant.Filled" 
-                                   Color="Color.Primary" 
-                                   OnClick="@(() => _showFilters = !_showFilters)"
-                                   StartIcon="@Icons.Material.Filled.FilterList">
-                            Filtreler
-                            @if (_filters.HasAnyFilter())
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Class="ml-2">@GetActiveFilterCount()</MudChip>
-                            }
-                        </MudButton>
-                        @if (_filters.HasAnyFilter())
-                        {
-                            <MudButton Variant="Variant.Outlined" 
-                                       Color="Color.Default" 
-                                       OnClick="ClearAllFilters"
-                                       StartIcon="@Icons.Material.Filled.Clear">
-                                TEMİZLE
-                            </MudButton>
-                        }
-                    </MudItem>
-                </MudGrid>
+            @* Excel Export Button *@
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Outlined.FileDownload"
+                           OnClick="ExportToExcel">
+                    Excel'e Aktar
+                </MudButton>
+            </div>
 
-                @* Filter Chips *@
-                @if (_filters.HasAnyFilter())
-                {
-                    <MudPaper Elevation="0" Class="mt-3 d-flex flex-wrap gap-2">
+            @* FILTER BAR *@
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <div class="d-flex align-center gap-3">
+                    <MudTextField @bind-Value="_filters.SearchText"
+                                  Label="Ara"
+                                  Placeholder="İsim, meslek, sicil..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true"
+                                  DebounceInterval="300"
+                                  OnDebounceIntervalElapsed="ApplyFilters"
+                                  Style="flex: 1; max-width: 400px;" />
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Tune"
+                               OnClick="@(() => _showFilters = !_showFilters)">
+                        Filtreler
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Default"
+                               OnClick="ClearAllFilters">
+                        TEMİZLE
+                    </MudButton>
+                </div>
+            </MudPaper>
+
+            @* SELECTED FILTER CHIPS *@
+            @if (_filters.HasAnyFilter())
+            {
+                <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f5f5f5;">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Seçilen Filtreler:</strong></MudText>
+                    <div class="d-flex flex-wrap gap-2">
                         @if (_filters.Status != MemberStatusFilter.All)
                         {
                             <MudChip T="string" OnClose="RemoveStatusFilter" Color="Color.Info" Size="Size.Small">
@@ -177,9 +181,9 @@
                                 Yaş: @GetAgeRangeText()
                             </MudChip>
                         }
-                    </MudPaper>
-                }
-            </MudPaper>
+                    </div>
+                </MudPaper>
+            }
 
             @* Tabs *@
             <MudTabs Elevation="2" Rounded="true" ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
@@ -196,15 +200,15 @@
                 </MudButton>
 
                 <MudTable Items="@GetFilteredMembersForAllTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading"
-                          @bind-SelectedItem="_selectedMember" RowsPerPage="50">
+                          @bind-SelectedItem="_selectedMember" RowsPerPage="50" SortLabel="Sırala">
                     <HeaderContent>
-                        <MudTh>Sicil No</MudTh>
-                        <MudTh>Adı Soyadı</MudTh>
-                        <MudTh>Mesleği</MudTh>
-                        <MudTh>Firma</MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.SicilNumarasi ?? string.Empty)">Sicil No</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.AdSoyad)">Adı Soyadı</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.Meslek ?? string.Empty)">Mesleği</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.Firma ?? string.Empty)">Firma</MudTableSortLabel></MudTh>
                         <MudTh>İletişim</MudTh>
                         <MudTh>Roller</MudTh>
-                        <MudTh>Durum</MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.AktifMi)">Durum</MudTableSortLabel></MudTh>
                         <MudTh>İşlemler</MudTh>
                     </HeaderContent>
                     <PagerContent>
@@ -1372,6 +1376,52 @@
         if (result != null && !result.Canceled)
         {
             await LoadData();
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var membersToExport = _filteredMembers.ToList();
+            
+            if (!membersToExport.Any())
+            {
+                Snackbar.Add("Dışa aktarılacak üye bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            // Excel verilerini hazırla
+            var excelData = new List<Dictionary<string, object>>();
+            
+            foreach (var member in membersToExport)
+            {
+                excelData.Add(new Dictionary<string, object>
+                {
+                    { "Sicil No", member.SicilNumarasi ?? "" },
+                    { "Ad Soyad", member.AdSoyad ?? "" },
+                    { "Meslek", member.Meslek ?? "" },
+                    { "Firma", member.Firma ?? "" },
+                    { "Telefon", member.Telefon ?? "" },
+                    { "Email", member.Email ?? "" },
+                    { "Köy", member.Koy ?? "" },
+                    { "Adres", member.Adres ?? "" },
+                    { "Üyelik Türü", member.UyelikTuru ?? "" },
+                    { "Mütevelli", member.IsMutevelli ? "Evet" : "Hayır" },
+                    { "Burs Veriyor", member.BursVeriyor ? "Evet" : "Hayır" },
+                    { "Aktif", member.AktifMi ? "Evet" : "Hayır" },
+                    { "Notlar", member.Notlar ?? "" }
+                });
+            }
+
+            var fileName = $"Uyeler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JS.InvokeVoidAsync("downloadExcel", excelData, fileName);
+            
+            Snackbar.Add($"{membersToExport.Count} üye Excel'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel aktarma hatası: {ex.Message}", Severity.Error);
         }
     }
 

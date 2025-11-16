@@ -74,3 +74,47 @@
 .modern-header img:hover {
     transform: scale(1.05);
 }
+
+/* Modern Card Spacing */
+.mud-grid-item {
+    padding: 8px !important;
+}
+
+/* Search Input Premium Style */
+.mud-input-root .mud-input-outlined {
+    height: 44px;
+    border-radius: 8px;
+}
+
+/* Modern Tab Styling */
+.mud-tabs .mud-tab-active {
+    border-bottom: 3px solid #ff9800 !important;
+    color: #ff9800 !important;
+}
+
+.mud-tabs .mud-tab:hover {
+    background: rgba(255, 152, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Table Header Shadow */
+table thead,
+.mud-table-head {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    background: #fafafa;
+}
+
+/* Modern Navigation Menu Items */
+.nav-item {
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+    background: rgba(255, 152, 0, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item-active {
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4) !important;
+}

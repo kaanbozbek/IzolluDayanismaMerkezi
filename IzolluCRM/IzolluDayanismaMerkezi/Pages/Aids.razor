@@ -56,20 +56,20 @@
     <MudCard>
         <MudCardContent>
             <div class="d-flex justify-space-between align-center mb-4">
-                <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="max-width: 400px;" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenAddDialog" StartIcon="@Icons.Material.Filled.Add">
                     Yeni Yardım Ekle
                 </MudButton>
+                <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="max-width: 400px;" />
             </div>
 
-            <MudTable Items="@_aids" Filter="new Func<Aid,bool>(FilterFunc)" Hover="true" Striped="true" Dense="true">
+            <MudTable Items="@_aids" Filter="new Func<Aid,bool>(FilterFunc)" Hover="true" Striped="true" Dense="true" SortLabel="Sırala">
                 <HeaderContent>
-                    <MudTh>Ad</MudTh>
-                    <MudTh>Telefon</MudTh>
-                    <MudTh>Adres</MudTh>
-                    <MudTh>Refere Eden</MudTh>
-                    <MudTh>Durum</MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Ad)">Ad</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Telefon ?? string.Empty)">Telefon</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Adres ?? string.Empty)">Adres</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.RefereEden ?? string.Empty)">Refere Eden</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.IsIzollulu)">Durum</MudTableSortLabel></MudTh>
                     <MudTh>Konum</MudTh>
                     <MudTh>İşlemler</MudTh>
                 </HeaderContent>

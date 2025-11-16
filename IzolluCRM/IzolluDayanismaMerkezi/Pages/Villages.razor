@@ -65,21 +65,21 @@
         Köy Ekle
     </MudButton>
 
-    <MudTable Items="@_villages" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Village, bool>(FilterFunc)">
+    <MudTable Items="@_villages" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Village, bool>(FilterFunc)" SortLabel="Sırala">
         <ToolBarContent>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
                           AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
         <HeaderContent>
-            <MudTh>Köy Adı</MudTh>
-            <MudTh>Nüfus</MudTh>
-            <MudTh>İlkokul</MudTh>
-            <MudTh>Ortaokul</MudTh>
-            <MudTh>Lise</MudTh>
-            <MudTh>Üniversite</MudTh>
-            <MudTh>Toplam Öğrenci</MudTh>
-            <MudTh>Muhtar</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.Ad)">Köy Adı</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.Nufus ?? 0)">Nüfus</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.IlkokulOgrenciSayisi ?? 0)">İlkokul</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.OrtaokulOgrenciSayisi ?? 0)">Ortaokul</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.LiseOgrenciSayisi ?? 0)">Lise</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.UniversiteOgrenciSayisi ?? 0)">Üniversite</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => (x.IlkokulOgrenciSayisi ?? 0) + (x.OrtaokulOgrenciSayisi ?? 0) + (x.LiseOgrenciSayisi ?? 0) + (x.UniversiteOgrenciSayisi ?? 0))">Toplam Öğrenci</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.MuhtarAdi ?? string.Empty)">Muhtar</MudTableSortLabel></MudTh>
             <MudTh>İşlemler</MudTh>
         </HeaderContent>
         <RowTemplate>

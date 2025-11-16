@@ -41,6 +41,7 @@
     <script src="js/select2-helper.js"></script>
     <script src="_framework/blazor.server.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         window.downloadFile = function (filename, base64String) {
             const link = document.createElement('a');
@@ -49,6 +50,23 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        };
+
+        window.downloadExcel = function (data, filename) {
+            try {
+                // JSON array'i worksheet'e çevir
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                
+                // Yeni workbook oluştur
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Üyeler");
+                
+                // Excel dosyası oluştur ve indir
+                XLSX.writeFile(workbook, filename);
+            } catch (error) {
+                console.error('Excel export error:', error);
+                alert('Excel dosyası oluşturulurken hata oluştu: ' + error.message);
+            }
         };
     </script>
 </body>
