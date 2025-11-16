@@ -1,98 +1,99 @@
-<div class="modern-nav-menu">
+<div class="izollu-nav-menu">
     <!-- Logo Section -->
-    <div class="nav-logo-section">
+    <div class="nav-header">
         <img src="/izollu-vakfi.png" alt="Logo" class="nav-logo" />
     </div>
 
     <!-- ANA MENÜ -->
-    <div class="nav-section-header">ANA MENÜ</div>
+    <div class="nav-section-title">ANA MENÜ</div>
     
-    <MudNavMenu Class="mud-nav-modern">
+    <MudNavMenu Dense="true" Class="nav-menu">
         <MudNavLink Href="/reports" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.Dashboard" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Dashboard
         </MudNavLink>
         
         <MudNavLink Href="/students" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.School" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Öğrenciler
         </MudNavLink>
         
         <MudNavLink Href="/members" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.People" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Üyeler
         </MudNavLink>
     </MudNavMenu>
 
     <!-- VERİ YÖNETİMİ -->
-    <div class="nav-section-header">VERİ YÖNETİMİ</div>
+    <div class="nav-section-title mt-3">VERİ YÖNETİMİ</div>
     
-    <MudNavMenu Class="mud-nav-modern">
+    <MudNavMenu Dense="true" Class="nav-menu">
         <MudNavLink Href="/villages" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.LocationCity" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Köyler
         </MudNavLink>
         
         <MudNavLink Href="/aids" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.VolunteerActivism" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Yardımlar
         </MudNavLink>
         
         <MudNavLink Href="/meetings" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.Event" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Toplantılar
         </MudNavLink>
         
         <MudNavLink Href="/excel-import" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.UploadFile" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Excel İçe Aktar
         </MudNavLink>
     </MudNavMenu>
 
     <!-- SİSTEM -->
-    <div class="nav-section-header">SİSTEM</div>
+    <div class="nav-section-title mt-3">SİSTEM</div>
     
-    <MudNavMenu Class="mud-nav-modern">
+    <MudNavMenu Dense="true" Class="nav-menu">
         <MudNavLink Href="/activity-logs" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.History" 
-                    Class="nav-pill"
-                    ActiveClass="nav-active">
+                    Class="nav-item"
+                    ActiveClass="nav-item-active">
             Aktivite Logları
         </MudNavLink>
     </MudNavMenu>
 
-    <!-- User Section at Bottom -->
-    <div class="nav-user-section">
+    <!-- Footer Section -->
+    <div class="nav-footer">
         <MudNavLink Href="/settings" 
                     Icon="@Icons.Material.Filled.Settings" 
-                    Class="nav-pill-small">
+                    Class="nav-footer-link"
+                    ActiveClass="nav-item-active">
             Ayarlar
         </MudNavLink>
-        <div style="cursor: pointer;" class="nav-pill-small" @onclick="HandleLogoutClick">
-            <MudIcon Icon="@Icons.Material.Filled.Logout" Class="mr-2" Style="font-size: 18px; color: #ef4444;" />
-            <span style="color: #ef4444; font-weight: 500;">Çıkış Yap</span>
+        <div class="nav-footer-link logout-link" @onclick="HandleLogoutClick">
+            <MudIcon Icon="@Icons.Material.Filled.Logout" Style="font-size: 20px; margin-right: 0.5rem;" />
+            <span>Çıkış Yap</span>
         </div>
     </div>
 </div>
@@ -108,135 +109,124 @@
 }
 
 <style>
-    .modern-nav-menu {
+    .izollu-nav-menu {
         height: 100%;
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        background: #ffffff;
     }
     
-    /* Logo Section */
-    .nav-logo-section {
-        padding: 12px 16px 10px;
+    /* Logo Header */
+    .nav-header {
+        padding: 1.5rem 1rem 1rem;
         text-align: center;
-        border-bottom: 1px solid rgba(0,0,0,0.06);
+        border-bottom: 1px solid #f1f5f9;
     }
     
     .nav-logo {
-        max-width: 130px;
+        max-width: 140px;
         height: auto;
+        transition: transform 0.2s ease;
     }
     
-    /* Section Headers */
-    .nav-section-header {
-        margin-top: 10px;
-        margin-bottom: 2px;
-        padding: 0 16px;
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        color: #9ca3af;
+    .nav-logo:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Section Titles */
+    .nav-section-title {
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-    }
-    
-    /* Pill-style Navigation Links */
-    .mud-nav-modern .nav-pill {
-        border-radius: 8px;
-        margin: 2px 10px;
-        padding: 8px 10px;
-        transition: background-color 0.15s ease, color 0.15s ease;
-        position: relative;
-    }
-    
-    .mud-nav-modern .nav-pill:hover {
-        background-color: #f3f4f6;
-    }
-    
-    /* Active Item with Left Accent Bar */
-    .mud-nav-modern .nav-active {
-        background-color: #fff7ed;
-        color: #f59e0b;
-        font-weight: 600;
-    }
-    
-    .mud-nav-modern .nav-active::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 8px;
-        bottom: 8px;
-        width: 3px;
-        border-radius: 999px;
-        background-color: #f59e0b;
-    }
-    
-    .mud-nav-modern .nav-pill .mud-nav-link-icon-default {
-        color: #6b7280;
-        font-size: 20px;
-    }
-    
-    .mud-nav-modern .nav-active .mud-nav-link-icon-default {
-        color: #f59e0b;
-    }
-    
-    /* User Section at Bottom */
-    .nav-user-section {
-        margin-top: auto;
-        padding: 10px 12px 12px;
-        border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    
-    .user-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 6px;
-        margin-bottom: 2px;
-    }
-    
-    .user-avatar {
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #fff7ed;
-        border-radius: 50%;
-    }
-    
-    .user-details {
-        flex: 1;
-    }
-    
-    .user-name {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .user-role {
-        font-size: 12px;
         color: #9ca3af;
+        margin: 0.75rem 0 0.25rem 1rem;
+        font-weight: 600;
     }
     
-    .nav-pill-small {
+    .nav-menu {
+        padding: 0 0.75rem;
+    }
+    
+    /* Modern Pill Navigation Items */
+    .nav-item {
+        border-radius: 999px !important;
+        margin: 3px 4px !important;
+        padding: 10px 14px !important;
+        color: #4b5563;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+    
+    .nav-item .mud-icon-root {
+        font-size: 20px;
+        margin-right: 0.6rem;
+        color: #6b7280;
+    }
+    
+    .nav-item:hover {
+        background: #fef3c7 !important;
+        color: #f59e0b;
+        transform: translateX(4px);
+    }
+    
+    .nav-item:hover .mud-icon-root {
+        color: #f59e0b;
+    }
+    
+    /* Active Item - Full Pill Style */
+    .nav-item-active {
+        background: linear-gradient(90deg, #ef9420, #f5a93c) !important;
+        color: white !important;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(239, 148, 32, 0.3);
+    }
+    
+    .nav-item-active .mud-icon-root {
+        color: white !important;
+    }
+    
+    /* Footer Section */
+    .nav-footer {
+        margin-top: auto;
+        padding: 0.75rem;
+        border-top: 1px solid #f1f5f9;
+        background: #fafafa;
+    }
+    
+    .nav-footer-link {
         border-radius: 8px;
-        margin: 2px 0;
-        padding: 8px 12px;
-        font-size: 13px;
-        transition: all 0.15s ease;
+        margin: 3px 0;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
-        gap: 8px;
+        cursor: pointer;
+        color: #4b5563;
     }
     
-    .nav-pill-small:hover {
-        background-color: #fee2e2;
+    .nav-footer-link .mud-icon-root {
+        font-size: 20px;
+        margin-right: 0.5rem;
+        color: #6b7280;
+    }
+    
+    .nav-footer-link:hover {
+        background: #f3f4f6;
         transform: translateX(2px);
     }
     
-    .nav-pill-small .mud-nav-link-icon-default {
-        font-size: 18px;
-        color: #6b7280;
+    .logout-link {
+        color: #ef4444 !important;
+        font-weight: 500;
+    }
+    
+    .logout-link:hover {
+        background: #fee2e2 !important;
+    }
+    
+    .logout-link .mud-icon-root {
+        color: #ef4444 !important;
     }
 </style>
