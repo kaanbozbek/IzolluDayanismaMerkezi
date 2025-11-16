@@ -1,0 +1,150 @@
+@page "/login"
+@layout EmptyLayout
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Giriş - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 100vh;">
+    <MudPaper Elevation="24" Class="pa-10 login-card" Style="width: 100%; max-width: 420px; border-radius: 18px; background-color: #fffbf3; box-shadow: 0 18px 45px rgba(0,0,0,0.35); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+        <div class="d-flex flex-column align-center mb-6">
+            <div style="background-color: #f59e0b; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <MudIcon Icon="@Icons.Material.Filled.AccountCircle" 
+                         Size="Size.Large" 
+                         Style="font-size: 64px; color: white;" />
+            </div>
+            <MudText Typo="Typo.h4" Align="Align.Center" Style="font-weight: 700; color: #f59e0b; font-size: 1.7rem;">
+                İzollu Dayanışma Merkezi
+            </MudText>
+            <MudText Typo="Typo.body2" Align="Align.Center" Style="color: #6b7280; font-size: 0.85rem;" Class="mt-2">
+                Yönetim Paneline Hoş Geldiniz
+            </MudText>
+        </div>
+
+        @if (_showError)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="@(() => _showError = false)">
+                Kullanıcı adı veya şifre hatalı!
+            </MudAlert>
+        }
+
+        <MudForm @ref="_form" @bind-IsValid="@_isValid">
+            <MudTextField @bind-Value="_username"
+                          Label="Kullanıcı Adı"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Required="true"
+                          RequiredError="Kullanıcı adı gerekli"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Person"
+                          AdornmentColor="Color.Primary"
+                          Class="mb-5"
+                          Style="margin-bottom: 8px;"
+                          OnKeyDown="@HandleKeyDown" />
+
+            <MudTextField @bind-Value="_password"
+                          Label="Şifre"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          InputType="@_passwordInput"
+                          Required="true"
+                          RequiredError="Şifre gerekli"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@(() => _showPassword = !_showPassword)"
+                          AdornmentColor="Color.Primary"
+                          Class="mb-5"
+                          Style="margin-bottom: 8px;"
+                          OnKeyDown="@HandleKeyDown" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Size="Size.Large"
+                       OnClick="@HandleLogin"
+                       Disabled="@_isLoading"
+                       Class="login-button"
+                       Style="height: 56px; font-size: 16px; font-weight: 600; border-radius: 10px; background-color: #f59e0b; color: white; margin-top: 12px; transition: all 0.2s ease;">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Giriş Yapılıyor...</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+                    <span>Giriş Yap</span>
+                }
+            </MudButton>
+        </MudForm>
+
+        <MudDivider Class="my-5" Style="opacity: 0.3;" />
+
+        <MudText Typo="Typo.body2" Align="Align.Center" Style="color: #9ca3af; font-size: 0.75rem;">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" Style="font-size: 14px;" />
+            Giriş yaparak sistem politikalarını kabul etmiş olursunuz
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm _form = null!;
+    private bool _isValid;
+    private bool _showPassword;
+    private bool _showError;
+    private bool _isLoading;
+    private string _username = string.Empty;
+    private string _password = string.Empty;
+
+    private InputType _passwordInput => _showPassword ? InputType.Text : InputType.Password;
+
+    protected override void OnInitialized()
+    {
+        // Eğer zaten giriş yapmışsa ana sayfaya yönlendir
+        if (AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        await _form.Validate();
+
+        if (!_isValid)
+        {
+            return;
+        }
+
+        _isLoading = true;
+        _showError = false;
+        StateHasChanged();
+
+        // Gerçek dünyada async bir işlem simüle et
+        await Task.Delay(500);
+
+        if (AuthService.Login(_username, _password))
+        {
+            Snackbar.Add("Giriş başarılı! Yönlendiriliyorsunuz...", Severity.Success);
+            await Task.Delay(500);
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            _showError = true;
+            Snackbar.Add("Giriş başarısız!", Severity.Error);
+        }
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_isLoading)
+        {
+            await HandleLogin();
+        }
+    }
+}

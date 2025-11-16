@@ -1,7 +1,9 @@
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        <AuthorizedRouteView RouteData="@routeData" />
     </Found>
     <NotFound>
         <PageTitle>Bulunamadı</PageTitle>
@@ -10,3 +12,16 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    private void CheckAuth(RouteData routeData)
+    {
+        var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        
+        // Login sayfasında değilse ve giriş yapmamışsa login'e yönlendir
+        if (!currentPath.StartsWith("login") && !AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+        }
+    }
+}

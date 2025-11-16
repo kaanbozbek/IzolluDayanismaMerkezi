@@ -1,11 +1,19 @@
 ﻿@page "/"
 @inject NavigationManager NavigationManager
+@inject AuthService AuthService
 
 <PageTitle>Dashboard - İzollu Dayanışma Merkezi</PageTitle>
 
 @code {
     protected override void OnInitialized()
     {
-        NavigationManager.NavigateTo("/reports", true);
+        if (!AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login", true);
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/reports", true);
+        }
     }
 }

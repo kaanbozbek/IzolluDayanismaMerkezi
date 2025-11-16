@@ -50,6 +50,7 @@ builder.Services.AddScoped<TermReportService>();
 
 // Add Singleton Services
 builder.Services.AddSingleton<TermChangeNotifier>(); // Cross-component event notifications
+builder.Services.AddSingleton<AuthService>(); // Authentication service
 
 var app = builder.Build();
 

@@ -5,6 +5,7 @@
 <MudSnackbarProvider />
 
 @inject NavigationManager Navigation
+@inject AuthService AuthService
 
 <MudLayout>
     <MudAppBar Elevation="1">
@@ -21,6 +22,10 @@
                 <MudMenuItem Href="/meetings">Toplantılar</MudMenuItem>
                 <MudMenuItem Href="/maintenance">Transkript Kontrolü</MudMenuItem>
             </MudMenu>
+            <MudIconButton Icon="@Icons.Material.Filled.Logout" 
+                           Color="Color.Inherit" 
+                           OnClick="@HandleLogout" 
+                           Title="Çıkış Yap" />
         </MudStack>
         <MudText Typo="Typo.body2" Class="ml-4">@DateTime.Now.ToString("dd MMMM yyyy")</MudText>
     </MudAppBar>
@@ -44,6 +49,21 @@
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private void HandleLogout()
+    {
+        AuthService.Logout();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    protected override void OnInitialized()
+    {
+        // Eğer login sayfasında değilse ve giriş yapmamışsa login'e yönlendir
+        if (!Navigation.Uri.Contains("/login") && !AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
     }
 
     private MudTheme _theme = new MudTheme()

@@ -20,3 +20,29 @@
 .mud-table-cell {
     padding: 8px !important;
 }
+
+/* Login Page Styles */
+.login-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.login-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+.login-button:hover:not(:disabled) {
+    background-color: #ea580c !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* Input Focus Effects */
+.mud-input-outlined:focus-within .mud-input-outlined-border {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2) !important;
+}
+
+.mud-input-outlined:focus-within .mud-input-adornment {
+    color: #f59e0b !important;
+}

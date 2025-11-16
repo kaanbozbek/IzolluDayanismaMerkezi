@@ -1,0 +1,94 @@
+@inherits LayoutComponentBase
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (AuthService.IsAuthenticated)
+{
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudText Typo="Typo.h5" Class="ml-2">İzollu Dayanışma Merkezi</MudText>
+            <MudSpacer />
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="@NavigateToSettings">
+                    Ayarlar
+                </MudButton>
+                <MudMenu Icon="@Icons.Material.Filled.ArrowDropDown" Color="Color.Inherit" Dense="true">
+                    <MudMenuItem Href="/settings">Genel Ayarlar</MudMenuItem>
+                    <MudMenuItem Href="/periods">Dönemler</MudMenuItem>
+                    <MudMenuItem Href="/meetings">Toplantılar</MudMenuItem>
+                    <MudMenuItem Href="/maintenance">Transkript Kontrolü</MudMenuItem>
+                </MudMenu>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" 
+                               Color="Color.Inherit" 
+                               OnClick="@HandleLogout" 
+                               Title="Çıkış Yap" />
+            </MudStack>
+            <MudText Typo="Typo.body2" Class="ml-4">@DateTime.Now.ToString("dd MMMM yyyy")</MudText>
+        </MudAppBar>
+        <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+            <NavMenu />
+            <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(calc(-50% - 1cm)); text-align: center;">
+                <img src="/izollu-vakfi.png" alt="Logo" style="max-width: 140%; height: auto;" />
+            </div>
+        </MudDrawer>
+        <MudMainContent>
+            <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+                @Body
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
+else
+{
+    @Body
+}
+
+@code {
+    private bool _drawerOpen = true;
+    
+    protected override void OnInitialized()
+    {
+        // Eğer login sayfasında değilse ve giriş yapmamışsa login'e yönlendir
+        var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (!currentPath.StartsWith("login") && !AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+        }
+    }
+
+    private void NavigateToSettings() => Navigation.NavigateTo("/settings");
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void HandleLogout()
+    {
+        AuthService.Logout();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#f07d00",
+            PrimaryDarken = "#d46d00",
+            PrimaryLighten = "#ff9933",
+            Secondary = "#1E88E5",
+            AppbarBackground = "#f07d00",
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#f07d00",
+            PrimaryDarken = "#d46d00",
+            PrimaryLighten = "#ff9933",
+        }
+    };
+}
