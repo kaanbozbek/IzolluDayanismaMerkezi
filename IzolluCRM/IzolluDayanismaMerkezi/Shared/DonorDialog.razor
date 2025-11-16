@@ -1,5 +1,6 @@
 @inject DonorService DonorService
 @inject SettingsService SettingsService
+@inject IJSRuntime JS
 
 <MudDialog>
     <DialogContent>
@@ -22,8 +23,7 @@
                     else if (_sectors.Any())
                     {
                         <label class="form-label">Sektör</label>
-                        <select class="form-select" @bind="_selectedSektor">
-                            <option value="">Seçiniz</option>
+                        <select class="selectpicker form-control" data-live-search="true" title="Seçiniz" @bind="_selectedSektor">
                             @foreach (var sector in _sectors)
                             {
                                 <option value="@sector">@sector</option>
@@ -165,4 +165,23 @@
     }
 
     private void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("eval", "$('.selectpicker').selectpicker();");
+            }
+            catch (JSDisconnectedException)
+            {
+                // Component disposed, ignore
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing selectpicker: {ex.Message}");
+            }
+        }
+    }
 }

@@ -2,6 +2,7 @@
 @inject ActivityLogService ActivityLogService
 @inject MemberScholarshipCommitmentService CommitmentService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <MudDialog>
     <DialogContent>
@@ -360,5 +361,24 @@
         _member.IsIzollulu = value;
         _member.Koy = null;
         StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("eval", "$('.selectpicker').selectpicker();");
+            }
+            catch (JSDisconnectedException)
+            {
+                // Component disposed, ignore
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing selectpicker: {ex.Message}");
+            }
+        }
     }
 }

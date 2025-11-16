@@ -3,9 +3,8 @@
 
 <PageTitle>Aktivite Logları - İzollu Dayanışma Merkezi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Aktivite Logları</MudText>
-
-<MudCard Class="mb-4">
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudCard Class="mb-4">
     <MudCardContent>
         <MudGrid>
             <MudItem xs="12" md="4">
@@ -50,6 +49,7 @@
         <MudTd DataLabel="Detay">@context.Detay</MudTd>
     </RowTemplate>
 </MudTable>
+</MudContainer>
 
 @code {
     private List<ActivityLog> _logs = new();
