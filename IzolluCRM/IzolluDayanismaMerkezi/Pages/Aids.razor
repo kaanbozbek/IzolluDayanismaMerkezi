@@ -152,14 +152,7 @@
             { x => x.Aid, new Aid() }
         };
 
-        var options = new DialogOptions 
-        { 
-            MaxWidth = MaxWidth.Large, 
-            FullWidth = true,
-            CloseOnEscapeKey = true 
-        };
-
-        var dialog = await DialogService.ShowAsync<AidDialog>("Yeni Yardım Ekle", parameters, options);
+        var dialog = await DialogService.ShowAsync<AidDialog>("Yeni Yardım Ekle", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)
@@ -177,14 +170,7 @@
             { x => x.IsEdit, true }
         };
 
-        var options = new DialogOptions 
-        { 
-            MaxWidth = MaxWidth.Large, 
-            FullWidth = true,
-            CloseOnEscapeKey = true 
-        };
-
-        var dialog = await DialogService.ShowAsync<AidDialog>("Yardım Düzenle", parameters, options);
+        var dialog = await DialogService.ShowAsync<AidDialog>("Yardım Düzenle", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)

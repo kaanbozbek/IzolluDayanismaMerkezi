@@ -1,4 +1,4 @@
-@page "/excel-import"
+﻿@page "/excel-import"
 @inject ExcelService ExcelService
 @inject StudentService StudentService
 @inject MemberService MemberService
@@ -8,133 +8,129 @@
 
 <PageTitle>Excel ile Veri Yükle - İzollu Dayanışma Merkezi</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
-        <MudTabPanel Text="Öğrenciler" Icon="@Icons.Material.Filled.School">
-            <MudCard Class="mt-4">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-4">Öğrenci Verilerini Yükle</MudText>
-                    
-                    <MudGrid Spacing="3">
-                        <MudItem xs="12" md="6">
-                            <MudButton Variant="Variant.Outlined" 
-                                       Color="Color.Info" 
-                                       StartIcon="@Icons.Material.Filled.Download" 
-                                       OnClick="DownloadStudentTemplate" 
-                                       FullWidth="true"
-                                       Size="Size.Large">
-                                Örnek Excel'i İndir
+<MudText Typo="Typo.h5" Class="mb-4"><b>Excel ile Veri Yükle</b></MudText>
+
+<MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" Outlined="true" PanelClass="pa-4 border-x border-b rounded-b-lg">
+    <MudTabPanel Text="Öğrenciler" Icon="@Icons.Material.Filled.School">
+        <MudPaper Elevation="0" Class="pa-4 border rounded-lg">
+            <MudText Typo="Typo.h6" Class="mb-4">Öğrenci Verilerini Yükle</MudText>
+            
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Info" 
+                               StartIcon="@Icons.Material.Filled.Download" 
+                               OnClick="DownloadStudentTemplate" 
+                               FullWidth="true"
+                               Size="Size.Large">
+                        Örnek Excel'i İndir
+                    </MudButton>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Success" 
+                               StartIcon="@Icons.Material.Filled.Download" 
+                               OnClick="ExportStudents" 
+                               FullWidth="true"
+                               Size="Size.Large">
+                        Öğrencileri Dışa Aktar
+                    </MudButton>
+                </MudItem>
+                
+                <MudItem xs="12" Class="mt-4">
+                    <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="UploadStudentFile" MaximumFileCount="1">
+                        <ActivatorContent>
+                            <MudButton HtmlTag="label"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       Size="Size.Large"
+                                       FullWidth="true">
+                                Excel Dosyası Yükle
                             </MudButton>
-                        </MudItem>
-                        
-                        <MudItem xs="12" md="6">
-                            <MudButton Variant="Variant.Outlined" 
-                                       Color="Color.Success" 
-                                       StartIcon="@Icons.Material.Filled.Download" 
-                                       OnClick="ExportStudents" 
-                                       FullWidth="true"
-                                       Size="Size.Large">
-                                Öğrencileri Dışa Aktar
-                            </MudButton>
-                        </MudItem>
-                        
-                        <MudItem xs="12" Class="mt-4">
-                            <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="UploadStudentFile" MaximumFileCount="1">
-                                <ActivatorContent>
-                                    <MudButton HtmlTag="label"
-                                               Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               StartIcon="@Icons.Material.Filled.CloudUpload"
-                                               Size="Size.Large"
-                                               FullWidth="true">
-                                        Excel Dosyası Yükle
-                                    </MudButton>
-                                </ActivatorContent>
-                            </MudFileUpload>
-                        </MudItem>
-                    
-                    @if (_uploadingStudents)
-                    {
-                        <MudItem xs="12">
-                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
-                            <MudText Typo="Typo.body2" Class="mt-2">Dosya işleniyor...</MudText>
-                        </MudItem>
-                    }
-                    
-                    @if (!string.IsNullOrEmpty(_studentUploadResult))
-                    {
-                        <MudItem xs="12">
-                            <MudAlert Severity="@_studentUploadSeverity">@_studentUploadResult</MudAlert>
-                        </MudItem>
-                    }
-                </MudGrid>
-            </MudCardContent>
-        </MudCard>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                </MudItem>
+            
+            @if (_uploadingStudents)
+            {
+                <MudItem xs="12">
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                    <MudText Typo="Typo.body2" Class="mt-2">Dosya işleniyor...</MudText>
+                </MudItem>
+            }
+            
+            @if (!string.IsNullOrEmpty(_studentUploadResult))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="@_studentUploadSeverity" Variant="Variant.Outlined">@_studentUploadResult</MudAlert>
+                </MudItem>
+            }
+            </MudGrid>
+        </MudPaper>
     </MudTabPanel>
 
-        <MudTabPanel Text="Üyeler" Icon="@Icons.Material.Filled.People">
-            <MudCard Class="mt-4">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Class="mb-4">Üye Verilerini Yükle</MudText>
-                    
-                    <MudGrid Spacing="3">
-                        <MudItem xs="12" md="6">
-                            <MudButton Variant="Variant.Outlined" 
-                                       Color="Color.Info" 
-                                       StartIcon="@Icons.Material.Filled.Download" 
-                                       OnClick="DownloadMemberTemplate" 
-                                       FullWidth="true"
-                                       Size="Size.Large">
-                                Örnek Excel'i İndir
+    <MudTabPanel Text="Üyeler" Icon="@Icons.Material.Filled.People">
+        <MudPaper Elevation="0" Class="pa-4 border rounded-lg">
+            <MudText Typo="Typo.h6" Class="mb-4">Üye Verilerini Yükle</MudText>
+            
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Info" 
+                               StartIcon="@Icons.Material.Filled.Download" 
+                               OnClick="DownloadMemberTemplate" 
+                               FullWidth="true"
+                               Size="Size.Large">
+                        Örnek Excel'i İndir
+                    </MudButton>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Success" 
+                               StartIcon="@Icons.Material.Filled.Download" 
+                               OnClick="ExportMembers" 
+                               FullWidth="true"
+                               Size="Size.Large">
+                        Üyeleri Dışa Aktar
+                    </MudButton>
+                </MudItem>
+                
+                <MudItem xs="12" Class="mt-4">
+                    <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="UploadMemberFile" MaximumFileCount="1">
+                        <ActivatorContent>
+                            <MudButton HtmlTag="label"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       Size="Size.Large"
+                                       FullWidth="true">
+                                Excel Dosyası Yükle
                             </MudButton>
-                        </MudItem>
-                        
-                        <MudItem xs="12" md="6">
-                            <MudButton Variant="Variant.Outlined" 
-                                       Color="Color.Success" 
-                                       StartIcon="@Icons.Material.Filled.Download" 
-                                       OnClick="ExportMembers" 
-                                       FullWidth="true"
-                                       Size="Size.Large">
-                                Üyeleri Dışa Aktar
-                            </MudButton>
-                        </MudItem>
-                        
-                        <MudItem xs="12" Class="mt-4">
-                            <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="UploadMemberFile" MaximumFileCount="1">
-                                <ActivatorContent>
-                                    <MudButton HtmlTag="label"
-                                               Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               StartIcon="@Icons.Material.Filled.CloudUpload"
-                                               Size="Size.Large"
-                                               FullWidth="true">
-                                        Excel Dosyası Yükle
-                                    </MudButton>
-                                </ActivatorContent>
-                            </MudFileUpload>
-                        </MudItem>
-                    
-                    @if (_uploadingMembers)
-                    {
-                        <MudItem xs="12">
-                            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
-                            <MudText Typo="Typo.body2" Class="mt-2">Dosya işleniyor...</MudText>
-                        </MudItem>
-                    }
-                    
-                    @if (!string.IsNullOrEmpty(_memberUploadResult))
-                    {
-                        <MudItem xs="12">
-                            <MudAlert Severity="@_memberUploadSeverity">@_memberUploadResult</MudAlert>
-                        </MudItem>
-                    }
-                    </MudGrid>
-                </MudCardContent>
-            </MudCard>
-        </MudTabPanel>
-    </MudTabs>
-</MudContainer>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                </MudItem>
+            
+            @if (_uploadingMembers)
+            {
+                <MudItem xs="12">
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                    <MudText Typo="Typo.body2" Class="mt-2">Dosya işleniyor...</MudText>
+                </MudItem>
+            }
+            
+            @if (!string.IsNullOrEmpty(_memberUploadResult))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="@_memberUploadSeverity" Variant="Variant.Outlined">@_memberUploadResult</MudAlert>
+                </MudItem>
+            }
+            </MudGrid>
+        </MudPaper>
+    </MudTabPanel>
+</MudTabs>
 
 @code {
     private bool _uploadingStudents = false;

@@ -1,4 +1,4 @@
-@page "/clear-data"
+﻿@page "/clear-data"
 @using Microsoft.EntityFrameworkCore
 @using IzolluVakfi.Data
 @inject ApplicationDbContext DbContext
@@ -8,71 +8,69 @@
 
 <PageTitle>Veritabanı Temizleme</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudPaper Class="pa-6">
-        <MudText Typo="Typo.h4" Class="mb-4">⚠️ Veritabanı Temizleme</MudText>
-        
-        <MudAlert Severity="Severity.Error" Class="mb-4">
-            <MudText><strong>DİKKAT:</strong> Bu işlem geri alınamaz!</MudText>
-            <MudText>Tüm öğrenciler, mezun öğrenciler ve ilişkili tüm kayıtlar silinecektir.</MudText>
-        </MudAlert>
+<MudText Typo="Typo.h5" Class="mb-4"><b>Veritabanı Temizleme</b></MudText>
 
-        <MudStack Spacing="3">
-            <MudText Typo="Typo.h6">Silinecek Kayıtlar:</MudText>
-            <MudList T="string">
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Person">
-                    Tüm Öğrenciler (@_studentCount kayıt)
-                </MudListItem>
-                <MudListItem T="string" Icon="@Icons.Material.Filled.School">
-                    Tüm Mezun Öğrenciler (@_graduateCount kayıt)
-                </MudListItem>
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Description">
-                    Tüm Transkript Kayıtları (@_transcriptCount kayıt)
-                </MudListItem>
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Event">
-                    Tüm Toplantı Katılım Kayıtları (@_attendanceCount kayıt)
-                </MudListItem>
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Payment">
-                    Tüm Burs Ödeme Kayıtları (@_paymentCount kayıt)
-                </MudListItem>
-            </MudList>
+<MudPaper Elevation="0" Outlined="true" Bordered="true" Rounded="true" Class="pa-6">
+    <MudAlert Severity="Severity.Error" Class="mb-4">
+        <MudText><strong>DİKKAT:</strong> Bu işlem geri alınamaz!</MudText>
+        <MudText>Tüm öğrenciler, mezun öğrenciler ve ilişkili tüm kayıtlar silinecektir.</MudText>
+    </MudAlert>
 
-            @if (_isClearing)
-            {
-                <MudProgressLinear Color="Color.Error" Indeterminate="true" Class="my-4" />
-                <MudText Align="Align.Center">Veriler siliniyor, lütfen bekleyin...</MudText>
-            }
-            else if (_isCleared)
-            {
-                <MudAlert Severity="Severity.Success" Class="my-4">
-                    ✅ Tüm öğrenci kayıtları başarıyla silindi!
-                </MudAlert>
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           OnClick="@(() => Navigation.NavigateTo("/students"))"
-                           FullWidth="true">
-                    Öğrenciler Sayfasına Git
-                </MudButton>
-            }
-            else
-            {
-                <MudTextField @bind-Value="_confirmText" 
-                              Label="Onaylamak için 'SİL' yazın" 
-                              Variant="Variant.Outlined"
-                              Class="mt-4" />
-                
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Error" 
-                           OnClick="ClearAllStudents"
-                           Disabled="@(_confirmText != "SİL")"
-                           FullWidth="true"
-                           StartIcon="@Icons.Material.Filled.DeleteForever">
-                    Tüm Öğrencileri Sil
-                </MudButton>
-            }
-        </MudStack>
-    </MudPaper>
-</MudContainer>
+    <MudStack Spacing="3">
+        <MudText Typo="Typo.h6">Silinecek Kayıtlar:</MudText>
+        <MudList T="string">
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Person">
+                Tüm Öğrenciler (@_studentCount kayıt)
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.School">
+                Tüm Mezun Öğrenciler (@_graduateCount kayıt)
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Description">
+                Tüm Transkript Kayıtları (@_transcriptCount kayıt)
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Event">
+                Tüm Toplantı Katılım Kayıtları (@_attendanceCount kayıt)
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Payment">
+                Tüm Burs Ödeme Kayıtları (@_paymentCount kayıt)
+            </MudListItem>
+        </MudList>
+
+        @if (_isClearing)
+        {
+            <MudProgressLinear Color="Color.Error" Indeterminate="true" Class="my-4" />
+            <MudText Align="Align.Center">Veriler siliniyor, lütfen bekleyin...</MudText>
+        }
+        else if (_isCleared)
+        {
+            <MudAlert Severity="Severity.Success" Class="my-4">
+                 Tüm öğrenci kayıtları başarıyla silindi!
+            </MudAlert>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="@(() => Navigation.NavigateTo("/students"))"
+                       FullWidth="true">
+                Öğrenciler Sayfasına Git
+            </MudButton>
+        }
+        else
+        {
+            <MudTextField @bind-Value="_confirmText" 
+                          Label="Onaylamak için 'SİL' yazın" 
+                          Variant="Variant.Outlined"
+                          Class="mt-4" />
+            
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Error" 
+                       OnClick="ClearAllStudents"
+                       Disabled="@(_confirmText != "SİL")"
+                       FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.DeleteForever">
+                Tüm Öğrencileri Sil
+            </MudButton>
+        }
+    </MudStack>
+</MudPaper>
 
 @code {
     private int _studentCount = 0;
