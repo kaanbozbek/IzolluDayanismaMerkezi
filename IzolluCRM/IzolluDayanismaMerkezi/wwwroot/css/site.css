@@ -21,9 +21,68 @@
     padding: 8px !important;
 }
 
+/* Ana layout yapısı */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar - ekran yüksekliği kadar */
+.app-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-right: 1px solid #eee;
+    min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* Sağ taraf içerik */
+.app-main {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.mud-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+.mud-drawer {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    width: 200px !important;
+    overflow: hidden !important;
+}
+
+.mud-drawer-open {
+    width: 200px !important;
+}
+
+.mud-drawer-closed {
+    width: 0 !important;
+}
+
+/* Responsive - mobile */
+@media (max-width: 960px) {
+    .app-sidebar {
+        width: 0;
+    }
+}
+
 /* Login Page Styles */
 .login-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    background-color: white !important;
 }
 
 .login-card:hover {
@@ -117,6 +176,38 @@ table thead,
 
 .nav-item-active {
     box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4) !important;
+}
+
+/* Compact sidebar tweaks */
+.sidebar {
+    padding-top: 10px !important;
+}
+
+.sidebar .logo-container {
+    margin-bottom: 10px !important;
+}
+
+.sidebar .menu-title {
+    margin-top: 8px !important;
+    margin-bottom: 4px !important;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    opacity: 0.75;
+}
+
+.sidebar .menu-item {
+    padding: 6px 10px !important;
+    margin-bottom: 2px !important;
+}
+
+.sidebar .menu-item .mud-icon-root {
+    margin-right: 6px !important;
+}
+
+.sidebar .logout-section {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
 
 /* List Page Layout Styles */

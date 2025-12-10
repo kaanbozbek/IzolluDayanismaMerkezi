@@ -188,6 +188,9 @@
             // Load default scholarship amount from settings
             var defaultAmount = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
             _student.AylikTutar = defaultAmount;
+            
+            // Auto-generate sicil number for new student
+            _student.SicilNumarasi = await StudentService.GetNextSicilNumarasiAsync();
         }
     }
 

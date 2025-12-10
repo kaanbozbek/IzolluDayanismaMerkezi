@@ -309,6 +309,24 @@
             </MudCardContent>
         </MudCard>
     </MudTabPanel>
+
+    <MudTabPanel Text="Nasıl Kullanılır?" Icon="@Icons.Material.Filled.Help">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h5">
+                        <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="mr-2" />
+                        Kullanım Kılavuzu
+                    </MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudPaper Class="pa-4" Style="max-height: 70vh; overflow-y: auto;">
+                    @((MarkupString)_userGuideHtml)
+                </MudPaper>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
 </MudTabs>
 
 @code {
@@ -321,10 +339,143 @@
     private bool _processingMeeting;
     private List<Student> _transcriptCutStudents = new();
     private List<Student> _meetingCutStudents = new();
+    private string _userGuideHtml = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadSettings();
+        await LoadUserGuide();
+    }
+
+    private async Task LoadUserGuide()
+    {
+        try
+        {
+            var markdownPath = "KULLANICI_DOKUMANI.md";
+            var markdownContent = await System.IO.File.ReadAllTextAsync(markdownPath);
+            _userGuideHtml = ConvertMarkdownToHtml(markdownContent);
+        }
+        catch (Exception ex)
+        {
+            _userGuideHtml = $"<div class='mud-alert mud-alert-error'><p>Kullanım kılavuzu yüklenemedi: {ex.Message}</p></div>";
+        }
+    }
+
+    private string ConvertMarkdownToHtml(string markdown)
+    {
+        var html = new System.Text.StringBuilder();
+        var lines = markdown.Split('\n');
+        bool inCodeBlock = false;
+        bool inTable = false;
+        
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.Trim();
+            
+            // Code blocks
+            if (trimmedLine.StartsWith("```"))
+            {
+                inCodeBlock = !inCodeBlock;
+                html.Append(inCodeBlock ? "<pre><code>" : "</code></pre>");
+                continue;
+            }
+            
+            if (inCodeBlock)
+            {
+                html.AppendLine(System.Web.HttpUtility.HtmlEncode(line));
+                continue;
+            }
+            
+            // Headers
+            if (trimmedLine.StartsWith("### "))
+            {
+                html.AppendLine($"<h3 style='color: #f59e0b; margin-top: 1.5rem;'>{trimmedLine.Substring(4)}</h3>");
+            }
+            else if (trimmedLine.StartsWith("## "))
+            {
+                html.AppendLine($"<h2 style='color: #f59e0b; margin-top: 2rem; border-bottom: 2px solid #f59e0b; padding-bottom: 0.5rem;'>{trimmedLine.Substring(3)}</h2>");
+            }
+            else if (trimmedLine.StartsWith("# "))
+            {
+                html.AppendLine($"<h1 style='color: #f59e0b; text-align: center; margin-bottom: 2rem;'>{trimmedLine.Substring(2)}</h1>");
+            }
+            // Lists
+            else if (trimmedLine.StartsWith("- ") || trimmedLine.StartsWith("* "))
+            {
+                html.AppendLine($"<li style='margin-left: 2rem;'>{ProcessInlineMarkdown(trimmedLine.Substring(2))}</li>");
+            }
+            // Table rows
+            else if (trimmedLine.StartsWith("|") && trimmedLine.EndsWith("|"))
+            {
+                if (!inTable)
+                {
+                    html.AppendLine("<table class='mud-table' style='width: 100%; border-collapse: collapse; margin: 1rem 0;'>");
+                    inTable = true;
+                }
+                
+                var cells = trimmedLine.Split('|').Where(c => !string.IsNullOrWhiteSpace(c)).ToArray();
+                
+                // Skip separator rows
+                if (cells.All(c => c.Trim().All(ch => ch == '-' || ch == ' ' || ch == ':')))
+                    continue;
+                
+                html.Append("<tr>");
+                foreach (var cell in cells)
+                {
+                    html.Append($"<td style='border: 1px solid #ddd; padding: 0.5rem;'>{ProcessInlineMarkdown(cell.Trim())}</td>");
+                }
+                html.AppendLine("</tr>");
+            }
+            else if (inTable && !trimmedLine.StartsWith("|"))
+            {
+                html.AppendLine("</table>");
+                inTable = false;
+            }
+            // Horizontal rule
+            else if (trimmedLine == "---")
+            {
+                html.AppendLine("<hr style='margin: 2rem 0; border: 1px solid #ddd;' />");
+            }
+            // Blockquotes
+            else if (trimmedLine.StartsWith("> "))
+            {
+                var type = "info";
+                var icon = "💡";
+                if (trimmedLine.Contains("⚠️")) { type = "warning"; icon = "⚠️"; }
+                else if (trimmedLine.Contains("❌")) { type = "error"; icon = "❌"; }
+                else if (trimmedLine.Contains("✅")) { type = "success"; icon = "✅"; }
+                
+                html.AppendLine($"<div class='mud-alert mud-alert-{type}' style='margin: 1rem 0; padding: 1rem; border-radius: 4px;'><strong>{icon}</strong> {ProcessInlineMarkdown(trimmedLine.Substring(2))}</div>");
+            }
+            // Regular paragraphs
+            else if (!string.IsNullOrWhiteSpace(trimmedLine))
+            {
+                html.AppendLine($"<p style='margin: 0.5rem 0;'>{ProcessInlineMarkdown(trimmedLine)}</p>");
+            }
+            else
+            {
+                html.AppendLine("<br />");
+            }
+        }
+        
+        if (inTable)
+            html.AppendLine("</table>");
+        
+        return html.ToString();
+    }
+
+    private string ProcessInlineMarkdown(string text)
+    {
+        // Bold
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+        
+        // Inline code
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"`(.+?)`", "<code style='background: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px;'>$1</code>");
+        
+        // Links
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[(.+?)\]\((.+?)\)", "<a href='$2' target='_blank' style='color: #f59e0b;'>$1</a>");
+        
+        return text;
     }
 
     private async Task LoadSettings()

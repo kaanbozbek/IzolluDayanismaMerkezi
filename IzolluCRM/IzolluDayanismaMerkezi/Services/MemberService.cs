@@ -44,9 +44,39 @@ public class MemberService
         return await _context.Members.FindAsync(id);
     }
 
+    public async Task<string> GetNextSicilNumarasiAsync()
+    {
+        const int startingSicil = 10001;
+        
+        var lastMember = await _context.Members
+            .Where(m => m.SicilNumarasi != null && m.SicilNumarasi.StartsWith("1"))
+            .OrderByDescending(m => m.SicilNumarasi)
+            .FirstOrDefaultAsync();
+        
+        if (lastMember == null || string.IsNullOrEmpty(lastMember.SicilNumarasi))
+        {
+            return startingSicil.ToString();
+        }
+        
+        if (int.TryParse(lastMember.SicilNumarasi, out int lastSicil))
+        {
+            return (lastSicil + 1).ToString();
+        }
+        
+        return startingSicil.ToString();
+    }
+
     public async Task<Member> CreateAsync(Member member)
     {
-        member.SicilNumarasi = NormalizeSicil(member.SicilNumarasi);
+        // Auto-generate sicil if not provided
+        if (string.IsNullOrWhiteSpace(member.SicilNumarasi))
+        {
+            member.SicilNumarasi = await GetNextSicilNumarasiAsync();
+        }
+        else
+        {
+            member.SicilNumarasi = NormalizeSicil(member.SicilNumarasi);
+        }
 
         if (!string.IsNullOrEmpty(member.SicilNumarasi))
         {

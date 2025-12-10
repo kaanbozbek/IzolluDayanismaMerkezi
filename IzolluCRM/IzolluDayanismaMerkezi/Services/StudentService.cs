@@ -59,9 +59,39 @@ public class StudentService
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
+    public async Task<string> GetNextSicilNumarasiAsync()
+    {
+        const int startingSicil = 20001;
+        
+        var lastStudent = await _context.Students
+            .Where(s => s.SicilNumarasi != null && s.SicilNumarasi.StartsWith("2"))
+            .OrderByDescending(s => s.SicilNumarasi)
+            .FirstOrDefaultAsync();
+        
+        if (lastStudent == null || string.IsNullOrEmpty(lastStudent.SicilNumarasi))
+        {
+            return startingSicil.ToString();
+        }
+        
+        if (int.TryParse(lastStudent.SicilNumarasi, out int lastSicil))
+        {
+            return (lastSicil + 1).ToString();
+        }
+        
+        return startingSicil.ToString();
+    }
+
     public async Task<Student> CreateAsync(Student student)
     {
-        student.SicilNumarasi = NormalizeSicil(student.SicilNumarasi);
+        // Auto-generate sicil if not provided
+        if (string.IsNullOrWhiteSpace(student.SicilNumarasi))
+        {
+            student.SicilNumarasi = await GetNextSicilNumarasiAsync();
+        }
+        else
+        {
+            student.SicilNumarasi = NormalizeSicil(student.SicilNumarasi);
+        }
 
         if (!string.IsNullOrEmpty(student.SicilNumarasi))
         {

@@ -282,6 +282,8 @@
         else
         {
             _member.AktifMi = true;
+            // Auto-generate sicil number for new member
+            _member.SicilNumarasi = await MemberService.GetNextSicilNumarasiAsync();
         }
     }
 

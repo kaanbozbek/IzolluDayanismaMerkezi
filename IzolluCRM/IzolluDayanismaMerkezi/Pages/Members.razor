@@ -380,8 +380,8 @@
             </MudPaper>
         </MudTabPanel>
 
-        @* Tab 3: Mütevelli Heyeti *@
-        <MudTabPanel Text="Mütevelli Heyeti" Icon="@Icons.Material.Filled.AdminPanelSettings">
+        @* Tab 3: Kurucular *@
+        <MudTabPanel Text="Kurucular" Icon="@Icons.Material.Filled.AdminPanelSettings">
             <MudPaper Elevation="2" Class="pa-4 mt-4">
                 <MudTable Items="@GetFilteredMembersForMutevelliTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
                     <HeaderContent>
@@ -633,7 +633,7 @@
             <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Rol</strong></MudText>
             <MudRadioGroup T="RoleFilter" @bind-Value="_filters.Role">
                 <MudRadio T="RoleFilter" Value="RoleFilter.All" Color="Color.Primary">Tümü</MudRadio>
-                <MudRadio T="RoleFilter" Value="RoleFilter.Mutevelli" Color="Color.Primary">Mütevelli Heyeti</MudRadio>
+                <MudRadio T="RoleFilter" Value="RoleFilter.Mutevelli" Color="Color.Primary">Kurucular</MudRadio>
                 <MudRadio T="RoleFilter" Value="RoleFilter.YonetimKurulu" Color="Color.Secondary">Yönetim Kurulu</MudRadio>
             </MudRadioGroup>
         </MudPaper>
@@ -1217,7 +1217,7 @@
     {
         return _filters.Role switch
         {
-            RoleFilter.Mutevelli => "Mütevelli Heyeti",
+            RoleFilter.Mutevelli => "Kurucular",
             RoleFilter.YonetimKurulu => "Yönetim Kurulu",
             _ => "Tümü"
         };
@@ -1380,7 +1380,7 @@
                     { "Köy", member.Koy ?? "" },
                     { "Adres", member.Adres ?? "" },
                     { "Üyelik Türü", member.UyelikTuru ?? "" },
-                    { "Mütevelli", member.IsMutevelli ? "Evet" : "Hayır" },
+                    { "Kurucular", member.IsMutevelli ? "Evet" : "Hayır" },
                     { "Burs Veriyor", member.BursVeriyor ? "Evet" : "Hayır" },
                     { "Aktif", member.AktifMi ? "Evet" : "Hayır" },
                     { "Notlar", member.Notlar ?? "" }
