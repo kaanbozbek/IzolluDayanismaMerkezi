@@ -64,16 +64,25 @@
                     <MudTextField @bind-Value="_member.Notlar" Label="Notlar" Lines="3" />
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudCheckBox T="bool" @bind-Value="_member.IsMutevelli" Label="Mütevelli Heyeti" Color="Color.Success" />
+                    <MudCheckBox T="bool" @bind-Value="_member.IsMutevelli" Label="Kurucular Heyeti" Color="Color.Success" />
                 </MudItem>
                 <MudItem xs="12" md="3">
                     <MudCheckBox T="bool" @bind-Value="_member.IsYonetimKurulu" Label="Yönetim Kurulu" Color="Color.Primary" />
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudCheckBox T="bool" @bind-Value="_member.BursVeriyor" Label="Burs Veriyor" Color="Color.Warning" />
+                    <MudCheckBox T="bool" @bind-Value="_member.IsDenetimKurulu" Label="Denetim Kurulu" Color="Color.Secondary" />
                 </MudItem>
                 <MudItem xs="12" md="3">
                     <MudCheckBox T="bool" @bind-Value="_member.AktifMi" Label="Aktif" Color="Color.Info" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField @bind-Value="_member.MembershipPeriod" Label="Görev Dönemi (ör: 2023-2024)" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudDatePicker @bind-Date="_member.RoleStartDate" Label="Görev Başlangıç Tarihi" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudDatePicker @bind-Date="_member.RoleEndDate" Label="Görev Bitiş Tarihi" />
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -234,7 +243,7 @@
                     <MudTextField @bind-Value="_member.Notlar" Label="Notlar" Lines="3" />
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudCheckBox T="bool" @bind-Value="_member.IsMutevelli" Label="Mütevelli Heyeti" Color="Color.Success" />
+                    <MudCheckBox T="bool" @bind-Value="_member.IsMutevelli" Label="Kurucular Heyeti" Color="Color.Success" />
                 </MudItem>
                 <MudItem xs="12" md="3">
                     <MudCheckBox T="bool" @bind-Value="_member.IsYonetimKurulu" Label="Yönetim Kurulu" Color="Color.Primary" />

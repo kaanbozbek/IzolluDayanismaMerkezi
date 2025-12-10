@@ -186,7 +186,14 @@
                                 <strong>Mezuniyet Tarihi:</strong> @_student.MezuniyetTarihi?.ToString("dd.MM.yyyy")
                             </MudAlert>
                             
-                            <MudText Typo="Typo.body2">Bu öğrenci mezun olmuştur.</MudText>
+                            <MudGrid Class="mt-4">
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.body2"><strong>Meslek:</strong> @(!string.IsNullOrEmpty(_student.Meslek) ? _student.Meslek : "-")</MudText>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.body2"><strong>Çalıştığı Firma:</strong> @(!string.IsNullOrEmpty(_student.Firma) ? _student.Firma : "-")</MudText>
+                                </MudItem>
+                            </MudGrid>
                         }
                         else
                         {
@@ -429,10 +436,11 @@
         var dialog = await DialogService.ShowAsync<GraduateStudentDialog>("Öğrenciyi Mezun Et", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is DateTime graduationDate)
+        if (!result.Canceled && result.Data is GraduateStudentDialog.GraduationResult graduationResult)
         {
-            await StudentService.GraduateStudentAsync(StudentId, graduationDate);
+            await StudentService.GraduateStudentAsync(StudentId, graduationResult.MezuniyetTarihi, graduationResult.Meslek, graduationResult.Firma);
             _student = await StudentService.GetByIdAsync(StudentId);
+            Snackbar.Add($"{_student?.AdSoyad} mezun edildi.", Severity.Success);
             StateHasChanged();
         }
     }

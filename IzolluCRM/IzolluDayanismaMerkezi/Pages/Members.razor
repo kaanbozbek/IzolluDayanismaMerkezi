@@ -233,7 +233,7 @@
                         <MudTd DataLabel="Roller">
                             @if (context.IsMutevelli)
                             {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Mütevelli Heyeti</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Kurucular Heyeti</MudChip>
                             }
                             @if (context.IsYonetimKurulu)
                             {
@@ -380,8 +380,8 @@
             </MudPaper>
         </MudTabPanel>
 
-        @* Tab 3: Kurucular *@
-        <MudTabPanel Text="Kurucular" Icon="@Icons.Material.Filled.AdminPanelSettings">
+        @* Tab 3: Kurucular Heyeti *@
+        <MudTabPanel Text="Kurucular Heyeti" Icon="@Icons.Material.Filled.AdminPanelSettings">
             <MudPaper Elevation="2" Class="pa-4 mt-4">
                 <MudTable Items="@GetFilteredMembersForMutevelliTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
                     <HeaderContent>
@@ -390,6 +390,7 @@
                         <MudTh>Mesleği</MudTh>
                         <MudTh>Firma</MudTh>
                         <MudTh>İletişim</MudTh>
+                        <MudTh>Görev Dönemi</MudTh>
                         <MudTh>Roller</MudTh>
                         <MudTh>Durum</MudTh>
                         <MudTh>İşlemler</MudTh>
@@ -416,10 +417,24 @@
                                 <div>@context.Email</div>
                             }
                         </MudTd>
+                        <MudTd DataLabel="Görev Dönemi">
+                            @if (!string.IsNullOrWhiteSpace(context.MembershipPeriod))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.MembershipPeriod</MudChip>
+                            }
+                            else if (context.RoleStartDate.HasValue || context.RoleEndDate.HasValue)
+                            {
+                                <span>@context.RoleStartDate?.ToString("yyyy") - @context.RoleEndDate?.ToString("yyyy")</span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </MudTd>
                         <MudTd DataLabel="Roller">
                             @if (context.IsMutevelli)
                             {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Mütevelli Heyeti</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Kurucular Heyeti</MudChip>
                             }
                             @if (context.IsYonetimKurulu)
                             {
@@ -494,7 +509,7 @@
                         <MudTd DataLabel="Roller">
                             @if (context.IsMutevelli)
                             {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Mütevelli Heyeti</MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Kurucular Heyeti</MudChip>
                             }
                             @if (context.IsYonetimKurulu)
                             {
@@ -633,7 +648,7 @@
             <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Rol</strong></MudText>
             <MudRadioGroup T="RoleFilter" @bind-Value="_filters.Role">
                 <MudRadio T="RoleFilter" Value="RoleFilter.All" Color="Color.Primary">Tümü</MudRadio>
-                <MudRadio T="RoleFilter" Value="RoleFilter.Mutevelli" Color="Color.Primary">Kurucular</MudRadio>
+                <MudRadio T="RoleFilter" Value="RoleFilter.Mutevelli" Color="Color.Primary">Kurucular Heyeti</MudRadio>
                 <MudRadio T="RoleFilter" Value="RoleFilter.YonetimKurulu" Color="Color.Secondary">Yönetim Kurulu</MudRadio>
             </MudRadioGroup>
         </MudPaper>
@@ -1217,7 +1232,7 @@
     {
         return _filters.Role switch
         {
-            RoleFilter.Mutevelli => "Kurucular",
+            RoleFilter.Mutevelli => "Kurucular Heyeti",
             RoleFilter.YonetimKurulu => "Yönetim Kurulu",
             _ => "Tümü"
         };
@@ -1398,5 +1413,4 @@
         }
     }
 
-}
 }

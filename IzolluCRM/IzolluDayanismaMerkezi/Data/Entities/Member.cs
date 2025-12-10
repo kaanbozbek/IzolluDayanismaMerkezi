@@ -55,6 +55,13 @@ public class Member
 
     public bool IsDenetimKurulu { get; set; }
 
+    [StringLength(50)]
+    public string? MembershipPeriod { get; set; }
+
+    public DateTime? RoleStartDate { get; set; }
+
+    public DateTime? RoleEndDate { get; set; }
+
     public bool BursVeriyor { get; set; }
 
     public bool AktifMi { get; set; } = true;
