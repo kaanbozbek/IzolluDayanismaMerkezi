@@ -18,7 +18,7 @@
             </div>
             <MudNumericField @bind-Value="_amount" Label="Aylık Burs Tutarı (₺)" Required="true" Min="0" Format="N2" />
             <MudText Typo="Typo.body2" Color="Color.Info" Class="mt-2">
-                Yıllık Tutar: @((_amount * 12).ToString("N2")) ₺
+                Dönemlik Tutar (8 Ay): @((_amount * 8).ToString("N2")) ₺
             </MudText>
         </MudForm>
     </DialogContent>

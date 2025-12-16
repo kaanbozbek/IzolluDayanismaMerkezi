@@ -2,8 +2,10 @@
 @using IzolluVakfi.Data.Entities
 @using IzolluVakfi.Services
 @inject AidService AidService
+@inject SettingsService SettingsService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>Yardımlar - İzollu Dayanışma Merkezi</PageTitle>
 
@@ -16,7 +18,7 @@
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                     <div>
                         <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Yardım</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_totalAids</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_filteredAids.Count</MudText>
                     </div>
                     <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
                 </MudStack>
@@ -28,7 +30,7 @@
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                     <div>
                         <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">İzollulu</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_izolluluCount</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_filteredAids.Count(a => a.IsIzollulu)</MudText>
                     </div>
                     <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Large" Style="opacity: 0.8;" />
                 </MudStack>
@@ -40,7 +42,7 @@
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                     <div>
                         <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Dışarıdan</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_nonIzolluluCount</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_filteredAids.Count(a => !a.IsIzollulu)</MudText>
                     </div>
                     <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Large" Style="opacity: 0.8;" />
                 </MudStack>
@@ -48,11 +50,42 @@
         </MudItem>
     </MudGrid>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
-        Yeni Yardım Ekle
-    </MudButton>
+    @* Filtre ve Butonlar *@
+    <MudPaper Elevation="2" Class="pa-4 mb-4" Style="border-radius: 12px;">
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <label class="form-label">Dönem Filtresi</label>
+                <select id="period-filter" class="selectpicker" data-live-search="true" 
+                        data-width="100%" title="Dönem Seçiniz" @onchange="OnPeriodFilterChanged">
+                    <option value="">Tüm Dönemler</option>
+                    @foreach (var period in _academicYears)
+                    {
+                        <option value="@period">@period</option>
+                    }
+                </select>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <label class="form-label">Durum Filtresi</label>
+                <MudSelect T="string" @bind-Value="_statusFilter" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("")">Tümü</MudSelectItem>
+                    <MudSelectItem Value="@("izollulu")">İzollulu</MudSelectItem>
+                    <MudSelectItem Value="@("disaridan")">Dışarıdan</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3" Style="display: flex; align-items: flex-end;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" FullWidth="true">
+                    Yeni Yardım Ekle
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3" Style="display: flex; align-items: flex-end;">
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ClearFilters" FullWidth="true">
+                    Filtreleri Temizle
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
 
-    <MudTable Items="@_aids" Dense="true" Hover="true" Filter="new Func<Aid, bool>(FilterFunc)" SortLabel="Sırala">
+    <MudTable Items="@_filteredAids" Dense="true" Hover="true" Filter="new Func<Aid, bool>(FilterFunc)" SortLabel="Sırala">
         <ToolBarContent>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
@@ -106,22 +139,82 @@
 
 @code {
     private List<Aid> _aids = new();
+    private List<Aid> _filteredAids = new();
     private string _searchString = "";
-    private int _totalAids = 0;
-    private int _izolluluCount = 0;
-    private int _nonIzolluluCount = 0;
+    private List<string> _academicYears = new();
+    private string _selectedPeriod = "";
+    private string _statusFilter = "";
+    private bool _selectPickerInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
+        // Load academic years from settings
+        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
+        if (periodsFromSettings.Count > 0)
+        {
+            _academicYears = periodsFromSettings.OrderByDescending(p => p).ToList();
+        }
+        else
+        {
+            for (int startYear = 2025; startYear <= 2039; startYear++)
+            {
+                _academicYears.Add($"{startYear}-{startYear + 1}");
+            }
+        }
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_selectPickerInitialized)
+        {
+            _selectPickerInitialized = true;
+            await Task.Delay(100);
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
     }
 
     private async Task LoadData()
     {
         _aids = await AidService.GetAllAsync();
-        _totalAids = await AidService.GetTotalCountAsync();
-        _izolluluCount = await AidService.GetIzolluluCountAsync();
-        _nonIzolluluCount = await AidService.GetNonIzolluluCountAsync();
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        _filteredAids = _aids.ToList();
+        
+        // Period filter
+        if (!string.IsNullOrWhiteSpace(_selectedPeriod))
+        {
+            _filteredAids = _filteredAids.Where(a => a.AcademicYear == _selectedPeriod).ToList();
+        }
+        
+        // Status filter
+        if (_statusFilter == "izollulu")
+        {
+            _filteredAids = _filteredAids.Where(a => a.IsIzollulu).ToList();
+        }
+        else if (_statusFilter == "disaridan")
+        {
+            _filteredAids = _filteredAids.Where(a => !a.IsIzollulu).ToList();
+        }
+    }
+
+    private async Task OnPeriodFilterChanged(ChangeEventArgs e)
+    {
+        _selectedPeriod = e.Value?.ToString() ?? "";
+        ApplyFilters();
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private void ClearFilters()
+    {
+        _selectedPeriod = "";
+        _statusFilter = "";
+        _searchString = "";
+        ApplyFilters();
     }
 
     private bool FilterFunc(Aid aid)

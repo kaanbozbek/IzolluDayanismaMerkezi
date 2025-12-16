@@ -293,13 +293,13 @@
                     <HeaderContent>
                         <MudTh>Dönem</MudTh>
                         <MudTh>Aylık Burs Tutarı</MudTh>
-                        <MudTh>Yıllık Tutar</MudTh>
+                        <MudTh>Dönemlik Tutar (8 Ay)</MudTh>
                         <MudTh>İşlemler</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd DataLabel="Dönem">@context.Period</MudTd>
                         <MudTd DataLabel="Aylık Burs Tutarı">@context.Amount.ToString("N2") ₺</MudTd>
-                        <MudTd DataLabel="Yıllık Tutar">@((context.Amount * 12).ToString("N2")) ₺</MudTd>
+                        <MudTd DataLabel="Dönemlik Tutar (8 Ay)">@((context.Amount * 8).ToString("N2")) ₺</MudTd>
                         <MudTd DataLabel="İşlemler">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenEditScholarshipDialog(context))" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteScholarshipAmount(context))" />
@@ -484,6 +484,18 @@
         _universiteler = await SettingsService.GetListValueAsync("Universiteler");
         _bolumler = await SettingsService.GetListValueAsync("Bolumler");
         _periods = await SettingsService.GetListValueAsync("AcademicPeriods");
+        
+        // Eğer dönemler boşsa varsayılan dönemleri ekle (2024-2025'ten 2039-2040'a kadar)
+        if (!_periods.Any())
+        {
+            var defaultPeriods = new List<string>();
+            for (int startYear = 2024; startYear <= 2039; startYear++)
+            {
+                defaultPeriods.Add($"{startYear}-{startYear + 1}");
+            }
+            _periods = defaultPeriods.OrderByDescending(p => p).ToList();
+            await SettingsService.SetListValueAsync("AcademicPeriods", _periods, "Akademik dönemler listesi");
+        }
         
         // Load scholarship amounts
         var amountsJson = await SettingsService.GetValueAsync("ScholarshipAmountsByPeriod");

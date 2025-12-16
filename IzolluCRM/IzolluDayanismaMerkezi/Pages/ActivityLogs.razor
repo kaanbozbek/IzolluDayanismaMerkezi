@@ -1,4 +1,5 @@
 @page "/activity-logs"
+@using Microsoft.AspNetCore.Components.Forms
 @inject ActivityLogService LogService
 @inject IJSRuntime JS
 
@@ -10,18 +11,12 @@
             <MudText Typo="Typo.h6" Class="mb-4">Filtreler</MudText>
             <MudGrid Spacing="3">
                 <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Başlangıç Tarihi</strong></MudText>
-                    <MudDatePicker @bind-Date="_startDate" 
-                                   Label="Başlangıç" 
-                                   Variant="Variant.Outlined"
-                                   DateFormat="dd.MM.yyyy" />
+                    <label class="form-label"><strong>Başlangıç Tarihi</strong></label>
+                    <InputDate @bind-Value="_startDate" class="form-control" />
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Bitiş Tarihi</strong></MudText>
-                    <MudDatePicker @bind-Date="_endDate" 
-                                   Label="Bitiş" 
-                                   Variant="Variant.Outlined"
-                                   DateFormat="dd.MM.yyyy" />
+                    <label class="form-label"><strong>Bitiş Tarihi</strong></label>
+                    <InputDate @bind-Value="_endDate" class="form-control" />
                 </MudItem>
                 <MudItem xs="12" md="4">
                     <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>İşlem Tipi</strong></MudText>

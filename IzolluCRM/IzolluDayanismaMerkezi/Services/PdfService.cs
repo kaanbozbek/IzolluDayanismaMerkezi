@@ -199,6 +199,148 @@ public class PdfService
         return document.GeneratePdf();
     }
 
+    public byte[] GenerateStudentsPdfReport(List<Student> students)
+    {
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                page.Header()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span("İzollu Dayanışma Merkezi\n").FontSize(18).Bold().FontColor(Colors.Orange.Darken2);
+                        text.Span("Öğrenci Listesi Raporu\n").FontSize(14).FontColor(Colors.Grey.Darken1);
+                        text.Span($"{DateTime.Now:dd MMMM yyyy HH:mm}").FontSize(9).FontColor(Colors.Grey.Medium);
+                    });
+
+                page.Content()
+                    .PaddingVertical(1, Unit.Centimetre)
+                    .Column(column =>
+                    {
+                        column.Item().Text($"Toplam Öğrenci: {students.Count}").FontSize(10).Bold();
+                        column.Item().PaddingTop(5).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(2);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Ad Soyad").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Üniversite").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Bölüm").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Sınıf").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Burs").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Telefon").Bold().FontSize(8);
+                            });
+
+                            foreach (var student in students)
+                            {
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(student.AdSoyad).FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(student.Universite ?? "-").FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(student.Bolum ?? "-").FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(student.Sinif?.ToString() ?? "-").FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(student.AktifBursMu ? "✓" : "-").FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(student.Telefon ?? "-").FontSize(8);
+                            }
+                        });
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span("Sayfa ");
+                        text.CurrentPageNumber();
+                        text.Span(" / ");
+                        text.TotalPages();
+                    });
+            });
+        });
+
+        return document.GeneratePdf();
+    }
+
+    public byte[] GenerateMembersPdfReport(List<Member> members)
+    {
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(2, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                page.Header()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span("İzollu Dayanışma Merkezi\n").FontSize(18).Bold().FontColor(Colors.Orange.Darken2);
+                        text.Span("Üye Listesi Raporu\n").FontSize(14).FontColor(Colors.Grey.Darken1);
+                        text.Span($"{DateTime.Now:dd MMMM yyyy HH:mm}").FontSize(9).FontColor(Colors.Grey.Medium);
+                    });
+
+                page.Content()
+                    .PaddingVertical(1, Unit.Centimetre)
+                    .Column(column =>
+                    {
+                        column.Item().Text($"Toplam Üye: {members.Count}").FontSize(10).Bold();
+                        column.Item().PaddingTop(5).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Ad Soyad").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Rol").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Telefon").Bold().FontSize(8);
+                                header.Cell().Background(Colors.Grey.Lighten2).Padding(3).Text("Email").Bold().FontSize(8);
+                            });
+
+                            foreach (var member in members)
+                            {
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(member.AdSoyad).FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(member.UyelikTuru ?? "-").FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(member.Telefon ?? "-").FontSize(8);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(member.Email ?? "-").FontSize(8);
+                            }
+                        });
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span("Sayfa ");
+                        text.CurrentPageNumber();
+                        text.Span(" / ");
+                        text.TotalPages();
+                    });
+            });
+        });
+
+        return document.GeneratePdf();
+    }
+
     public byte[] GenerateComprehensiveReport(
         int totalStudents, 
         int activeScholarships, 
@@ -209,7 +351,11 @@ public class PdfService
         string activePeriod,
         decimal periodBursTutari,
         Dictionary<string, int> universityData,
-        List<MemberScholarshipDetail> memberScholarshipDetails)
+        List<MemberScholarshipDetail> memberScholarshipDetails,
+        Dictionary<string, int> genderDistribution,
+        Dictionary<string, int> malatyaLocationDistribution,
+        List<MemberScholarshipDetail> topDonors,
+        List<MemberScholarshipDetail> unfulfilledCommitments)
     {
         var document = Document.Create(container =>
         {
@@ -258,15 +404,94 @@ public class PdfService
                             });
                         });
 
+                        // Burs Taahhüt Özeti
+                        var totalPledged = memberScholarshipDetails.Sum(m => m.PledgedCount);
+                        var totalRealized = memberScholarshipDetails.Sum(m => m.RealizedCount);
+                        var realizationRate = totalPledged > 0 ? (totalRealized * 100.0 / totalPledged) : 0;
+                        
+                        column.Item().PaddingTop(10).Background(Colors.Purple.Lighten4).Padding(10).Column(col =>
+                        {
+                            col.Item().Text("BURS TAAHHÜT ÖZETİ").FontSize(14).Bold().FontColor(Colors.Purple.Darken3);
+                            col.Item().PaddingTop(5).Row(row =>
+                            {
+                                row.RelativeItem().Border(1).BorderColor(Colors.Purple.Medium).Padding(10).Column(c =>
+                                {
+                                    c.Item().Text("Toplam Taahhüt").FontSize(10);
+                                    c.Item().Text($"{totalPledged} Burs").FontSize(16).Bold().FontColor(Colors.Purple.Darken2);
+                                });
+                                row.RelativeItem().Border(1).BorderColor(Colors.Green.Medium).Padding(10).Column(c =>
+                                {
+                                    c.Item().Text("Gerçekleşen").FontSize(10);
+                                    c.Item().Text($"{totalRealized} Burs").FontSize(16).Bold().FontColor(Colors.Green.Darken2);
+                                });
+                                row.RelativeItem().Border(1).BorderColor(Colors.Blue.Medium).Padding(10).Column(c =>
+                                {
+                                    c.Item().Text("Gerçekleşme Oranı").FontSize(10);
+                                    c.Item().Text($"%{realizationRate:F1}").FontSize(16).Bold().FontColor(Colors.Blue.Darken2);
+                                });
+                            });
+                        });
+
+                        // Cinsiyet Dağılımı
+                        if (genderDistribution != null && genderDistribution.Any())
+                        {
+                            column.Item().Text("CİNSİYETE GÖRE DAĞILIM").FontSize(12).Bold();
+                            column.Item().Row(row =>
+                            {
+                                foreach (var item in genderDistribution)
+                                {
+                                    var percentage = totalStudents > 0 ? (item.Value * 100.0 / totalStudents) : 0;
+                                    row.RelativeItem().Border(2).BorderColor(item.Key == "Erkek" ? Colors.Blue.Medium : Colors.Pink.Medium).Padding(10).Column(col =>
+                                    {
+                                        col.Item().Text(item.Key).FontSize(11).Bold();
+                                        col.Item().Text(item.Value.ToString()).FontSize(20).Bold();
+                                        col.Item().Text($"%{percentage:F1}").FontSize(10);
+                                        // Görsel bar gösterimi
+                                        col.Item().PaddingTop(5).Height(8).Background(Colors.Grey.Lighten3).Row(barRow =>
+                                        {
+                                            barRow.RelativeItem((float)percentage).Background(item.Key == "Erkek" ? Colors.Blue.Medium : Colors.Pink.Medium);
+                                            barRow.RelativeItem((float)(100 - percentage)).Background(Colors.Grey.Lighten3);
+                                        });
+                                    });
+                                }
+                            });
+                        }
+
+                        // Malatya Konum Dağılımı
+                        if (malatyaLocationDistribution != null && malatyaLocationDistribution.Any())
+                        {
+                            column.Item().PaddingTop(10).Text("MALATYA KONUMUNA GÖRE DAĞILIM").FontSize(12).Bold();
+                            column.Item().Row(row =>
+                            {
+                                foreach (var item in malatyaLocationDistribution)
+                                {
+                                    var percentage = totalStudents > 0 ? (item.Value * 100.0 / totalStudents) : 0;
+                                    row.RelativeItem().Border(2).BorderColor(item.Key == "Malatya İçi" ? Colors.Green.Medium : Colors.Orange.Medium).Padding(10).Column(col =>
+                                    {
+                                        col.Item().Text(item.Key).FontSize(11).Bold();
+                                        col.Item().Text(item.Value.ToString()).FontSize(20).Bold();
+                                        col.Item().Text($"%{percentage:F1}").FontSize(10);
+                                        // Görsel bar gösterimi
+                                        col.Item().PaddingTop(5).Height(8).Background(Colors.Grey.Lighten3).Row(barRow =>
+                                        {
+                                            barRow.RelativeItem((float)percentage).Background(item.Key == "Malatya İçi" ? Colors.Green.Medium : Colors.Orange.Medium);
+                                            barRow.RelativeItem((float)(100 - percentage)).Background(Colors.Grey.Lighten3);
+                                        });
+                                    });
+                                }
+                            });
+                        }
+
                         // Üniversite Dağılımı
                         if (universityData.Any())
                         {
-                            column.Item().Text("ÜNİVERSİTEYE GÖRE ÖĞRENCİ DAĞILIMI (İLK 10)").FontSize(12).Bold();
+                            column.Item().PaddingTop(10).Text("ÜNİVERSİTEYE GÖRE ÖĞRENCİ DAĞILIMI (İLK 10)").FontSize(12).Bold();
                             column.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
                                 {
                                     columns.RelativeColumn(4);
+                                    columns.RelativeColumn(1);
                                     columns.RelativeColumn(1);
                                 });
 
@@ -274,12 +499,87 @@ public class PdfService
                                 {
                                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Üniversite").Bold();
                                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Öğrenci").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Oran").Bold();
                                 });
 
                                 foreach (var item in universityData.Take(10))
                                 {
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(item.Key);
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(item.Value.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"%{(item.Value * 100.0 / totalStudents):F1}");
+                                }
+                            });
+                        }
+
+                        // En Çok Burs Verenler
+                        if (topDonors != null && topDonors.Any())
+                        {
+                            column.Item().PageBreak();
+                            column.Item().Background(Colors.Green.Lighten4).Padding(10).Column(col =>
+                            {
+                                col.Item().Text("EN ÇOK BURS VERENLER (İLK 10)").FontSize(12).Bold().FontColor(Colors.Green.Darken3);
+                            });
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Sıra").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Üye Adı").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Taahhüt").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Gerçekleşen").Bold();
+                                });
+
+                                int rank = 1;
+                                foreach (var item in topDonors.Take(10))
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{rank++}");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(item.MemberName);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.PledgedCount}");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.RealizedCount}").FontColor(Colors.Green.Darken2).Bold();
+                                }
+                            });
+                        }
+
+                        // Taahhüdünü Yerine Getirmeyenler
+                        if (unfulfilledCommitments != null && unfulfilledCommitments.Any())
+                        {
+                            column.Item().PaddingTop(15).Background(Colors.Red.Lighten4).Padding(10).Column(col =>
+                            {
+                                col.Item().Text("TAAHHÜDÜNÜ YERINE GETİRMEYENLER").FontSize(12).Bold().FontColor(Colors.Red.Darken3);
+                            });
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Üye Adı").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Taahhüt").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Gerçekleşen").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Eksik").Bold();
+                                });
+
+                                foreach (var item in unfulfilledCommitments)
+                                {
+                                    var deficit = item.PledgedCount - item.RealizedCount;
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(item.MemberName);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.PledgedCount}");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.RealizedCount}");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{deficit}").FontColor(Colors.Red.Darken2).Bold();
                                 }
                             });
                         }
@@ -288,7 +588,7 @@ public class PdfService
                         if (memberScholarshipDetails.Any())
                         {
                             column.Item().PageBreak();
-                            column.Item().Text("ÜYELERİN VERDİĞİ BURS DAĞILIMI").FontSize(12).Bold();
+                            column.Item().Text("TÜM ÜYELERİN BURS DAĞILIMI").FontSize(12).Bold();
                             column.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>

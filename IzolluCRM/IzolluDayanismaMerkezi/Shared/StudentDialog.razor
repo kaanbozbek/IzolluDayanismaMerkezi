@@ -68,12 +68,15 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <label class="form-label">Üniversite</label>
-                    <select class="selectpicker form-control" data-live-search="true" title="Seçiniz" @bind="_student.Universite">
+                    <select class="selectpicker form-control" data-live-search="true" title="Seçiniz" value="@_student.Universite" @onchange="OnUniversityChanged">
                         @foreach (var uni in _universities)
                         {
                             <option value="@uni">@uni</option>
                         }
                     </select>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudCheckBox T="bool" @bind-Value="_student.IsMalatyaUniversity" Label="Malatya İçi" Color="Color.Primary" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <label class="form-label">Bölüm</label>
@@ -164,6 +167,26 @@
     {
         _student.IsIzollulu = value;
         _student.Koy = null; // Clear the selection when changing between villages and provinces
+        StateHasChanged();
+    }
+
+    private void OnUniversityChanged(ChangeEventArgs e)
+    {
+        var selectedUniversity = e.Value?.ToString();
+        _student.Universite = selectedUniversity;
+
+        // Auto-check Malatya İçi for specific universities
+        if (!string.IsNullOrWhiteSpace(selectedUniversity))
+        {
+            _student.IsMalatyaUniversity = 
+                selectedUniversity.Equals("Malatya Turgut Özal Üniversitesi", StringComparison.OrdinalIgnoreCase) ||
+                selectedUniversity.Equals("İnönü Üniversitesi", StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            _student.IsMalatyaUniversity = false;
+        }
+
         StateHasChanged();
     }
 

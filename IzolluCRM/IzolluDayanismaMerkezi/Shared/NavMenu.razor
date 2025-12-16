@@ -1,7 +1,7 @@
 <div class="izollu-nav-menu sidebar">
     <!-- Logo Section -->
     <div class="nav-header logo-container">
-        <img src="/izollu-vakfi.png" alt="Logo" class="nav-logo" />
+        <img src="/izollu-vakfi.png" alt="İzollu Dayanışma Merkezi" class="nav-logo" />
     </div>
 
     <!-- ANA MENÜ -->
@@ -126,36 +126,47 @@
         padding-bottom: 60px;
         position: relative;
         box-sizing: border-box;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     
     /* Logo Header */
     .nav-header {
-        padding: 0.25rem 0.5rem 0.25rem;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100px;
+        padding: 10px 16px;
         border-bottom: 1px solid #f1f5f9;
-        margin-top: 0 !important;
-        margin-bottom: 0.25rem;
+        margin-bottom: 38px; /* 1cm boşluk */
         flex-shrink: 0;
+        background: transparent;
     }
     
     .nav-logo {
-        max-width: 100px;
+        max-width: 240px;
+        max-height: 132px;
+        width: auto;
         height: auto;
-        transition: transform 0.2s ease;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+        transition: transform 0.2s ease, opacity 0.2s ease;
     }
     
     .nav-logo:hover {
-        transform: scale(1.05);
+        transform: scale(1.03);
+        opacity: 0.9;
+        cursor: pointer;
     }
     
-    /* Section Titles */
+    /* Section Titles - COMPRESSED */
     .nav-section-title {
         font-size: 0.65rem;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: #9ca3af;
-        margin: 0.2rem 0 0.1rem 0.5rem;
+        margin: 12px 0 6px 0.5rem;
         font-weight: 600;
         flex-shrink: 0;
     }
@@ -166,17 +177,18 @@
         flex: 0 0 auto;
     }
     
-    /* Modern Pill Navigation Items */
+    /* Modern Pill Navigation Items - REDUCED PADDING */
     .nav-item {
         border-radius: 999px !important;
         margin: 1px 2px !important;
-        padding: 6px 10px !important;
+        padding: 10px 14px !important;
         color: #4b5563;
         transition: all 0.2s ease;
         font-size: 0.85rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-decoration: none !important;
     }
     
     .nav-item .mud-icon-root {
@@ -253,5 +265,30 @@
     
     .logout-link .mud-icon-root {
         color: #ef4444 !important;
+    }
+    
+    /* Responsive adjustments for smaller screens */
+    @@media (max-width: 768px) {
+        .nav-header {
+            height: 120px;
+            padding: 10px 12px;
+        }
+        
+        .nav-logo {
+            max-width: 170px;
+            max-height: 95px;
+        }
+    }
+    
+    @@media (max-width: 480px) {
+        .nav-header {
+            height: 100px;
+            padding: 8px 8px;
+        }
+        
+        .nav-logo {
+            max-width: 140px;
+            max-height: 80px;
+        }
     }
 </style>

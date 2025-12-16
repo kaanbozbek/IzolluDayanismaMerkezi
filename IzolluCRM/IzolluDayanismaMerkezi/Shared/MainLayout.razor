@@ -7,18 +7,20 @@
 @inject NavigationManager Navigation
 @inject AuthService AuthService
 
-<MudLayout Class="app-layout">
-    <MudDrawer @bind-Open="@_drawerOpen" 
-               ClipMode="DrawerClipMode.Never" 
-               Elevation="2"
-               Variant="@DrawerVariant.Responsive"
-               Class="app-sidebar">
+<MudLayout>
+    <!-- LEFT NAVIGATION -->
+    <MudDrawer @bind-Open="@_drawerOpen"
+               Anchor="Anchor.Left"
+               Elevation="1"
+               ClipMode="DrawerClipMode.Never"
+               Variant="@DrawerVariant.Persistent"
+               Class="sidebar">
         <NavMenu />
     </MudDrawer>
-    <MudMainContent Class="app-main">
-        <MudContainer MaxWidth="MaxWidth.False" Style="padding: 1.5rem 1rem 1rem 1rem; margin: 0 !important; max-width: 100%; overflow-x: hidden;">
-            @Body
-        </MudContainer>
+
+    <!-- PAGE CONTENT -->
+    <MudMainContent Class="page-content">
+        @Body
     </MudMainContent>
 </MudLayout>
 

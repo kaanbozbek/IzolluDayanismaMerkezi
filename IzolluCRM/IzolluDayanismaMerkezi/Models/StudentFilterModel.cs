@@ -6,6 +6,7 @@ public class StudentFilterModel
 
     public ScholarshipStatusFilter ScholarshipStatus { get; set; } = ScholarshipStatusFilter.All;
     public GenderFilter Gender { get; set; } = GenderFilter.All;
+    public MalatyaLocationFilter MalatyaLocation { get; set; } = MalatyaLocationFilter.All;
 
     public List<string> SelectedUniversities { get; set; } = new();
     public List<string> SelectedDepartments { get; set; } = new();
@@ -21,6 +22,7 @@ public class StudentFilterModel
         return !string.IsNullOrWhiteSpace(SearchText) ||
                ScholarshipStatus != ScholarshipStatusFilter.All ||
                Gender != GenderFilter.All ||
+               MalatyaLocation != MalatyaLocationFilter.All ||
                SelectedUniversities.Any() ||
                SelectedDepartments.Any() ||
                SelectedClassLevels.Any() ||
@@ -35,6 +37,7 @@ public class StudentFilterModel
         SearchText = null;
         ScholarshipStatus = ScholarshipStatusFilter.All;
         Gender = GenderFilter.All;
+        MalatyaLocation = MalatyaLocationFilter.All;
         SelectedUniversities.Clear();
         SelectedDepartments.Clear();
         SelectedClassLevels.Clear();
@@ -58,4 +61,11 @@ public enum GenderFilter
     All,
     Male,
     Female
+}
+
+public enum MalatyaLocationFilter
+{
+    All,
+    MalatyaIci,
+    MalatyaDisi
 }

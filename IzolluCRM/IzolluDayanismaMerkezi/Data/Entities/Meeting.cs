@@ -27,4 +27,5 @@ public class Meeting
     public DateTime OlusturmaTarihi { get; set; }
 
     public virtual ICollection<StudentMeetingAttendance> Attendances { get; set; } = new List<StudentMeetingAttendance>();
+    public virtual ICollection<MemberMeetingAttendance> MemberAttendances { get; set; } = new List<MemberMeetingAttendance>();
 }

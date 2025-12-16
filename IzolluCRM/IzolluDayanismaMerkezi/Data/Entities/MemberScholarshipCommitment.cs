@@ -60,10 +60,10 @@ public class MemberScholarshipCommitment
     public decimal TotalYearlyAmount => PledgedCount * YearlyAmountPerScholarship;
 
     /// <summary>
-    /// Computed: Total monthly amount for all pledged scholarships
+    /// Computed: Total monthly amount for all pledged scholarships (8 months period)
     /// </summary>
     [NotMapped]
-    public decimal TotalMonthlyAmount => (YearlyAmountPerScholarship / 12m) * PledgedCount;
+    public decimal TotalMonthlyAmount => (YearlyAmountPerScholarship / 8m) * PledgedCount;
 
     /// <summary>
     /// Optional notes about this commitment

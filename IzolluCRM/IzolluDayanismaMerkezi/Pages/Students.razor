@@ -3,6 +3,7 @@
 @inject StudentService StudentService
 @inject MeetingService MeetingService
 @inject ExcelService ExcelService
+@inject PdfService PdfService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
@@ -57,6 +58,9 @@
             <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportToExcel">
                 Excel'e Aktar
             </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportToPdf">
+                PDF'e Aktar
+            </MudButton>
         </div>
 
         @* FILTER BAR *@
@@ -109,6 +113,12 @@
                     {
                         <MudChip T="string" Color="Color.Secondary" Size="Size.Small" OnClose="@(() => RemoveGenderFilter())">
                             Cinsiyet: @GetGenderText(_filters.Gender)
+                        </MudChip>
+                    }
+                    @if (_filters.MalatyaLocation != MalatyaLocationFilter.All)
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" OnClose="@(() => RemoveMalatyaLocationFilter())">
+                            Konum: @GetMalatyaLocationText(_filters.MalatyaLocation)
                         </MudChip>
                     }
                     @if (_filters.SelectedUniversities.Any())
@@ -319,6 +329,16 @@
                     <MudRadio Value="GenderFilter.All" Color="Color.Primary">Tümü</MudRadio>
                     <MudRadio Value="GenderFilter.Male" Color="Color.Info">Erkek</MudRadio>
                     <MudRadio Value="GenderFilter.Female" Color="Color.Secondary">Kadın</MudRadio>
+                </MudRadioGroup>
+            </div>
+
+            @* Malatya Konum *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Malatya Konum</strong></MudText>
+                <MudRadioGroup @bind-Value="_filters.MalatyaLocation">
+                    <MudRadio Value="MalatyaLocationFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                    <MudRadio Value="MalatyaLocationFilter.MalatyaIci" Color="Color.Success">Malatya İçi</MudRadio>
+                    <MudRadio Value="MalatyaLocationFilter.MalatyaDisi" Color="Color.Warning">Malatya Dışı</MudRadio>
                 </MudRadioGroup>
             </div>
 
@@ -587,6 +607,12 @@
             else if (_filters.Gender == GenderFilter.Female)
                 query = query.Where(s => s.Cinsiyet == "Kadın");
 
+            // Malatya Location
+            if (_filters.MalatyaLocation == MalatyaLocationFilter.MalatyaIci)
+                query = query.Where(s => s.IsMalatyaUniversity);
+            else if (_filters.MalatyaLocation == MalatyaLocationFilter.MalatyaDisi)
+                query = query.Where(s => !s.IsMalatyaUniversity);
+
             // Universities
             if (_filters.SelectedUniversities.Any())
                 query = query.Where(s => s.Universite != null && _filters.SelectedUniversities.Contains(s.Universite));
@@ -652,6 +678,12 @@
     private async Task RemoveGenderFilter()
     {
         _filters.Gender = GenderFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveMalatyaLocationFilter()
+    {
+        _filters.MalatyaLocation = MalatyaLocationFilter.All;
         await ApplyFilters();
     }
 
@@ -811,6 +843,13 @@
         _ => "Tümü"
     };
 
+    private string GetMalatyaLocationText(MalatyaLocationFilter location) => location switch
+    {
+        MalatyaLocationFilter.MalatyaIci => "Malatya İçi",
+        MalatyaLocationFilter.MalatyaDisi => "Malatya Dışı",
+        _ => "Tümü"
+    };
+
     // GRADUATED STUDENTS FILTER
     private bool FilterGraduatedFunc(Student student)
     {
@@ -927,6 +966,30 @@
 
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelBytes));
             Snackbar.Add($"{studentsToExport.Count} öğrenci Excel'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel aktarımı başarısız: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var studentsToExport = _filteredStudents;
+            
+            if (studentsToExport.Count == 0)
+            {
+                Snackbar.Add("Dışa aktarılacak öğrenci bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            var pdfBytes = PdfService.GenerateStudentsPdfReport(studentsToExport);
+            var fileName = $"Ogrenciler_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(pdfBytes));
+            Snackbar.Add($"{studentsToExport.Count} öğrenci PDF'e aktarıldı.", Severity.Success);
         }
         catch (Exception ex)
         {

@@ -20,6 +20,8 @@ public class MeetingService
         return await _context.Meetings
             .Include(m => m.Attendances)
                 .ThenInclude(a => a.Student)
+            .Include(m => m.MemberAttendances)
+                .ThenInclude(a => a.Member)
             .OrderByDescending(m => m.Tarih)
             .ToListAsync();
     }
@@ -29,6 +31,8 @@ public class MeetingService
         return await _context.Meetings
             .Include(m => m.Attendances)
                 .ThenInclude(a => a.Student)
+            .Include(m => m.MemberAttendances)
+                .ThenInclude(a => a.Member)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -42,7 +46,7 @@ public class MeetingService
         _context.Meetings.Add(meeting);
         await _context.SaveChangesAsync();
 
-        await EnsureAttendanceRecordsAsync(meeting.Id);
+        await EnsureAttendanceRecordsAsync(meeting.Id, meeting.ToplantiTuru);
         await _logService.LogAsync("ToplantiEkle", $"Yeni toplantı oluşturuldu: {meeting.Baslik}");
         return meeting;
     }
@@ -79,6 +83,17 @@ public class MeetingService
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdateMemberAttendanceAsync(int attendanceId, bool katildi)
+    {
+        var attendance = await _context.MemberMeetingAttendances.FindAsync(attendanceId);
+        if (attendance == null)
+            return;
+
+        attendance.Katildi = katildi;
+        attendance.GuncellemeTarihi = DateTime.Now;
+        await _context.SaveChangesAsync();
+    }
+
     public async Task SeedAttendanceForNewStudentAsync(int studentId)
     {
         var meetingIds = await _context.Meetings.Select(m => m.Id).ToListAsync();
@@ -96,7 +111,59 @@ public class MeetingService
         await _context.SaveChangesAsync();
     }
 
-    private async Task EnsureAttendanceRecordsAsync(int meetingId)
+    private async Task EnsureAttendanceRecordsAsync(int meetingId, string toplantiTuru)
+    {
+        // For "Yönetim Kurulu" (Board) meetings: only board members
+        // For "Kurucular Heyeti" (Founders) meetings: board members + founders
+        // For all other meetings: students
+        
+        if (toplantiTuru == "Yönetim Kurulu")
+        {
+            // Only board members
+            await CreateMemberAttendanceRecordsAsync(meetingId, membersQuery => 
+                membersQuery.Where(m => m.IsYonetimKurulu && m.AktifMi));
+        }
+        else if (toplantiTuru == "Kurucular Heyeti")
+        {
+            // Board members + founders
+            await CreateMemberAttendanceRecordsAsync(meetingId, membersQuery => 
+                membersQuery.Where(m => (m.IsYonetimKurulu || m.IsMutevelli) && m.AktifMi));
+        }
+        else
+        {
+            // Students for other meeting types
+            await CreateStudentAttendanceRecordsAsync(meetingId);
+        }
+    }
+
+    private async Task CreateMemberAttendanceRecordsAsync(int meetingId, Func<IQueryable<Member>, IQueryable<Member>> filter)
+    {
+        var existingMemberIds = await _context.MemberMeetingAttendances
+            .Where(a => a.MeetingId == meetingId)
+            .Select(a => a.MemberId)
+            .ToListAsync();
+
+        var membersQuery = _context.Members.AsQueryable();
+        var members = await filter(membersQuery)
+            .Where(m => !existingMemberIds.Contains(m.Id))
+            .Select(m => m.Id)
+            .ToListAsync();
+
+        if (!members.Any())
+            return;
+
+        var attendances = members.Select(memberId => new MemberMeetingAttendance
+        {
+            MeetingId = meetingId,
+            MemberId = memberId,
+            Katildi = true
+        });
+
+        _context.MemberMeetingAttendances.AddRange(attendances);
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task CreateStudentAttendanceRecordsAsync(int meetingId)
     {
         var existingStudentIds = await _context.StudentMeetingAttendances
             .Where(a => a.MeetingId == meetingId)

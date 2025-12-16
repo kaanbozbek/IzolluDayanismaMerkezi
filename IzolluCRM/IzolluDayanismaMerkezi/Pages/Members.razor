@@ -8,6 +8,7 @@
 @inject DonorService DonorService
 @inject MemberScholarshipCommitmentService CommitmentService
 @inject SettingsService SettingsService
+@inject PdfService PdfService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
@@ -95,6 +96,12 @@
                            StartIcon="@Icons.Material.Outlined.FileDownload"
                            OnClick="ExportToExcel">
                     Excel'e Aktar
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                           OnClick="ExportToPdf">
+                    PDF'e Aktar
                 </MudButton>
             </div>
 
@@ -1410,6 +1417,30 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Excel aktarma hatası: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var membersToExport = _filteredMembers.ToList();
+            
+            if (!membersToExport.Any())
+            {
+                Snackbar.Add("Dışa aktarılacak üye bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            var pdfBytes = PdfService.GenerateMembersPdfReport(membersToExport);
+            var fileName = $"Uyeler_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+            await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(pdfBytes));
+            Snackbar.Add($"{membersToExport.Count} üye PDF'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF aktarma hatası: {ex.Message}", Severity.Error);
         }
     }
 

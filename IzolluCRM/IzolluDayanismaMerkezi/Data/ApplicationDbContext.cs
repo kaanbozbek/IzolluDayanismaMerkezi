@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Settings> Settings { get; set; }
     public DbSet<Meeting> Meetings { get; set; }
     public DbSet<StudentMeetingAttendance> StudentMeetingAttendances { get; set; }
+    public DbSet<MemberMeetingAttendance> MemberMeetingAttendances { get; set; }
     public DbSet<MemberScholarshipCommitment> MemberScholarshipCommitments { get; set; }
     public DbSet<SystemSettings> SystemSettings { get; set; }
     public DbSet<ScholarshipPayment> ScholarshipPayments { get; set; }

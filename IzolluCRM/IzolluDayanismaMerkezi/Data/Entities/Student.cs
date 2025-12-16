@@ -19,6 +19,8 @@ public class Student
     [StringLength(200)]
     public string? Universite { get; set; }
 
+    public bool IsMalatyaUniversity { get; set; }
+
     [StringLength(20)]
     public string? Cinsiyet { get; set; }
 

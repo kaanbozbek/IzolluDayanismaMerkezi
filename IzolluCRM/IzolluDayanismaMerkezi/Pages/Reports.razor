@@ -85,10 +85,7 @@ else
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); border-radius: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between;">
-                                <div style="display: flex; align-items: center;">
-                                    <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Style="color: white; margin-right: 8px;" />
-                                    <MudText Typo="Typo.body2" Style="color: white;">Bağışçılar</MudText>
-                                </div>
+                                <MudText Typo="Typo.body2" Style="color: white;">Bağışçılar</MudText>
                                 <MudText Typo="Typo.h5" Style="color: white;"><strong>@_stats.TotalDonors</strong></MudText>
                             </MudPaper>
                         </MudItem>
@@ -138,6 +135,78 @@ else
 
     <!-- Dağılım Tabloları -->
     <MudGrid Spacing="3">
+        <!-- Cinsiyet Dağılımı Chart -->
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3" Style="border-radius: 12px;">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" Class="mr-2" />
+                            Cinsiyet Bazlı Üye Dağılımı
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_genderChartData.Any())
+                    {
+                        <MudChart ChartType="ChartType.Donut" 
+                                  InputData="@_genderChartData" 
+                                  InputLabels="@_genderLabels"
+                                  Width="300px" Height="300px" />
+                        <MudStack Row="true" Justify="Justify.Center" Class="mt-2">
+                            @for (int i = 0; i < _genderLabels.Length; i++)
+                            {
+                                var idx = i;
+                                <MudChip T="string" Color="@(idx == 0 ? Color.Primary : Color.Secondary)" Size="Size.Small">
+                                    @_genderLabels[idx]: @_genderChartData[idx].ToString("F0")
+                                </MudChip>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">Cinsiyet verisi bulunamadı.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Malatya İçi/Dışı Dağılımı -->
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3" Style="border-radius: 12px;">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Class="mr-2" />
+                            Malatya İçi/Dışı Öğrenci Dağılımı
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_locationChartData.Any())
+                    {
+                        <MudChart ChartType="ChartType.Donut" 
+                                  InputData="@_locationChartData" 
+                                  InputLabels="@_locationLabels"
+                                  Width="300px" Height="300px" />
+                        <MudStack Row="true" Justify="Justify.Center" Class="mt-2">
+                            @for (int i = 0; i < _locationLabels.Length; i++)
+                            {
+                                var idx = i;
+                                <MudChip T="string" Color="@(idx == 0 ? Color.Success : Color.Warning)" Size="Size.Small">
+                                    @_locationLabels[idx]: @_locationChartData[idx].ToString("F0")
+                                </MudChip>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">Konum verisi bulunamadı.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
         <MudItem xs="12" md="6">
             <MudCard Elevation="3" Style="border-radius: 12px;">
                 <MudCardHeader>
@@ -151,7 +220,11 @@ else
                 <MudCardContent>
                     @if (_universityData.Any())
                     {
-                        <MudTable Items="@_universityData" Dense="true" Hover="true" Elevation="0">
+                        <MudChart ChartType="ChartType.Bar" 
+                                  ChartSeries="@_universityChartSeries" 
+                                  XAxisLabels="@_universityChartLabels"
+                                  Width="100%" Height="300px" />
+                        <MudTable Items="@_universityData" Dense="true" Hover="true" Elevation="0" Class="mt-3">
                             <HeaderContent>
                                 <MudTh>Üniversite</MudTh>
                                 <MudTh>Öğrenci Sayısı</MudTh>
@@ -303,6 +376,18 @@ else
     private List<string> _academicYears = new();
     private string _selectedReportPeriod = string.Empty;
     private bool _selectPickerInitialized = false;
+    
+    // Chart data for gender distribution
+    private double[] _genderChartData = Array.Empty<double>();
+    private string[] _genderLabels = Array.Empty<string>();
+    
+    // Chart data for location distribution
+    private double[] _locationChartData = Array.Empty<double>();
+    private string[] _locationLabels = Array.Empty<string>();
+    
+    // Chart data for university distribution
+    private List<ChartSeries> _universityChartSeries = new();
+    private string[] _universityChartLabels = Array.Empty<string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -428,6 +513,28 @@ else
 
     private async Task LoadChartsAndTablesAsync(List<Student> students, List<MemberScholarshipCommitment> commitments, List<Aid> aids)
     {
+        // Gender distribution for charts
+        var genderGroups = students
+            .GroupBy(s => string.IsNullOrEmpty(s.Cinsiyet) ? "Belirtilmemiş" : s.Cinsiyet)
+            .ToDictionary(g => g.Key, g => g.Count());
+        
+        if (genderGroups.Any())
+        {
+            _genderLabels = genderGroups.Keys.ToArray();
+            _genderChartData = genderGroups.Values.Select(v => (double)v).ToArray();
+        }
+        
+        // Location distribution (Malatya içi/dışı)
+        var locationGroups = students
+            .GroupBy(s => s.IsMalatyaUniversity ? "Malatya İçi" : "Malatya Dışı")
+            .ToDictionary(g => g.Key, g => g.Count());
+        
+        if (locationGroups.Any())
+        {
+            _locationLabels = locationGroups.Keys.ToArray();
+            _locationChartData = locationGroups.Values.Select(v => (double)v).ToArray();
+        }
+        
         // "Üyelerin Verdiği Burs Dağılımı" - show pledged and realized counts
         _memberScholarshipDetails = commitments
             .Where(c => c.Member != null)
@@ -449,6 +556,16 @@ else
             .OrderByDescending(g => g.Count())
             .Take(10)
             .ToDictionary(g => g.Key, g => g.Count());
+        
+        // University chart data
+        if (_universityData.Any())
+        {
+            _universityChartLabels = _universityData.Keys.Select(k => k.Length > 15 ? k.Substring(0, 12) + "..." : k).ToArray();
+            _universityChartSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Öğrenci", Data = _universityData.Values.Select(v => (double)v).ToArray() }
+            };
+        }
 
         // "Köylere Göre Yardım Dağılımı" - dönem filtresine göre
         _villageAidData = aids
@@ -573,6 +690,31 @@ else
     {
         try
         {
+            // Get all students for distribution calculations
+            var allStudents = await StudentService.GetAllAsync();
+            
+            // Calculate gender distribution
+            var genderDistribution = allStudents
+                .GroupBy(s => string.IsNullOrEmpty(s.Cinsiyet) ? "Belirtilmemiş" : s.Cinsiyet)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Calculate Malatya location distribution
+            var malatyaLocationDistribution = allStudents
+                .GroupBy(s => s.IsMalatyaUniversity ? "Malatya İçi" : "Malatya Dışı")
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Get top 10 donors by realized count
+            var topDonors = _memberScholarshipDetails
+                .OrderByDescending(x => x.RealizedCount)
+                .Take(10)
+                .ToList();
+
+            // Get unfulfilled commitments
+            var unfulfilledCommitments = _memberScholarshipDetails
+                .Where(x => x.PledgedCount > x.RealizedCount)
+                .OrderByDescending(x => x.PledgedCount - x.RealizedCount)
+                .ToList();
+
             var pdfBytes = PdfService.GenerateComprehensiveReport(
                 totalStudents: _stats.TotalStudents,
                 activeScholarships: _stats.ActiveScholarships,
@@ -583,7 +725,11 @@ else
                 activePeriod: _stats.ActivePeriod,
                 periodBursTutari: _stats.PeriodBursTutari,
                 universityData: _universityData,
-                memberScholarshipDetails: _memberScholarshipDetails
+                memberScholarshipDetails: _memberScholarshipDetails,
+                genderDistribution: genderDistribution,
+                malatyaLocationDistribution: malatyaLocationDistribution,
+                topDonors: topDonors,
+                unfulfilledCommitments: unfulfilledCommitments
             );
             
             await JS.InvokeVoidAsync("downloadFile", $"kapsamli_rapor_{DateTime.Now:yyyyMMdd_HHmmss}.pdf", Convert.ToBase64String(pdfBytes));

@@ -53,7 +53,8 @@
                 <MudItem xs="12" md="6">
                     <MudNumericField Value="_donor.BirimBursTutari" 
                                    ValueChanged="@((decimal val) => OnBursAmountChanged(val))"
-                                   Label="1 Burs Tutarı" Min="0" Format="N2" />
+                                   Label="1 Burs Tutarı" Min="0" Format="N2" 
+                                   Step="0.01M" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudAlert Severity="Severity.Success">
