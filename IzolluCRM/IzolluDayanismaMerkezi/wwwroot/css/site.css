@@ -251,15 +251,28 @@ table thead,
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
-/* Logo spacing from menu - adds 8-12px padding below logo */
+/* Logo spacing from menu - adds padding below logo */
 .drawer-logo {
     padding: 12px 12px 10px 12px !important;
+    margin-bottom: 10px !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
 .sidebar .drawer-logo {
-    margin-bottom: 0 !important;
+    margin-bottom: 10px !important;
+    border: none !important;
+    border-bottom: none !important;
+}
+
+/* Nav header - logo wrapper */
+.sidebar .nav-header {
+    border: none !important;
+    border-bottom: none !important;
 }
 
 .sidebar .nav-logo {
