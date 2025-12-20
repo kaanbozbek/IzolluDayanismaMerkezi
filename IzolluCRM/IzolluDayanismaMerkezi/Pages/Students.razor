@@ -11,39 +11,39 @@
 <PageTitle>Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
 
 @* STATISTICS CARDS *@
-<MudGrid Class="mb-4" Spacing="4">
+<MudGrid Class="mb-4" Spacing="3">
     <MudItem xs="12" sm="4">
-        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin: 8px 0;">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border-radius: 12px;">
             <div class="d-flex align-center justify-space-between">
                 <div>
-                    <MudText Typo="Typo.h5" Style="color: white; font-weight: bold;">@TotalStudents</MudText>
-                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Toplam Öğrenci</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Öğrenci</MudText>
                 </div>
-                <MudIcon Icon="@Icons.Material.Outlined.School" Size="Size.Large" Style="color: rgba(255,255,255,0.8);" />
+                <MudIcon Icon="@Icons.Material.Outlined.School" Size="Size.Large" Style="opacity: 0.8;" />
             </div>
         </MudPaper>
     </MudItem>
     
     <MudItem xs="12" sm="4">
-        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; margin: 8px 0;">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; border-radius: 12px;">
             <div class="d-flex align-center justify-space-between">
                 <div>
-                    <MudText Typo="Typo.h5" Style="color: white; font-weight: bold;">@ActiveScholarshipStudents</MudText>
-                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Aktif Burs Alan</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@ActiveScholarshipStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;">Aktif Burs Alan</MudText>
                 </div>
-                <MudIcon Icon="@Icons.Material.Outlined.Payments" Size="Size.Large" Style="color: rgba(255,255,255,0.8);" />
+                <MudIcon Icon="@Icons.Material.Outlined.Payments" Size="Size.Large" Style="opacity: 0.8;" />
             </div>
         </MudPaper>
     </MudItem>
     
     <MudItem xs="12" sm="4">
-        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 12px; margin: 8px 0;">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%); color: white; border-radius: 12px;">
             <div class="d-flex align-center justify-space-between">
                 <div>
-                    <MudText Typo="Typo.h5" Style="color: white; font-weight: bold;">@GraduatedStudents</MudText>
-                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Mezun Öğrenci</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@GraduatedStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;">Mezun Öğrenci</MudText>
                 </div>
-                <MudIcon Icon="@Icons.Material.Outlined.EmojiEvents" Size="Size.Large" Style="color: rgba(255,255,255,0.8);" />
+                <MudIcon Icon="@Icons.Material.Outlined.EmojiEvents" Size="Size.Large" Style="opacity: 0.8;" />
             </div>
         </MudPaper>
     </MudItem>
@@ -154,7 +154,7 @@
                     @if (_filters.ScholarshipStartFrom.HasValue || _filters.ScholarshipStartTo.HasValue)
                     {
                         <MudChip T="string" Color="Color.Error" Size="Size.Small" OnClose="@(() => RemoveDateRangeFilter())">
-                            Tarih: @(_filters.ScholarshipStartFrom?.ToString("dd.MM.yyyy") ?? "...") - @(_filters.ScholarshipStartTo?.ToString("dd.MM.yyyy") ?? "...")
+                            Tarih: @(_filters.ScholarshipStartFrom?.ToString("dd/MM/yyyy") ?? "...") - @(_filters.ScholarshipStartTo?.ToString("dd/MM/yyyy") ?? "...")
                         </MudChip>
                     }
                 </div>
@@ -283,7 +283,7 @@
                     @if (context.MezuniyetTarihi.HasValue)
                     {
                         <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.School">
-                            @context.MezuniyetTarihi.Value.ToString("dd.MM.yyyy")
+                            @context.MezuniyetTarihi.Value.ToString("dd/MM/yyyy")
                         </MudChip>
                     }
                     else
@@ -445,15 +445,14 @@
             @* Burs Tarihleri *@
             <div>
                 <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Burs Başlangıç Tarihi</strong></MudText>
-                <MudDatePicker @bind-Date="_filters.ScholarshipStartFrom" 
-                               Label="En erken" 
-                               Variant="Variant.Outlined"
-                               DateFormat="dd.MM.yyyy" />
-                <MudDatePicker @bind-Date="_filters.ScholarshipStartTo" 
-                               Label="En geç" 
-                               Variant="Variant.Outlined"
-                               DateFormat="dd.MM.yyyy"
-                               Class="mt-2" />
+                <div class="form-group">
+                    <label class="form-label">En erken</label>
+                    <InputDate @bind-Value="_filters.ScholarshipStartFrom" class="form-control" />
+                </div>
+                <div class="form-group mt-2">
+                    <label class="form-label">En geç</label>
+                    <InputDate @bind-Value="_filters.ScholarshipStartTo" class="form-control" />
+                </div>
             </div>
 
         </MudStack>

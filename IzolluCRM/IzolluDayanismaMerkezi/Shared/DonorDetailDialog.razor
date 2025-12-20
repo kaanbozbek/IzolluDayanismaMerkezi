@@ -35,10 +35,10 @@
                 <MudText Typo="Typo.body2" Color="Color.Primary"><strong>Toplam Tutar:</strong> @Donor.ToplamTutar.ToString("N2") ₺</MudText>
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudText Typo="Typo.body2"><strong>İlk Burs Tarihi:</strong> @Donor.IlkBursVerdigiTarih?.ToString("dd.MM.yyyy")</MudText>
+                <MudText Typo="Typo.body2"><strong>İlk Burs Tarihi:</strong> @Donor.IlkBursVerdigiTarih?.ToString("dd/MM/yyyy")</MudText>
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudText Typo="Typo.body2"><strong>Son Burs Tarihi:</strong> @Donor.SonBursVerdigiTarih?.ToString("dd.MM.yyyy")</MudText>
+                <MudText Typo="Typo.body2"><strong>Son Burs Tarihi:</strong> @Donor.SonBursVerdigiTarih?.ToString("dd/MM/yyyy")</MudText>
             </MudItem>
         </MudGrid>
     </DialogContent>

@@ -10,65 +10,77 @@
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
 
     @* Statistics Cards *@
-    <MudGrid Class="mb-4">
+    <MudGrid Class="mb-4" Spacing="3">
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Köy</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_villages.Count</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_villages.Count</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Köy</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.LocationCity" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.LocationCity" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Nüfus</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_totalPopulation.ToString("N0")</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_totalPopulation.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Nüfus</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.People" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Öğrenci</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_totalStudents.ToString("N0")</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_totalStudents.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Öğrenci</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.School" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #5eead4 0%, #2dd4bf 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Ortalama Nüfus</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_averagePopulation.ToString("N0")</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_averagePopulation.ToString("N0")</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Ortalama Nüfus</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.BarChart" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
     </MudGrid>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" Class="mb-4">
-        Köy Ekle
-    </MudButton>
+    @* FILTER BAR *@
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <div class="d-flex align-center gap-3">
+            <MudTextField @bind-Value="_searchString"
+                          Label="Ara"
+                          Placeholder="Köy adı, nüfus..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Style="flex: 1; max-width: 400px;" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Köy Ekle
+            </MudButton>
+        </div>
+    </MudPaper>
 
     <MudTable Items="@_villages" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Village, bool>(FilterFunc)" SortLabel="Sırala">
         <ToolBarContent>
-            <MudSpacer />
-            <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<Village, object>(x => x.Ad)">Köy Adı</MudTableSortLabel></MudTh>

@@ -89,7 +89,7 @@
             @if (student.MezuniyetTarihi.HasValue)
             {
                 <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.School">
-                    @student.MezuniyetTarihi.Value.ToString("dd.MM.yyyy")
+                    @student.MezuniyetTarihi.Value.ToString("dd/MM/yyyy")
                 </MudChip>
             }
             else
@@ -209,7 +209,7 @@
                 IsIzollulu = student.IsIzollulu,
                 UyelikTuru = "Mezun Öğrenci",
                 UyelikBaslangicTarihi = DateTime.Now,
-                Notlar = $"Mezun öğrenciden dönüştürüldü. Mezuniyet Tarihi: {student.MezuniyetTarihi?.ToString("dd.MM.yyyy")}",
+                Notlar = $"Mezun öğrenciden dönüştürüldü. Mezuniyet Tarihi: {student.MezuniyetTarihi?.ToString("dd/MM/yyyy")}",
                 OlusturmaTarihi = DateTime.Now
             };
             

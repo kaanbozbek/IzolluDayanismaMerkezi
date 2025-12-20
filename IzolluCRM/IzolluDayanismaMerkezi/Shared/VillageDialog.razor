@@ -2,57 +2,102 @@
 @using IzolluVakfi.Services
 @inject VillageService VillageService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
-<MudDialog>
+<MudDialog Style="max-width: 650px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.LocationCity" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Köy Düzenle" : "Yeni Köy Ekle")
+        </MudText>
+    </TitleContent>
     <DialogContent>
         <MudForm @ref="_form" @bind-IsValid="@_success">
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="_village.Ad" Label="Köy Adı" Required="true" />
-                </MudItem>
+            @* Temel Bilgiler *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mr-1" />
+                    Temel Bilgiler
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Köy Adı *</label>
+                            <select class="form-select selectpicker" data-live-search="true" @bind="_village.Ad" required>
+                                <option value="">Seçiniz</option>
+                                @foreach (var village in _izolluVillages)
+                                {
+                                    <option value="@village">@village</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Nüfus</label>
+                            <input type="number" class="form-control form-select" @bind="_village.Nufus" min="0" style="height: 38px;" />
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
 
-                <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_village.Nufus" Label="Nüfus" Min="0" />
-                </MudItem>
+            @* Muhtar Bilgileri *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                    Muhtar Bilgileri
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_village.MuhtarAdi" Label="Muhtar Adı" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_village.MuhtarTelefon" Label="Muhtar Telefon" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
 
-                <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="_village.MuhtarAdi" Label="Muhtar Adı" />
-                </MudItem>
+            @* Öğrenci Sayıları *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Info" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
+                    Öğrenci Sayıları
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="6" md="3">
+                        <MudNumericField @bind-Value="_village.IlkokulOgrenciSayisi" Label="İlkokul" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudNumericField @bind-Value="_village.OrtaokulOgrenciSayisi" Label="Ortaokul" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudNumericField @bind-Value="_village.LiseOgrenciSayisi" Label="Lise" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudNumericField @bind-Value="_village.UniversiteOgrenciSayisi" Label="Üniversite" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
 
-                <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="_village.MuhtarTelefon" Label="Muhtar Telefon" />
-                </MudItem>
-
-                <MudItem xs="12">
-                    <MudText Typo="Typo.subtitle1" Class="mt-2 mb-2"><strong>Öğrenci Sayıları</strong></MudText>
-                    <MudDivider />
-                </MudItem>
-
-                <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_village.IlkokulOgrenciSayisi" Label="İlkokul Öğrenci Sayısı" Min="0" />
-                </MudItem>
-
-                <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_village.OrtaokulOgrenciSayisi" Label="Ortaokul Öğrenci Sayısı" Min="0" />
-                </MudItem>
-
-                <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_village.LiseOgrenciSayisi" Label="Lise Öğrenci Sayısı" Min="0" />
-                </MudItem>
-
-                <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_village.UniversiteOgrenciSayisi" Label="Üniversite Öğrenci Sayısı" Min="0" />
-                </MudItem>
-
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="_village.Notlar" Label="Notlar" Lines="3" />
-                </MudItem>
-            </MudGrid>
+            @* Notlar *@
+            <MudPaper Elevation="0" Class="pa-3" Style="background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <MudText Typo="Typo.subtitle2" Style="color: #b45309;" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Notes" Size="Size.Small" Class="mr-1" />
+                    Notlar
+                </MudText>
+                <MudTextField @bind-Value="_village.Notlar" 
+                              Label="Notlar" 
+                              Lines="3" 
+                              Variant="Variant.Outlined"
+                              Placeholder="Köy ile ilgili notlarınızı buraya yazabilirsiniz..." />
+            </MudPaper>
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">İptal</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)">Kaydet</MudButton>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Kaydet")
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -64,12 +109,40 @@
     private MudForm _form = null!;
     private bool _success;
     private Village _village = new();
+    
+    private readonly List<string> _izolluVillages = new()
+    {
+        "Abuşoğlu", "Akça", "Akuşağı", "Bağlıca", "Bentköy", "Çanakçı", "Darıpınar", "Dedeköy",
+        "Düztarla", "Erdemli", "Gülenköy", "Güneyce", "İkizpınar", "Kaleköy", "Karaağaç",
+        "Karahüseyin", "Kıyıcak", "Kozluk", "Kumluyazı", "Mahmut Dursun", "Salkımlı", "Sarıot",
+        "Soğukpınar", "Tepebaşı", "Uyanık", "Uzunhüseyin", "Üçdeğirmen", "Yenidamlar"
+    };
 
     protected override void OnInitialized()
     {
         if (IsEdit && Village != null)
         {
             _village = Village;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeSelectPickersAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickersAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
         }
     }
 
@@ -83,10 +156,12 @@
                 if (IsEdit)
                 {
                     await VillageService.UpdateAsync(_village);
+                    Snackbar.Add("Köy başarıyla güncellendi.", Severity.Success);
                 }
                 else
                 {
                     await VillageService.CreateAsync(_village);
+                    Snackbar.Add("Köy başarıyla eklendi.", Severity.Success);
                 }
 
                 MudDialog.Close(DialogResult.Ok(true));

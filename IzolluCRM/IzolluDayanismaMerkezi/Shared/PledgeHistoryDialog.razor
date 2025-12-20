@@ -4,19 +4,19 @@
 
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h5">@MemberName - Taahhüt Geçmişi</MudText>
+        <div class="d-flex justify-space-between align-center" style="width: 100%;">
+            <MudText Typo="Typo.h5">@MemberName - Taahhüt Geçmişi</MudText>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="AddNewPledge"
+                       Size="Size.Small">
+                Yeni Taahhüt Ekle
+            </MudButton>
+        </div>
     </TitleContent>
     <DialogContent>
         <MudGrid>
-            <MudItem xs="12" Class="d-flex justify-end">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="AddNewPledge"
-                           Class="mb-3">
-                    Yeni Taahhüt Ekle
-                </MudButton>
-            </MudItem>
 
             <MudItem xs="12">
                 @if (_loading)

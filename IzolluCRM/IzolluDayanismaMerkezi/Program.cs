@@ -5,8 +5,15 @@ using IzolluVakfi.Services;
 using QuestPDF.Infrastructure;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Turkish culture for dd/MM/yyyy date format
+var cultureInfo = new CultureInfo("tr-TR");
+cultureInfo.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Configure Kestrel to listen on all network interfaces
 builder.WebHost.ConfigureKestrel(serverOptions =>

@@ -11,54 +11,73 @@
     <MudForm @ref="_formRef" Model="_formModel">
         <MudGrid Spacing="2">
             <MudItem xs="12" md="4">
-                <MudTextField @bind-Value="_formModel.ToplantiAdi" Label="Toplantı Adı" Required="true" />
+                <div class="form-group">
+                    <label class="form-label">Toplantı Adı</label>
+                    <MudTextField @bind-Value="_formModel.ToplantiAdi" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </div>
             </MudItem>
             <MudItem xs="12" md="4">
-                <label class="form-label">Toplantı Türü</label>
-                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
-                        value="@_formModel.ToplantiTuru" @onchange="OnMeetingTypeChanged" title="Seçiniz">
-                    @foreach (var type in _meetingTypes)
-                    {
-                        <option value="@type">@type</option>
-                    }
-                </select>
+                <div class="form-group">
+                    <label class="form-label">Toplantı Türü</label>
+                    <select id="meeting-type-select" class="selectpicker form-control" data-live-search="false" data-width="100%"
+                            @onchange="@(e => _formModel.ToplantiTuru = e.Value?.ToString())">
+                        <option value="">Seçiniz</option>
+                        @foreach (var type in _meetingTypes)
+                        {
+                            <option value="@type" selected="@(_formModel.ToplantiTuru == type)">@type</option>
+                        }
+                    </select>
+                </div>
             </MudItem>
             <MudItem xs="12" md="4">
-                <label class="form-label">Toplantı Lokasyonu</label>
-                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary" data-live-search="true"
-                        value="@_formModel.Konum" @onchange="OnLocationChanged" title="Seçiniz">
-                    @foreach (var loc in _locations)
-                    {
-                        <option value="@loc">@loc</option>
-                    }
-                </select>
+                <div class="form-group">
+                    <label class="form-label">Toplantı Lokasyonu</label>
+                    <select id="meeting-location-select" class="selectpicker form-control" data-live-search="true" data-width="100%"
+                            @onchange="@(e => _formModel.Konum = e.Value?.ToString())">
+                        <option value="">Seçiniz</option>
+                        @foreach (var loc in _locations)
+                        {
+                            <option value="@loc" selected="@(_formModel.Konum == loc)">@loc</option>
+                        }
+                    </select>
+                </div>
             </MudItem>
             <MudItem xs="12" md="4">
-                <label class="form-label">Toplantı Tarihi</label>
-                <InputDate @bind-Value="_formModel.Tarih" class="form-control" />
+                <div class="form-group">
+                    <label class="form-label">Toplantı Tarihi</label>
+                    <input type="date" class="form-control" 
+                           value="@(_formModel.Tarih?.ToString("yyyy-MM-dd"))"
+                           @onchange="@(e => _formModel.Tarih = DateTime.TryParse(e.Value?.ToString(), out var dt) ? dt : null)" />
+                </div>
             </MudItem>
             <MudItem xs="12" md="4">
-                <label class="form-label">Başlangıç Saati</label>
-                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
-                        value="@_formModel.BaslangicSaatiStr" @onchange="OnStartTimeChanged" title="Seçiniz">
-                    @foreach (var time in _timeOptions)
-                    {
-                        <option value="@time">@time</option>
-                    }
-                </select>
+                <div class="form-group">
+                    <label class="form-label">Başlangıç Saati</label>
+                    <select id="meeting-start-time-select" class="selectpicker form-control" data-live-search="false" data-width="100%"
+                            @onchange="@(e => _formModel.BaslangicSaatiStr = e.Value?.ToString())">
+                        <option value="">Seçiniz</option>
+                        @foreach (var time in _timeOptions)
+                        {
+                            <option value="@time" selected="@(_formModel.BaslangicSaatiStr == time)">@time</option>
+                        }
+                    </select>
+                </div>
             </MudItem>
             <MudItem xs="12" md="4">
-                <label class="form-label">Bitiş Saati</label>
-                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
-                        value="@_formModel.BitisSaatiStr" @onchange="OnEndTimeChanged" title="Seçiniz">
-                    @foreach (var time in _timeOptions)
-                    {
-                        <option value="@time">@time</option>
-                    }
-                </select>
+                <div class="form-group">
+                    <label class="form-label">Bitiş Saati</label>
+                    <select id="meeting-end-time-select" class="selectpicker form-control" data-live-search="false" data-width="100%"
+                            @onchange="@(e => _formModel.BitisSaatiStr = e.Value?.ToString())">
+                        <option value="">Seçiniz</option>
+                        @foreach (var time in _timeOptions)
+                        {
+                            <option value="@time" selected="@(_formModel.BitisSaatiStr == time)">@time</option>
+                        }
+                    </select>
+                </div>
             </MudItem>
             <MudItem xs="12">
-                <MudTextField @bind-Value="_formModel.Not" Label="Toplantı Notu" Lines="3" />
+                <MudTextField @bind-Value="_formModel.Not" Label="Toplantı Notu" Lines="3" Variant="Variant.Outlined" />
             </MudItem>
         </MudGrid>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.EventAvailable"
@@ -79,27 +98,33 @@
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           Immediate="true"
                           DebounceInterval="300"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
                           OnDebounceIntervalElapsed="ApplyFilters"
-                          Style="flex: 1; max-width: 400px;" />
+                          Style="flex: 1; max-width: 300px;" />
 
-            <div style="flex: 1; max-width: 200px;">
-                <label class="form-label">Başlangıç Tarihi</label>
-                <InputDate @bind-Value="_dateStart" class="form-control" @onchange="ApplyFilters" />
+            <div class="form-group" style="max-width: 180px;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 2px;">Başlangıç Tarihi</label>
+                <input type="date" class="form-control form-control-sm" 
+                       value="@(_dateStart?.ToString("yyyy-MM-dd"))"
+                       @onchange="@(e => { _dateStart = DateTime.TryParse(e.Value?.ToString(), out var dt) ? dt : null; ApplyFilters(); })" />
             </div>
 
-            <div style="flex: 1; max-width: 200px;">
-                <label class="form-label">Bitiş Tarihi</label>
-                <InputDate @bind-Value="_dateEnd" class="form-control" @onchange="ApplyFilters" />
+            <div class="form-group" style="max-width: 180px;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 2px;">Bitiş Tarihi</label>
+                <input type="date" class="form-control form-control-sm" 
+                       value="@(_dateEnd?.ToString("yyyy-MM-dd"))"
+                       @onchange="@(e => { _dateEnd = DateTime.TryParse(e.Value?.ToString(), out var dt) ? dt : null; ApplyFilters(); })" />
             </div>
 
-            <div style="flex: 1; max-width: 200px;">
-                <label class="form-label">Konum</label>
-                <select class="selectpicker" data-width="100%" data-style="btn-outline-primary" data-live-search="true"
-                        value="@_selectedLocation" @onchange="OnLocationFilterChanged" title="Seçiniz">
+            <div class="form-group" style="max-width: 180px;">
+                <label class="form-label" style="font-size: 0.75rem; margin-bottom: 2px;">Konum</label>
+                <select id="filter-location-select" class="selectpicker form-control form-control-sm" data-live-search="true" data-width="100%"
+                        @onchange="@(e => { _selectedLocation = e.Value?.ToString() ?? ""; ApplyFilters(); })">
                     <option value="">Tüm konumlar</option>
                     @foreach (var loc in _locations)
                     {
-                        <option value="@loc">@loc</option>
+                        <option value="@loc" selected="@(_selectedLocation == loc)">@loc</option>
                     }
                 </select>
             </div>
@@ -124,9 +149,9 @@
                 }
                 @if (_dateStart.HasValue || _dateEnd.HasValue)
                 {
-                    var dateText = $"{_dateStart?.ToString("dd.MM.yyyy") ?? "*"}";
+                    var dateText = $"{_dateStart?.ToString("dd/MM/yyyy") ?? "*"}";
                     if (_dateEnd.HasValue)
-                        dateText += " - " + _dateEnd.Value.ToString("dd.MM.yyyy");
+                        dateText += " - " + _dateEnd.Value.ToString("dd/MM/yyyy");
                     <MudChip T="string" Color="Color.Info" Size="Size.Small" OnClose="@(() => { _dateStart = null; _dateEnd = null; ApplyFilters(); })">Tarih: @dateText</MudChip>
                 }
                 @if (!string.IsNullOrEmpty(_selectedLocation))
@@ -176,7 +201,7 @@
                         <div style="width: 100%;">
                             <MudText Typo="Typo.subtitle1"><strong>@meeting.Baslik</strong></MudText>
                             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                @meeting.ToplantiTuru • @meeting.Tarih.ToString("dd.MM.yyyy HH:mm") - @meeting.BitisTarihi.ToString("HH:mm")
+                                @meeting.ToplantiTuru • @meeting.Tarih.ToString("dd/MM/yyyy HH:mm") - @meeting.BitisTarihi.ToString("HH:mm")
                                 @if (!string.IsNullOrEmpty(meeting.Konum))
                                 {
                                     <text> • @meeting.Konum</text>
@@ -184,15 +209,24 @@
                             </MudText>
                             @if (!string.IsNullOrWhiteSpace(meeting.Aciklama))
                             {
-                                <span @onclick="@(() => ShowMeetingDetail(meeting))" @onclick:stopPropagation="true" style="cursor: pointer; color: #1976d2;" class="mt-1 d-block">
-                                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" /> <small>Not: @(meeting.Aciklama.Length > 50 ? meeting.Aciklama.Substring(0, 50) + "..." : meeting.Aciklama)</small>
-                                </span>
+                                <MudText Typo="Typo.caption" Color="Color.Tertiary" Class="mt-1">
+                                    Not: @(meeting.Aciklama.Length > 50 ? meeting.Aciklama.Substring(0, 50) + "..." : meeting.Aciklama)
+                                </MudText>
                             }
                             <MudText Typo="Typo.caption" Color="Color.Tertiary">
                                 Katılım: @attended / @total
                             </MudText>
                         </div>
-                        <MudIcon Icon="@(isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" />
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <div @onclick:stopPropagation="true">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" 
+                                           OnClick="@(() => ShowMeetingDetail(meeting))"
+                                           StartIcon="@Icons.Material.Filled.Visibility">
+                                    Detay Göster
+                                </MudButton>
+                            </div>
+                            <MudIcon Icon="@(isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" />
+                        </MudStack>
                     </MudStack>
                 </MudListItem>
 
@@ -303,7 +337,6 @@
     private bool _loading = true;
     private readonly MeetingInput _formModel = new();
     private MudForm? _formRef;
-    private bool _selectPickerReady;
     private int? _expandedMeetingId;
     private string _searchText = string.Empty;
     private DateTime? _dateStart = null;
@@ -320,60 +353,15 @@
     {
         if (firstRender)
         {
-            await InitializeSelectPickersAsync();
-            _selectPickerReady = true;
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("bootstrapSelect.init");
+            }
+            catch (JSDisconnectedException)
+            {
+                // Component disposed, ignore
+            }
         }
-    }
-
-    private async Task InitializeSelectPickersAsync()
-    {
-        await JSRuntime.InvokeVoidAsync("bootstrapSelect.init");
-        await JSRuntime.InvokeVoidAsync("bootstrapSelect.refresh");
-    }
-
-    private Task RefreshSelectPickersAsync()
-    {
-        if (!_selectPickerReady)
-        {
-            return Task.CompletedTask;
-        }
-
-        return JSRuntime.InvokeVoidAsync("bootstrapSelect.refresh").AsTask();
-    }
-
-    private async Task OnMeetingTypeChanged(ChangeEventArgs args)
-    {
-        _formModel.ToplantiTuru = args.Value?.ToString() ?? string.Empty;
-        await RefreshSelectPickersAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnLocationChanged(ChangeEventArgs args)
-    {
-        _formModel.Konum = args.Value?.ToString() ?? string.Empty;
-        await RefreshSelectPickersAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnStartTimeChanged(ChangeEventArgs args)
-    {
-        _formModel.BaslangicSaatiStr = args.Value?.ToString() ?? string.Empty;
-        await RefreshSelectPickersAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnEndTimeChanged(ChangeEventArgs args)
-    {
-        _formModel.BitisSaatiStr = args.Value?.ToString() ?? string.Empty;
-        await RefreshSelectPickersAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnLocationFilterChanged(ChangeEventArgs args)
-    {
-        _selectedLocation = args.Value?.ToString() ?? string.Empty;
-        await RefreshSelectPickersAsync();
-        ApplyFilters();
     }
 
     private async Task LoadMeetings()
@@ -382,6 +370,24 @@
         _meetings = await MeetingService.GetAllAsync();
         FilterMeetings();
         _loading = false;
+    }
+
+    private void OnDateStartChanged(DateTime? date)
+    {
+        _dateStart = date;
+        ApplyFilters();
+    }
+
+    private void OnDateEndChanged(DateTime? date)
+    {
+        _dateEnd = date;
+        ApplyFilters();
+    }
+
+    private void OnLocationFilterChanged(string value)
+    {
+        _selectedLocation = value ?? string.Empty;
+        ApplyFilters();
     }
 
     private void FilterMeetings()
@@ -396,7 +402,7 @@
                 (m.Baslik?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (m.Konum?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (m.Aciklama?.ToLowerInvariant().Contains(searchLower) ?? false) ||
-                m.Tarih.ToString("dd.MM.yyyy").Contains(searchLower)
+                m.Tarih.ToString("dd/MM/yyyy").Contains(searchLower)
             );
         }
 
@@ -501,7 +507,6 @@
         });
 
         _formModel.Reset(_meetingTypes.First(), _locations.First());
-        await RefreshSelectPickersAsync();
         await LoadMeetings();
         Snackbar.Add(successMessage, Severity.Success);
     }

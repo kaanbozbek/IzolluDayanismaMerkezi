@@ -12,7 +12,15 @@ window.bootstrapSelect = window.bootstrapSelect || {};
         }
 
         window.setTimeout(function () {
-            window.jQuery(".selectpicker").selectpicker();
+            // Sadece henüz initialize edilmemiş selectpicker'ları işle
+            window.jQuery(".selectpicker").not(".bs-select-hidden").each(function() {
+                var $this = window.jQuery(this);
+                // Eğer zaten bir bootstrap-select container'ı varsa, destroy et ve yeniden oluştur
+                if ($this.data('selectpicker')) {
+                    $this.selectpicker('destroy');
+                }
+                $this.selectpicker();
+            });
         }, 0);
     };
 
@@ -23,6 +31,21 @@ window.bootstrapSelect = window.bootstrapSelect || {};
 
         window.setTimeout(function () {
             window.jQuery(".selectpicker").selectpicker("refresh");
+        }, 0);
+    };
+    
+    window.bootstrapSelect.destroy = function () {
+        if (!ensurePlugin()) {
+            return;
+        }
+
+        window.setTimeout(function () {
+            window.jQuery(".selectpicker").each(function() {
+                var $this = window.jQuery(this);
+                if ($this.data('selectpicker')) {
+                    $this.selectpicker('destroy');
+                }
+            });
         }, 0);
     };
 })();

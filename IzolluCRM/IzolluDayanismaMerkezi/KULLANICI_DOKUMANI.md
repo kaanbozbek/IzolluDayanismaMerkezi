@@ -1,116 +1,388 @@
 # 📘 İzollu Dayanışma Merkezi - Kullanım Kılavuzu
 
+**Versiyon:** 2.0  
+**Son Güncelleme:** 20 Aralık 2025
+
+---
+
+## 📑 İçindekiler
+
+### [🎯 Genel Bakış](#genel-bakis)
+- [Sistem Özellikleri](#sistem-ozellikleri)
+- [Kimler İçin?](#kimler-icin)
+
+### [🔐 Giriş ve Güvenlik](#giris-ve-guvenlik)
+- [İlk Giriş](#ilk-giris)
+- [Şifre Değiştirme](#sifre-degistirme)
+- [Oturum Yönetimi](#oturum-yonetimi)
+
+### [📊 Dashboard (Ana Sayfa)](#dashboard)
+- [Genel İstatistikler](#genel-istatistikler)
+- [Finansal İstatistikler](#finansal-istatistikler)
+- [Dönem Filtresi](#donem-filtresi)
+- [PDF Rapor Alma](#pdf-rapor-alma)
+
+### [🎓 Öğrenci Yönetimi](#ogrenci-yonetimi)
+- [Öğrenci Listesi](#ogrenci-listesi)
+- [Yeni Öğrenci Ekleme](#yeni-ogrenci-ekleme)
+- [Öğrenci Düzenleme](#ogrenci-duzenleme)
+- [Öğrenci Detayları](#ogrenci-detaylari)
+- [Mezun Öğrenciler](#mezun-ogrenciler)
+- [Filtreleme ve Arama](#filtreleme-ve-arama)
+- [Toplu İşlemler](#toplu-islemler)
+
+### [👥 Üye Yönetimi](#uye-yonetimi)
+- [Üye Listesi](#uye-listesi)
+- [Yeni Üye Ekleme](#yeni-uye-ekleme)
+- [Üye Düzenleme](#uye-duzenleme)
+- [Burs Taahhütleri](#burs-taahutleri)
+- [Taahhüt Takibi](#taahut-takibi)
+
+### [🎁 Bağışçı Yönetimi](#bagisci-yonetimi)
+- [Bağışçı Listesi](#bagisci-listesi)
+- [Yeni Bağışçı Ekleme](#yeni-bagisci-ekleme)
+- [Bağışçı Detayları](#bagisci-detaylari)
+
+### [🏘️ Köy Yönetimi](#koy-yonetimi)
+- [Köy Listesi](#koy-listesi)
+- [Yeni Köy Ekleme](#yeni-koy-ekleme)
+- [Köy Düzenleme](#koy-duzenleme)
+
+### [🎁 Yardım Yönetimi](#yardim-yonetimi)
+- [Yardım Listesi](#yardim-listesi)
+- [Yeni Yardım Ekleme](#yeni-yardim-ekleme)
+- [Yardım Türleri](#yardim-turleri)
+
+### [📅 Toplantı Yönetimi](#toplanti-yonetimi)
+- [Toplantı Listesi](#toplanti-listesi)
+- [Yeni Toplantı Oluşturma](#yeni-toplanti-olusturma)
+- [Katılımcı Yönetimi](#katilimci-yonetimi)
+- [Katılım Takibi](#katilim-takibi)
+
+### [📝 Transkript İşlemleri](#transkript-islemleri)
+- [Transkript Ekleme](#transkript-ekleme)
+- [Not Ortalaması Hesaplama](#not-ortalamasi-hesaplama)
+- [Transkript Geçme Kontrolü](#transkript-gecme-kontrolu)
+
+### [📥 Excel İçe/Dışa Aktarma](#excel-ice-disa-aktarma)
+- [Excel'den Veri İçe Aktarma](#excelden-veri-ice-aktarma)
+- [Excel'e Veri Dışa Aktarma](#excele-veri-disa-aktarma)
+- [Toplu Güncelleme](#toplu-guncelleme)
+
+### [📋 Aktivite Logları](#aktivite-loglari)
+- [Log Görüntüleme](#log-goruntuleme)
+- [Log Filtreleme](#log-filtreleme)
+
+### [⚙️ Sistem Ayarları](#sistem-ayarlari)
+- [Genel Ayarlar](#genel-ayarlar)
+- [Sektör Yönetimi](#sektor-yonetimi)
+- [Üniversite Yönetimi](#universite-yonetimi)
+- [Bölüm Yönetimi](#bolum-yonetimi)
+- [Dönem Yönetimi](#donem-yonetimi)
+- [Burs Miktarları](#burs-miktarlari)
+- [Transkript Ayarları](#transkript-ayarlari)
+- [Toplantı Ayarları](#toplanti-ayarlari)
+
+### [🎨 Kullanıcı Arayüzü](#kullanici-arayuzu)
+- [Navigasyon Menüsü](#navigasyon-menusu)
+- [Renk Kodları](#renk-kodlari)
+- [Tablo İşlemleri](#tablo-islemleri)
+- [Dialog Kullanımı](#dialog-kullanimi)
+- [Bildirimler](#bildirimler)
+
+### [🔧 Teknik Bilgiler](#teknik-bilgiler)
+- [Sistem Gereksinimleri](#sistem-gereksinimleri)
+- [Tarayıcı Uyumluluğu](#tarayici-uyumlulugu)
+- [Performans İpuçları](#performans-ipuclari)
+- [Veri Güvenliği](#veri-guvenligi)
+
+### [❓ Sorun Giderme](#sorun-giderme)
+- [Sık Karşılaşılan Sorunlar](#sik-karsilasilan-sorunlar)
+- [Hata Mesajları](#hata-mesajlari)
+
+### [📞 Destek](#destek)
+
+---
+
+<a name="genel-bakis"></a>
 ## 🎯 Genel Bakış
 
 İzollu Dayanışma Merkezi, vakıf bünyesindeki öğrenci bursları, üye yönetimi, bağışçı takibi ve raporlama işlemlerini dijital ortamda yönetmek için geliştirilmiş kapsamlı bir CRM (Müşteri İlişkileri Yönetimi) sistemidir.
 
+<a name="sistem-ozellikleri"></a>
 ### Sistem Özellikleri
-- ✅ **Öğrenci Yönetimi**: Burs alan öğrencilerin tüm bilgileri
-- ✅ **Üye Yönetimi**: Vakıf üyelerinin kayıtları ve taahhütleri
-- ✅ **Bağışçı Takibi**: Bağış yapan kişi ve kurumların kayıtları
-- ✅ **Transkript Kontrolü**: Öğrenci not kayıtlarının takibi
-- ✅ **Toplantı Yönetimi**: Katılım kayıtları ve raporlama
+
+- ✅ **Öğrenci Yönetimi**: Burs alan öğrencilerin tüm bilgileri, akademik takip
+- ✅ **Üye Yönetimi**: Vakıf üyelerinin kayıtları ve burs taahhütleri
+- ✅ **Bağışçı Takibi**: Bağış yapan kişi ve kurumların detaylı kayıtları
+- ✅ **Transkript Kontrolü**: Öğrenci not kayıtları ve ortanca hesaplama
+- ✅ **Toplantı Yönetimi**: Katılım kayıtları ve katılım takibi
 - ✅ **Finansal Raporlama**: Burs ödemeleri ve taahhüt takibi
-- ✅ **Excel İçe/Dışa Aktarma**: Toplu veri işleme
-- ✅ **PDF Raporlama**: Profesyonel raporlar oluşturma
+- ✅ **Excel İçe/Dışa Aktarma**: Toplu veri işleme ve güncelleme
+- ✅ **PDF Raporlama**: Profesyonel raporlar oluşturma ve yazdırma
+- ✅ **Aktivite Logları**: Tüm işlemlerin kayıt altına alınması
+- ✅ **Gelişmiş Filtreleme**: Çok kriterli arama ve filtreleme
+- ✅ **Responsive Tasarım**: Mobil, tablet ve desktop uyumlu
+
+<a name="kimler-icin"></a>
+### Kimler İçin?
+
+- 👨‍💼 **Vakıf Yöneticileri**: Genel raporlama ve karar destek
+- 👩‍💻 **Veri Giriş Personeli**: Günlük kayıt ve güncelleme işlemleri
+- 📊 **Muhasebe Personeli**: Finansal takip ve raporlama
+- 👨‍🎓 **Koordinatörler**: Öğrenci ve üye takibi
+- 📋 **Yönetim Kurulu**: Stratejik raporlar ve istatistikler
 
 ---
 
-## 🔐 Giriş Yapma
+<a name="giris-ve-guvenlik"></a>
+## 🔐 Giriş ve Güvenlik
 
+<a name="ilk-giris"></a>
 ### İlk Giriş
+
+<a name="ilk-giris"></a>
+### İlk Giriş
+
 1. Tarayıcınızda uygulamayı açın
 2. **Kullanıcı Adı** ve **Şifre** alanlarını doldurun
 3. **GİRİŞ YAP** butonuna tıklayın
 
 **Varsayılan Giriş Bilgileri:**
-- Kullanıcı Adı: `admin`
-- Şifre: `admin123`
+- 👤 Kullanıcı Adı: `admin`
+- 🔑 Şifre: `admin123`
 
-> ⚠️ **Güvenlik Notu:** İlk girişten sonra şifrenizi mutlaka değiştirin!
+> ⚠️ **Güvenlik Notu:** İlk girişten sonra şifrenizi mutlaka değiştirin! Güçlü şifre kullanın: En az 8 karakter, büyük/küçük harf, rakam ve özel karakter içermeli.
+
+<a name="sifre-degistirme"></a>
+### Şifre Değiştirme
+
+1. Ayarlar sayfasına gidin
+2. "Şifre Değiştir" bölümünü bulun
+3. Eski şifrenizi girin
+4. Yeni şifrenizi iki kez girin
+5. **Kaydet** butonuna tıklayın
+
+**Güçlü Şifre Önerileri:**
+- ✅ En az 8 karakter
+- ✅ Büyük ve küçük harf karışımı
+- ✅ En az bir rakam
+- ✅ En az bir özel karakter (!@#$%^&*)
+- ❌ Doğum tarihi, isim gibi kolay tahmin edilebilir bilgiler kullanmayın
+
+<a name="oturum-yonetimi"></a>
+### Oturum Yönetimi
+
+**Oturumu Kapatma:**
+- Sol menüden **Çıkış Yap** seçeneğine tıklayın
+- Tarayıcıyı kapatmadan önce mutlaka çıkış yapın
+
+**Otomatik Oturum Kapatma:**
+- Sistem 30 dakika işlem yapılmazsa otomatik olarak oturumu kapatır
+- Güvenlik amacıyla her zaman önerilir
 
 ---
 
+<a name="dashboard"></a>
 ## 📊 Dashboard (Ana Sayfa)
 
-Dashboard, sistemdeki tüm önemli istatistikleri bir bakışta görmenizi sağlar.
+<a name="dashboard"></a>
+## 📊 Dashboard (Ana Sayfa)
 
-### Görünen İstatistikler
+Dashboard, sistemdeki tüm önemli istatistikleri bir bakışta görmenizi sağlar ve hızlı kararlar almanıza yardımcı olur.
 
-#### 📈 Genel İstatistikler
-- **Aktif Dönem**: Güncel akademik dönem
-- **Toplam Öğrenci**: Sistemdeki tüm öğrenci sayısı
-- **Burs Alan**: Aktif burs alan öğrenci sayısı
-- **Burs Alamayan**: Bursu kesilen/almayan öğrenci sayısı
+<a name="genel-istatistikler"></a>
+### 📈 Genel İstatistikler
 
-#### 💰 Finansal İstatistikler
-- **Taahhüt Edilen Burs Adedi**: Üyelerin verdiği toplam burs taahhütleri
-- **Gerçekleşen Burs Adedi**: Fiilen yapılan burs atamaları
-- **Toplam Yardım Sayısı**: Yapılan ayni/nakdi yardımlar
-- **Köy Sayısı**: Kayıtlı köy sayısı
+**Üst Kısımdaki İstatistik Kartları:**
 
-#### 👥 Üye İstatistikleri
-- **Üye Sayısı**: Toplam üye sayısı
-- **Toplam Dönem Burs Tutarı**: Seçili dönem için toplam burs tutarı
-- **Taahhüt Edilen Burs Adedi**: Detaylı taahhüt listesi
-- **Gerçekleşen Burs Adedi**: Gerçekleşen burs listesi
+1. **📅 Aktif Dönem**
+   - Şu anki akademik dönem (örn: 2025-2026)
+   - Tüm raporlar bu döneme göre filtrelenir
 
-### 📋 Raporlar
+2. **👨‍🎓 Toplam Öğrenci**
+   - Sistemdeki tüm kayıtlı öğrenci sayısı
+   - Aktif + pasif + mezun öğrenciler dahil
 
-#### Üniversiteye Göre Öğrenci Dağılımı
-Her üniversiteden kaç öğrencinin kayıtlı olduğunu gösterir.
+3. **💰 Burs Alan Öğrenci**
+   - Şu anda aktif olarak burs alan öğrenci sayısı
+   - Sadece aktif durumda olanlar
 
-**Kullanım:**
-- Liste otomatik olarak öğrenci sayısına göre sıralanır
-- Toplam öğrenci sayısı yanında gösterilir
+4. **⏸️ Burs Alamayan Öğrenci**
+   - Bursu kesilen veya henüz burs almayan öğrenci sayısı
+   - Bursu kesme nedenleri takip edilebilir
 
-#### Üyelerin Verdiği Burs Dağılımı
-Her üyenin kaç öğrenciye taahhüt verdiğini ve gerçekleştirdiğini gösterir.
+<a name="finansal-istatistikler"></a>
+### 💰 Finansal İstatistikler
+
+**Alt Kısımdaki Finansal Kartlar:**
+
+1. **📊 Taahhüt Edilen Burs Adedi**
+   - Üyelerin toplam burs taahhüt sayısı
+   - Henüz öğrenciye atanmamış taahhütler dahil
+   - Detaylı liste: Her üyenin taahhüt sayısı görülebilir
+
+2. **✅ Gerçekleşen Burs Adedi**
+   - Fiilen öğrencilere atanmış burs sayısı
+   - Sadece aktif burslar
+   - Üye bazlı gerçekleşme oranı
+
+3. **🎁 Toplam Yardım Sayısı**
+   - Yapılan ayni ve nakdi yardım sayısı
+   - Tüm yardım türleri dahil
+
+4. **🏘️ Köy Sayısı**
+   - Sistemde kayıtlı köy sayısı
+   - Öğrenci dağılımı takibi için
+
+**İstatistik Kartı Özellikleri:**
+- 🎨 Görsel ikonlar ile kolay tanımlama
+- 📊 Büyük font ile rakamlar
+- 🎯 Renkli kenarlıklar (turuncu vurgu)
+- ↗️ Trend göstergeleri (opsiyonel)
+
+<a name="donem-filtresi"></a>
+### 🎛️ Dönem Filtresi
+
+Tüm dashboard verilerini belirli bir akademik döneme göre filtreleyebilirsiniz.
+
+**Kullanım Adımları:**
+1. Dashboard sayfasının üst kısmındaki **Dönem Filtresi** dropdown'ına tıklayın
+2. Listeden istediğiniz dönemi seçin (örn: 2024-2025, 2025-2026)
+3. Sayfa otomatik olarak yenilenir
+4. Tüm istatistikler ve grafikler seçili döneme göre güncellenir
+
+**Dönem Filtresinin Etkilediği Alanlar:**
+- ✅ Aktif dönem bilgisi
+- ✅ Öğrenci sayıları
+- ✅ Burs istatistikleri
+- ✅ Taahhüt listeleri
+- ✅ Raporlar
+- ✅ Grafikler
+
+> 💡 **İpucu:** "Tümü" seçeneğini seçerek tüm dönemlerin verilerini görebilirsiniz.
+
+### 📋 Dashboard Raporları
+
+#### 1. Üniversiteye Göre Öğrenci Dağılımı
+
+**Özellikler:**
+- 📊 Her üniversiteden kaç öğrenci olduğunu gösterir
+- 🔢 Öğrenci sayısına göre otomatik sıralama
+- 📈 Yüzde dağılımı görüntüleme
+- 🎨 Renk kodlu gösterim
+
+**Görünüm:**
+```
+Üniversite Adı          | Öğrenci Sayısı | Yüzde
+------------------------|----------------|-------
+Atatürk Üniversitesi   | 45             | 30%
+İnönü Üniversitesi     | 32             | 21%
+Fırat Üniversitesi     | 28             | 19%
+...
+```
+
+**Kullanım Alanları:**
+- Hangi üniversitelerden daha çok öğrenci olduğunu görme
+- Üniversite bazlı kaynak planlaması
+- Stratejik karar alma
+
+#### 2. Üyelerin Verdiği Burs Dağılımı
 
 **Sütunlar:**
-- **Üye Adı**: Üyenin adı soyadı
-- **Taahhüt Edilen**: Verilen taahhüt sayısı
-- **Gerçekleşen**: Gerçekleşen burs sayısı
+- 👤 **Üye Adı**: Üyenin tam adı
+- 📝 **Taahhüt Edilen**: Verilen toplam taahhüt sayısı
+- ✅ **Gerçekleşen**: Öğrencilere atanmış burs sayısı
+- 📊 **Gerçekleşme Oranı**: (Gerçekleşen / Taahhüt) × 100
 
-### 🎛️ Dönem Filtresi
-Dashboard'daki tüm verileri belirli bir döneme göre filtreleyebilirsiniz.
+**Özellikler:**
+- 🔍 Üye bazlı performans takibi
+- ⚠️ Eksik taahhütlerin görülmesi
+- 📈 Taahhüt-gerçekleşme oranı analizi
+- 🎯 Üyelerin katkı seviyesi değerlendirmesi
 
-**Kullanım:**
-1. Üst kısımdaki "Dönem Filtresi" açılır menüsünü tıklayın
-2. İstediğiniz dönemi seçin
-3. Sayfa otomatik olarak yenilenir ve seçili döneme göre veriler gösterilir
+**Renk Kodları:**
+- 🟢 %100 gerçekleşme: Yeşil vurgu
+- 🟡 %50-99 gerçekleşme: Sarı vurgu
+- 🔴 %0-49 gerçekleşme: Kırmızı vurgu
 
+<a name="pdf-rapor-alma"></a>
 ### 📄 PDF Raporu Alma
-Dashboard'daki tüm verileri PDF formatında indirebilirsiniz.
 
-**Kullanım:**
-1. Sağ üstteki **PDF RAPORU AL** butonuna tıklayın
-2. PDF otomatik olarak oluşturulur ve indirilir
+Dashboard'daki tüm bilgileri profesyonel bir PDF raporu olarak indirebilirsiniz.
 
-**PDF İçeriği:**
-- Genel istatistikler
-- Üniversiteye göre öğrenci listesi
-- Üyelerin burs dağılımı
-- Tarih damgası
+**Adımlar:**
+1. Dashboard sayfasının sağ üst köşesindeki **📄 PDF RAPORU AL** butonuna tıklayın
+2. Tarayıcı PDF'i otomatik olarak oluşturur
+3. İndirme işlemi başlar
+4. Dosya adı: `Dashboard_Raporu_YYYYMMDD.pdf`
+
+**PDF Raporu İçeriği:**
+- 📋 Kapak sayfası (Vakıf logosu, rapor tarihi)
+- 📊 Genel istatistikler tablosu
+- 📈 Üniversite dağılım grafiği
+- 👥 Üye bazlı burs dağılımı
+- 📅 Dönem bilgisi
+- 🕐 Rapor oluşturma tarihi ve saati
+- 📝 Alt bilgi (Vakıf bilgileri)
+
+**PDF Özellikleri:**
+- 🖨️ Yazdırma için optimize edilmiş
+- 📄 A4 boyutunda
+- 🎨 Profesyonel tasarım
+- 📊 Tablo ve grafikler dahil
+- 🔒 Güvenli ve şifreli (opsiyonel)
+
+> 💡 **İpucu:** Yönetim kurulu toplantıları için önceden PDF raporu hazırlayın.
 
 ---
 
-## 🎓 Öğrenciler Sayfası
+<a name="ogrenci-yonetimi"></a>
+## 🎓 Öğrenci Yönetimi
 
-Burs alan öğrencilerin tüm bilgilerini yönettiğiniz ana modüldür.
+Öğrenciler sayfası, burs alan öğrencilerin tüm bilgilerini yönettiğiniz, detaylı filtreleme ve raporlama yapabileceğiniz ana modüldür.
 
 ### 📊 İstatistik Kartları
 
-Sayfanın üst kısmında 6 adet istatistik kartı bulunur:
+Sayfanın üst kısmında 6 adet canlı istatistik kartı bulunur:
 
-1. **Aktif Burslu Öğrenci**: Şu anda burs alan öğrenci sayısı
-2. **Bursu Kesilmiş Öğrenci**: Bursu kesilen öğrenci sayısı
-3. **Mezun Öğrenci**: Mezun olmuş öğrenci sayısı
-4. **Aylık Toplam Burs**: Aylık ödenen toplam burs tutarı
-5. **İzollulu Öğrenci**: İzollu'dan olan öğrenci sayısı
-6. **Dışarıdan Öğrenci**: Dışarıdan olan öğrenci sayısı
+1. **✅ Aktif Burslu Öğrenci** (Yeşil)
+   - Şu anda aktif olarak burs alan öğrenci sayısı
+   - Sadece "Burs Durumu: Aktif" olanlar
+   - Tıklanabilir: Tıklayınca sadece aktif bursluları gösterir
 
-### 🔍 Filtreleme Sistemi
+2. **⏸️ Bursu Kesilmiş Öğrenci** (Kırmızı)
+   - Bursu kesilen öğrenci sayısı
+   - Not ortalaması düşük veya başka nedenlerle kesilen
+   - Tıklanabilir: Tıklayınca sadece bursu kesilenleri gösterir
+
+3. **🎓 Mezun Öğrenci** (Mavi)
+   - Mezun olmuş öğrenci sayısı
+   - Mezuniyet tarihi girilmiş olanlar
+   - Ayrı sekmede listelenirler
+
+4. **💰 Aylık Toplam Burs** (Turuncu)
+   - Aylık ödenen toplam burs tutarı (TL)
+   - Sadece aktif bursluların toplam tutarı
+   - Finansal planlama için önemli
+
+5. **🏠 İzollulu Öğrenci** (Mavi)
+   - İzollu köyünden olan öğrenci sayısı
+   - "İzollulu" checkbox'ı işaretli olanlar
+   - Tıklanabilir: İzolluları filtreler
+
+6. **🌍 Dışarıdan Öğrenci** (Yeşil)
+   - İzollu dışından olan öğrenci sayısı
+   - İstatistiksel analiz için
+
+**Kart Özellikleri:**
+- 🎨 Renkli kenarlıklar ve ikonlar
+- 🖱️ Tıklanabilir kartlar (otomatik filtreleme)
+- 🔄 Anlık güncelleme
+- 📱 Mobil uyumlu görünüm
+
+<a name="filtreleme-ve-arama"></a>
+### 🔍 Gelişmiş Filtreleme Sistemi
 
 #### Temel Filtreler (Her Zaman Görünür)
 - **Arama**: Ad, soyad, telefon, email, sicil numarası ile arama

@@ -1,30 +1,56 @@
 @using IzolluVakfi.Data.Models
+@inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<MudDialog>
+<MudDialog Style="max-width: 500px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Burs Tutarı Düzenle" : "Yeni Burs Tutarı Ekle")
+        </MudText>
+    </TitleContent>
     <DialogContent>
-        <MudForm @ref="_form">
-            <div class="mb-3">
-                <label class="form-label">Dönem *</label>
-                <select id="period-selector-@_instanceId" class="selectpicker" data-width="100%" 
-                        data-style="btn-outline-primary" data-live-search="true"
-                        value="@_selectedPeriod" @onchange="OnPeriodChanged" title="Dönem Seçiniz"
-                        disabled="@IsEdit">
-                    @foreach (var period in Periods)
-                    {
-                        <option value="@period">@period</option>
-                    }
-                </select>
-            </div>
-            <MudNumericField @bind-Value="_amount" Label="Aylık Burs Tutarı (₺)" Required="true" Min="0" Format="N2" />
-            <MudText Typo="Typo.body2" Color="Color.Info" Class="mt-2">
-                Dönemlik Tutar (8 Ay): @((_amount * 8).ToString("N2")) ₺
-            </MudText>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" />
+                    Dönem Bilgisi
+                </MudText>
+                <div class="form-group">
+                    <label class="form-label">Dönem *</label>
+                    <select class="form-select selectpicker" data-live-search="true" @bind="_selectedPeriod" disabled="@IsEdit">
+                        @foreach (var period in Periods)
+                        {
+                            <option value="@period">@period</option>
+                        }
+                    </select>
+                </div>
+            </MudPaper>
+
+            <MudPaper Elevation="0" Class="pa-3" Style="background-color: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.CurrencyLira" Size="Size.Small" Class="mr-1" />
+                    Tutar Bilgisi
+                </MudText>
+                <MudNumericField @bind-Value="_amount" 
+                                Label="Aylık Burs Tutarı (₺)" 
+                                Required="true" 
+                                Min="0" 
+                                Format="N2" 
+                                Variant="Variant.Outlined" 
+                                Margin="Margin.Dense" />
+                <MudText Typo="Typo.body2" Color="Color.Info" Class="mt-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" Style="vertical-align: middle;" />
+                    Dönemlik Tutar (8 Ay): <strong>@((_amount * 8).ToString("N2")) ₺</strong>
+                </MudText>
+            </MudPaper>
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">İptal</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">@(IsEdit ? "Güncelle" : "Ekle")</MudButton>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Ekle")
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -36,9 +62,9 @@
     [Parameter] public bool IsEdit { get; set; }
 
     private MudForm _form = null!;
+    private bool _success;
     private string _selectedPeriod = string.Empty;
     private decimal _amount = 0;
-    private string _instanceId = Guid.NewGuid().ToString("N");
 
     protected override void OnInitialized()
     {
@@ -57,11 +83,11 @@
     {
         if (firstRender)
         {
-            await InitializeSelectPickerAsync();
+            await InitializeSelectPickersAsync();
         }
     }
 
-    private async Task InitializeSelectPickerAsync()
+    private async Task InitializeSelectPickersAsync()
     {
         try
         {
@@ -73,20 +99,12 @@
         }
     }
 
-    private void OnPeriodChanged(ChangeEventArgs e)
-    {
-        if (e.Value is string period && !string.IsNullOrWhiteSpace(period))
-        {
-            _selectedPeriod = period;
-        }
-    }
-
     private void Cancel() => MudDialog.Cancel();
 
     private async Task Submit()
     {
         await _form.Validate();
-        if (_form.IsValid)
+        if (_success)
         {
             var result = new ScholarshipAmountModel
             {

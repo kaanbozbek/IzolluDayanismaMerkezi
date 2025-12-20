@@ -12,84 +12,65 @@
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
 
     @* Statistics Cards *@
-    <MudGrid Class="mb-4">
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+    <MudGrid Class="mb-4" Spacing="3">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Yardım</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_filteredAids.Count</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_aids.Count</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Yardım</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">İzollulu</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_filteredAids.Count(a => a.IsIzollulu)</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_aids.Count(a => a.IsIzollulu)</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">İzollulu</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.Home" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Dışarıdan</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@_filteredAids.Count(a => !a.IsIzollulu)</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_aids.Count(a => !a.IsIzollulu)</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Dışarıdan</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.Public" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
     </MudGrid>
 
-    @* Filtre ve Butonlar *@
-    <MudPaper Elevation="2" Class="pa-4 mb-4" Style="border-radius: 12px;">
-        <MudGrid>
-            <MudItem xs="12" sm="6" md="3">
-                <label class="form-label">Dönem Filtresi</label>
-                <select id="period-filter" class="selectpicker" data-live-search="true" 
-                        data-width="100%" title="Dönem Seçiniz" @onchange="OnPeriodFilterChanged">
-                    <option value="">Tüm Dönemler</option>
-                    @foreach (var period in _academicYears)
-                    {
-                        <option value="@period">@period</option>
-                    }
-                </select>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3">
-                <label class="form-label">Durum Filtresi</label>
-                <MudSelect T="string" @bind-Value="_statusFilter" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
-                    <MudSelectItem Value="@("")">Tümü</MudSelectItem>
-                    <MudSelectItem Value="@("izollulu")">İzollulu</MudSelectItem>
-                    <MudSelectItem Value="@("disaridan")">Dışarıdan</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3" Style="display: flex; align-items: flex-end;">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog" FullWidth="true">
-                    Yeni Yardım Ekle
-                </MudButton>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3" Style="display: flex; align-items: flex-end;">
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="ClearFilters" FullWidth="true">
-                    Filtreleri Temizle
-                </MudButton>
-            </MudItem>
-        </MudGrid>
+    @* FILTER BAR *@
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <div class="d-flex align-center gap-3">
+            <MudTextField @bind-Value="_searchString"
+                          Label="Ara"
+                          Placeholder="İsim, telefon, adres..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Style="flex: 1; max-width: 400px;" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Yeni Yardım Ekle
+            </MudButton>
+        </div>
     </MudPaper>
 
-    <MudTable Items="@_filteredAids" Dense="true" Hover="true" Filter="new Func<Aid, bool>(FilterFunc)" SortLabel="Sırala">
+    <MudTable Items="@_aids" Dense="true" Hover="true" Filter="new Func<Aid, bool>(FilterFunc)" SortLabel="Sırala">
         <ToolBarContent>
-            <MudSpacer />
-            <MudTextField @bind-Value="_searchString" Placeholder="Ara..." Adornment="Adornment.Start" 
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Ad)">Ad</MudTableSortLabel></MudTh>
@@ -139,82 +120,16 @@
 
 @code {
     private List<Aid> _aids = new();
-    private List<Aid> _filteredAids = new();
     private string _searchString = "";
-    private List<string> _academicYears = new();
-    private string _selectedPeriod = "";
-    private string _statusFilter = "";
-    private bool _selectPickerInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load academic years from settings
-        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
-        if (periodsFromSettings.Count > 0)
-        {
-            _academicYears = periodsFromSettings.OrderByDescending(p => p).ToList();
-        }
-        else
-        {
-            for (int startYear = 2025; startYear <= 2039; startYear++)
-            {
-                _academicYears.Add($"{startYear}-{startYear + 1}");
-            }
-        }
         await LoadData();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !_selectPickerInitialized)
-        {
-            _selectPickerInitialized = true;
-            await Task.Delay(100);
-            await JS.InvokeVoidAsync("bootstrapSelect.init");
-        }
     }
 
     private async Task LoadData()
     {
         _aids = await AidService.GetAllAsync();
-        ApplyFilters();
-    }
-
-    private void ApplyFilters()
-    {
-        _filteredAids = _aids.ToList();
-        
-        // Period filter
-        if (!string.IsNullOrWhiteSpace(_selectedPeriod))
-        {
-            _filteredAids = _filteredAids.Where(a => a.AcademicYear == _selectedPeriod).ToList();
-        }
-        
-        // Status filter
-        if (_statusFilter == "izollulu")
-        {
-            _filteredAids = _filteredAids.Where(a => a.IsIzollulu).ToList();
-        }
-        else if (_statusFilter == "disaridan")
-        {
-            _filteredAids = _filteredAids.Where(a => !a.IsIzollulu).ToList();
-        }
-    }
-
-    private async Task OnPeriodFilterChanged(ChangeEventArgs e)
-    {
-        _selectedPeriod = e.Value?.ToString() ?? "";
-        ApplyFilters();
-        StateHasChanged();
-        await Task.CompletedTask;
-    }
-
-    private void ClearFilters()
-    {
-        _selectedPeriod = "";
-        _statusFilter = "";
-        _searchString = "";
-        ApplyFilters();
     }
 
     private bool FilterFunc(Aid aid)

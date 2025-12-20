@@ -6,6 +6,19 @@
 
 <PageTitle>Giriş - İzollu Dayanışma Merkezi</PageTitle>
 
+<style>
+    /* Login page specific styles */
+    .login-card {
+        background-color: #ffffff !important;
+    }
+    
+    /* Ensure no background on inputs */
+    .login-input .mud-input-outlined .mud-input,
+    .login-input .mud-input-outlined input {
+        background: transparent !important;
+    }
+</style>
+
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 100vh;">
     <MudPaper Elevation="24" Class="pa-10 login-card" Style="width: 100%; max-width: 420px; border-radius: 18px; background-color: white; box-shadow: 0 18px 45px rgba(0,0,0,0.35); transition: transform 0.2s ease, box-shadow 0.2s ease;">
         <div class="d-flex flex-column align-center mb-6">
@@ -39,7 +52,7 @@
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Person"
                           AdornmentColor="Color.Primary"
-                          Class="mb-5"
+                          Class="mb-5 login-input"
                           Style="margin-bottom: 8px;"
                           OnKeyDown="@HandleKeyDown" />
 
@@ -56,7 +69,7 @@
                           AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
                           OnAdornmentClick="@(() => _showPassword = !_showPassword)"
                           AdornmentColor="Color.Primary"
-                          Class="mb-5"
+                          Class="mb-5 login-input"
                           Style="margin-bottom: 8px;"
                           OnKeyDown="@HandleKeyDown" />
 

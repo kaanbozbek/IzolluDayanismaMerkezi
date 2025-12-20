@@ -7,17 +7,16 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="3">
-            <div class="form-group">
-                <label class="form-label">GNO *</label>
-                <select id="gnoSelect" class="form-control">
-                    <option value="">GNO Seçiniz</option>
-                    @for (decimal i = 0.0m; i <= 4.0m; i += 0.1m)
-                    {
-                        <option value="@i.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)">@i.ToString("F1")</option>
-                    }
-                </select>
-                <small class="form-text text-muted">0.0 - 4.0 arası bir değer seçin</small>
-            </div>
+            <MudNumericField @bind-Value="_selectedGno" 
+                            Label="GNO *"
+                            Min="0.0m"
+                            Max="4.0m"
+                            Step="0.01m"
+                            Format="N2"
+                            Variant="Variant.Outlined"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Grade"
+                            HelperText="0.00 - 4.00 arası bir değer girin (örn: 3.45, 4.00)" />
 
             <label class="form-label">Giriş Tarihi</label>
             <InputDate @bind-Value="_girisTarihi" class="form-control" />
@@ -69,21 +68,6 @@
         _transcript.StudentId = StudentId;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            try
-            {
-                await JS.InvokeVoidAsync("select2Helper.initializeGnoSelect", "gnoSelect");
-            }
-            catch (Exception)
-            {
-                // Fallback to regular dropdown if Select2 fails
-            }
-        }
-    }
-
     private void OnFileSelected(InputFileChangeEventArgs e)
     {
         _selectedFile = e.File;
@@ -92,31 +76,14 @@
 
     private async Task Save()
     {
-        // Get selected GNO value
-        string? gnoValue = null;
-        try
+        // Validate GNO
+        if (_selectedGno < 0 || _selectedGno > 4)
         {
-            gnoValue = await JS.InvokeAsync<string>("select2Helper.getValue", "gnoSelect");
-        }
-        catch
-        {
-            Snackbar.Add("GNO değeri alınırken hata oluştu", Severity.Error);
-            return;
-        }
-        
-        if (string.IsNullOrWhiteSpace(gnoValue))
-        {
-            Snackbar.Add("Lütfen bir GNO değeri seçiniz", Severity.Warning);
+            Snackbar.Add("GNO değeri 0.00 ile 4.00 arasında olmalıdır", Severity.Warning);
             return;
         }
 
-        if (!decimal.TryParse(gnoValue, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out decimal gno))
-        {
-            Snackbar.Add("Geçersiz GNO değeri", Severity.Warning);
-            return;
-        }
-
-        _transcript.GNO = gno;
+        _transcript.GNO = _selectedGno;
 
         if (!_girisTarihi.HasValue)
         {

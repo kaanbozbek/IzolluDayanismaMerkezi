@@ -12,6 +12,14 @@ public class MemberScholarshipDetail
     public int RealizedCount { get; set; }
 }
 
+public class RoleBasedScholarshipPdf
+{
+    public string Role { get; set; } = string.Empty;
+    public int PledgedCount { get; set; }
+    public int RealizedCount { get; set; }
+    public double Percentage { get; set; }
+}
+
 public class PdfService
 {
     public PdfService()
@@ -350,12 +358,18 @@ public class PdfService
         decimal totalAmount,
         string activePeriod,
         decimal periodBursTutari,
+        int pledgedCount,
+        int realizedCount,
+        int totalAidsCount,
+        int villageCount,
         Dictionary<string, int> universityData,
         List<MemberScholarshipDetail> memberScholarshipDetails,
         Dictionary<string, int> genderDistribution,
         Dictionary<string, int> malatyaLocationDistribution,
         List<MemberScholarshipDetail> topDonors,
-        List<MemberScholarshipDetail> unfulfilledCommitments)
+        List<MemberScholarshipDetail> unfulfilledCommitments,
+        Dictionary<string, int> villageAidData,
+        List<RoleBasedScholarshipPdf> roleBasedScholarshipData)
     {
         var document = Document.Create(container =>
         {
@@ -381,7 +395,7 @@ public class PdfService
                     {
                         column.Spacing(15);
 
-                        // Genel İstatistikler
+                        // Genel İstatistikler - Tüm Dashboard Verileri
                         column.Item().Background(Colors.Orange.Lighten4).Padding(10).Column(col =>
                         {
                             col.Item().Text("GENEL İSTATİSTİKLER").FontSize(14).Bold().FontColor(Colors.Orange.Darken3);
@@ -393,13 +407,17 @@ public class PdfService
                                     c.Item().Text($"Toplam Öğrenci: {totalStudents}").FontSize(11);
                                     c.Item().Text($"Burs Alan Öğrenci: {activeScholarships}").FontSize(11);
                                     c.Item().Text($"Mezun Öğrenci: {graduatedCount}").FontSize(11);
+                                    c.Item().Text($"İş Adamı Sayısı: {totalDonors}").FontSize(11);
+                                    c.Item().Text($"Üye Sayısı: {totalMembers}").FontSize(11);
                                 });
                                 row.RelativeItem().Column(c =>
                                 {
-                                    c.Item().Text($"İş Adamı Sayısı: {totalDonors}").FontSize(11);
-                                    c.Item().Text($"Üye Sayısı: {totalMembers}").FontSize(11);
-                                    c.Item().Text($"Dönem Burs Tutarı: {periodBursTutari:N2} ₺").FontSize(11);
-                                    c.Item().Text($"Aylık Toplam: {totalAmount:N2} ₺").FontSize(11).Bold().FontColor(Colors.Green.Darken2);
+                                    c.Item().Text($"Taahhüt Edilen Burs Tutarı: {periodBursTutari:N2} ₺").FontSize(11);
+                                    c.Item().Text($"Toplam Burs Tutarı: {totalAmount:N2} ₺").FontSize(11);
+                                    c.Item().Text($"Taahhüt Edilen Burs Sayısı: {pledgedCount}").FontSize(11);
+                                    c.Item().Text($"Gerçekleşen Burs Sayısı: {realizedCount}").FontSize(11);
+                                    c.Item().Text($"Toplam Yardım Sayısı: {totalAidsCount}").FontSize(11);
+                                    c.Item().Text($"Köy Sayısı: {villageCount}").FontSize(11);
                                 });
                             });
                         });
@@ -511,6 +529,71 @@ public class PdfService
                             });
                         }
 
+                        // Köylere Göre Yardım Dağılımı
+                        if (villageAidData != null && villageAidData.Any())
+                        {
+                            column.Item().PageBreak();
+                            column.Item().Background(Colors.Teal.Lighten4).Padding(10).Column(col =>
+                            {
+                                col.Item().Text("KÖYLERE GÖRE YARDIM DAĞILIMI").FontSize(12).Bold().FontColor(Colors.Teal.Darken3);
+                            });
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Köy").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Yardım Sayısı").Bold();
+                                });
+
+                                foreach (var item in villageAidData.OrderByDescending(v => v.Value))
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(item.Key);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.Value}");
+                                }
+                            });
+                        }
+
+                        // Rol Bazlı Burs Dağılımı
+                        if (roleBasedScholarshipData != null && roleBasedScholarshipData.Any())
+                        {
+                            column.Item().PaddingTop(15).Background(Colors.Indigo.Lighten4).Padding(10).Column(col =>
+                            {
+                                col.Item().Text("ROL BAZLI BURS DAĞILIMI").FontSize(12).Bold().FontColor(Colors.Indigo.Darken3);
+                            });
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Rol").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Taahhüt").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Gerçekleşen").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Yüzde").Bold();
+                                });
+
+                                foreach (var item in roleBasedScholarshipData)
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(item.Role);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.PledgedCount}");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{item.RealizedCount}");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"%{item.Percentage:F1}");
+                                }
+                            });
+                        }
+
                         // En Çok Burs Verenler
                         if (topDonors != null && topDonors.Any())
                         {
@@ -553,7 +636,7 @@ public class PdfService
                         {
                             column.Item().PaddingTop(15).Background(Colors.Red.Lighten4).Padding(10).Column(col =>
                             {
-                                col.Item().Text("TAAHHÜDÜNÜ YERINE GETİRMEYENLER").FontSize(12).Bold().FontColor(Colors.Red.Darken3);
+                                col.Item().Text("TAAHHÜDÜNÜ YERİNE GETİRMEYENLER").FontSize(12).Bold().FontColor(Colors.Red.Darken3);
                             });
                             column.Item().Table(table =>
                             {

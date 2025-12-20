@@ -65,7 +65,7 @@
                         <MudStack Spacing="1">
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Oluşturulma Tarihi</MudText>
                             <MudText Typo="Typo.body1">
-                                @Meeting.OlusturmaTarihi.ToString("dd/MM/yyyy HH:mm")
+                                @Meeting.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")
                             </MudText>
                         </MudStack>
                     </MudItem>

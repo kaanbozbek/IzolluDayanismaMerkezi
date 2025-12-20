@@ -3,6 +3,7 @@ using System;
 using IzolluVakfi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IzolluVakfi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251220100835_AddMeetingNotesAndAttendanceStatus")]
+    partial class AddMeetingNotesAndAttendanceStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -289,10 +292,6 @@ namespace IzolluVakfi.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("RoleStartDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Sektor")
-                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SicilNumarasi")

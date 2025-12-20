@@ -1,15 +1,24 @@
-<MudDialog>
+<MudDialog Style="max-width: 400px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" Style="vertical-align: middle;" />
+            @Title
+        </MudText>
+    </TitleContent>
     <DialogContent>
-        <MudTextField @bind-Value="_inputValue" 
-                     Label="@Label" 
-                     Variant="Variant.Outlined" 
-                     FullWidth="true"
-                     AutoFocus="true"
-                     InputType="@InputType" />
+        <MudPaper Elevation="0" Class="pa-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+            <MudTextField @bind-Value="_inputValue" 
+                         Label="@Label" 
+                         Variant="Variant.Outlined" 
+                         Margin="Margin.Dense"
+                         FullWidth="true"
+                         AutoFocus="true"
+                         InputType="@InputType" />
+        </MudPaper>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">İptal</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(_inputValue)">Ekle</MudButton>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(_inputValue)">Ekle</MudButton>
     </DialogActions>
 </MudDialog>
 

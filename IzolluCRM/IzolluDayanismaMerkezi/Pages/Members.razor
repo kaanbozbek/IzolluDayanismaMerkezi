@@ -18,78 +18,79 @@
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
 
     @* Statistics Cards *@
-    <MudGrid Class="mb-4">
+    <MudGrid Class="mb-4" Spacing="3">
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Toplam Üye</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalMembers</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalMembers</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Üye</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.People" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Aktif Üyeler</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@ActiveMembers</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@ActiveMembers</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Aktif Üyeler</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.Check" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #34d399 0%, #10b981 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Burs Verenler</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@ScholarshipGivers</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@ScholarshipGivers</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Burs Verenler</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Taahhüt Edilen Burs</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalPledgedScholarships</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalPledgedScholarships</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Taahhüt Edilen Burs</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.Handshake" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.Handshake" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="3" Class="pa-4" Style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; border-radius: 15px;">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="opacity: 0.9;">Gerçekleşen Burs</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 600;">@TotalGivenScholarships</MudText>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalGivenScholarships</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Gerçekleşen Burs</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Style="opacity: 0.8;" />
-                </MudStack>
+                    <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
             </MudPaper>
         </MudItem>
     </MudGrid>
 
-    <MudGrid>
-        @* LEFT COLUMN: Members table and controls *@
-        <MudItem xs="12" md="@(_showFilters ? 8 : 12)" lg="@(_showFilters ? 9 : 12)">
+    <MudTabs Elevation="2" Rounded="true" ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
+        
+        @* Tab 1: Tüm Üyeler *@
+        <MudTabPanel Text="Tüm Üyeler" Icon="@Icons.Material.Filled.Group">
             @* Action Buttons *@
-            <div class="d-flex gap-2 mb-3">
+            <div class="d-flex gap-2 mb-4 mt-4">
                 <MudButton Variant="Variant.Filled" 
                            Color="Color.Primary" 
                            StartIcon="@Icons.Material.Filled.Add" 
                            OnClick="OpenAddDialog">
-                    Üye Ekle
+                    Yeni Üye Ekle
                 </MudButton>
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Success"
@@ -115,6 +116,8 @@
                                   AdornmentIcon="@Icons.Material.Filled.Search"
                                   Immediate="true"
                                   DebounceInterval="300"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
                                   OnDebounceIntervalElapsed="ApplyFilters"
                                   Style="flex: 1; max-width: 400px;" />
 
@@ -197,12 +200,7 @@
                 </MudPaper>
             }
 
-            @* Tabs *@
-            <MudTabs Elevation="2" Rounded="true" ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
-        
-        @* Tab 1: Tüm Üyeler *@
-        <MudTabPanel Text="Tüm Üyeler" Icon="@Icons.Material.Filled.Group">
-            <MudPaper Elevation="2" Class="pa-4 mt-4">
+            <MudPaper Elevation="2" Class="pa-4">
                 <MudTable Items="@GetFilteredMembersForAllTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading"
                           @bind-SelectedItem="_selectedMember" RowsPerPage="50" SortLabel="Sırala">
                     <HeaderContent>
@@ -291,7 +289,6 @@
                         <MudTh>Verilen</MudTh>
                         <MudTh>Kalan</MudTh>
                         <MudTh>Durum</MudTh>
-                        <MudTh>Tamamlandı</MudTh>
                         <MudTh>İşlemler</MudTh>
                     </HeaderContent>
                     <PagerContent>
@@ -553,15 +550,15 @@
         </MudTabPanel>
 
     </MudTabs>
-        </MudItem>
 
-        @* RIGHT COLUMN: Filters panel *@
-        <MudItem xs="12" md="4" lg="3">
-            @if (_showFilters)
-            {
-                <MudPaper Elevation="2" Class="pa-3" Style="position: sticky; top: 16px; max-height: calc(100vh - 100px); overflow-y: auto;">
-        
-        @* Filter Group 1: Durum (Status) *@
+    @* FILTER DRAWER *@
+    <MudDrawer @bind-Open="_showFilters" Anchor="Anchor.End" Elevation="2" Variant="DrawerVariant.Temporary" Width="350px">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Filtreler</MudText>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            <div class="pa-3">
+                @* Filter Group 1: Durum (Status) *@
         <MudPaper Elevation="1" Class="pa-3 mb-3">
             <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Durum</strong></MudText>
             <MudRadioGroup T="MemberStatusFilter" @bind-Value="_filters.Status">
@@ -683,15 +680,14 @@
         @* Filter Group 7: Üyelik Başlangıç Tarihi (Membership Start Date) *@
         <MudPaper Elevation="1" Class="pa-3 mb-3">
             <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Üyelik Başlangıç Tarihi</strong></MudText>
-            <MudDatePicker Label="Başlangıç" 
-                           @bind-Date="_filters.MembershipStartFrom" 
-                           Variant="Variant.Outlined" 
-                           Margin="Margin.Dense" />
-            <MudDatePicker Label="Bitiş" 
-                           @bind-Date="_filters.MembershipStartTo" 
-                           Variant="Variant.Outlined" 
-                           Margin="Margin.Dense" 
-                           Class="mt-2" />
+            <div class="form-group">
+                <label class="form-label">Başlangıç</label>
+                <InputDate @bind-Value="_filters.MembershipStartFrom" class="form-control" />
+            </div>
+            <div class="form-group mt-2">
+                <label class="form-label">Bitiş</label>
+                <InputDate @bind-Value="_filters.MembershipStartTo" class="form-control" />
+            </div>
         </MudPaper>
 
         @* Filter Group 8: Yaş Aralığı (Age Range) *@
@@ -717,7 +713,7 @@
                     <MudButton Variant="Variant.Filled" 
                                Color="Color.Primary" 
                                FullWidth="true" 
-                               OnClick="ApplyFilters"
+                               OnClick="@(() => { ApplyFilters(); _showFilters = false; })"
                                Class="mb-2">
                         Filtreleri Uygula
                     </MudButton>
@@ -728,10 +724,9 @@
                                OnClick="ClearAllFilters">
                         Temizle
                     </MudButton>
-                </MudPaper>
-            }
-        </MudItem>
-    </MudGrid>
+            </div>
+        </MudNavMenu>
+    </MudDrawer>
 </MudContainer>
 
 @code {

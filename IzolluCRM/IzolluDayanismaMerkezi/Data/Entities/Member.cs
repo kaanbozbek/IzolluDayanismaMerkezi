@@ -66,6 +66,9 @@ public class Member
 
     public bool AktifMi { get; set; } = true;
 
+    [StringLength(100)]
+    public string? Sektor { get; set; }
+
     [StringLength(500)]
     public string? Notlar { get; set; }
 

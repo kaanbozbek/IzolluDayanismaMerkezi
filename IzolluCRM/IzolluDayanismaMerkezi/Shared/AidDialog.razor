@@ -1,80 +1,128 @@
 @using IzolluVakfi.Data.Entities
 @using IzolluVakfi.Services
 @inject AidService AidService
-@inject VillageService VillageService
 @inject SettingsService SettingsService
+@inject MemberService MemberService
+@inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
 <MudDialog Style="max-width: 700px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Yardım Düzenle" : "Yeni Yardım Ekle")
+        </MudText>
+    </TitleContent>
     <DialogContent>
         <MudForm @ref="_form" @bind-IsValid="@_success">
-            <MudGrid Spacing="3">
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="Aid.Ad" Label="İsim" Required="true" RequiredError="İsim gereklidir" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="Aid.Telefon" Label="Telefon" />
-                </MudItem>
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="Aid.Adres" Label="Adres" Lines="2" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="Aid.RefereEden" Label="Refere Eden" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <div class="mt-2">
-                        <label class="form-label">Dönem</label>
-                        <select id="period-selector-@_instanceId" class="selectpicker" data-width="100%" 
-                                data-style="btn-outline-primary" data-live-search="true"
-                                @bind="Aid.AcademicYear" title="Dönem Seçiniz">
-                            @foreach (var period in _academicYears)
-                            {
-                                <option value="@period">@period</option>
-                            }
-                        </select>
-                    </div>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudCheckBox @bind-Value="Aid.IsIzollulu" Label="İzollulu" Color="Color.Primary" @onclick="OnIzollululChanged" />
-                </MudItem>
-                @if (Aid.IsIzollulu)
-                {
-                    <MudItem xs="12" sm="6">
-                        <label class="form-label">Köy</label>
-                        <select id="village-selector-@_instanceId" class="selectpicker" data-width="100%" 
-                                data-style="btn-outline-primary" data-live-search="true"
-                                value="@_selectedVillage" @onchange="OnVillageChanged" title="Köy Seçiniz">
-                            @foreach (var villageName in _izolluVillages)
-                            {
-                                <option value="@villageName">@villageName</option>
-                            }
-                        </select>
+            @* Kişisel Bilgiler *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                    Kişisel Bilgiler
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Aid.Ad" Label="İsim" Required="true" RequiredError="İsim gereklidir" Variant="Variant.Outlined" Margin="Margin.Dense" />
                     </MudItem>
-                }
-                else
-                {
-                    <MudItem xs="12" sm="6">
-                        <label class="form-label">Şehir</label>
-                        <select id="city-selector-@_instanceId" class="selectpicker" data-width="100%" 
-                                data-style="btn-outline-primary" data-live-search="true"
-                                value="@_selectedCity" @onchange="OnCityChanged" title="Şehir Seçiniz">
-                            @foreach (var city in _turkishCities)
-                            {
-                                <option value="@city">@city</option>
-                            }
-                        </select>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Aid.Telefon" Label="Telefon" Variant="Variant.Outlined" Margin="Margin.Dense" />
                     </MudItem>
-                }
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="Aid.Notlar" Label="Notlar" Lines="3" />
-                </MudItem>
-            </MudGrid>
+                    <MudItem xs="12" md="6">
+                        @if (_isLoadingMembers)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Refere Eden</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="Aid.RefereEden">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var member in _members)
+                                    {
+                                        <option value="@member.AdSoyad">@member.AdSoyad</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Dönem</label>
+                            <select class="form-select selectpicker" data-live-search="true" @bind="Aid.AcademicYear">
+                                @foreach (var period in _academicYears)
+                                {
+                                    <option value="@period">@period</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Adres Bilgileri *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <MudText Typo="Typo.subtitle2" Style="color: #b45309;" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mr-1" />
+                    Adres Bilgileri
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudCheckBox T="bool" Value="Aid.IsIzollulu" ValueChanged="OnIsIzolluluChanged" Label="İzollulu mu?" Color="Color.Secondary" />
+                    </MudItem>
+                    <MudItem xs="12" md="8">
+                        @if (Aid.IsIzollulu)
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Köy</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="Aid.Koy">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var village in _izolluVillages)
+                                    {
+                                        <option value="@village">@village</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Şehir</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="Aid.Sehir">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var city in _turkishCities)
+                                    {
+                                        <option value="@city">@city</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="Aid.Adres" Label="Açık Adres" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Notlar *@
+            <MudPaper Elevation="0" Class="pa-3" Style="background-color: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Notes" Size="Size.Small" Class="mr-1" />
+                    Notlar
+                </MudText>
+                <MudTextField @bind-Value="Aid.Notlar" 
+                              Label="Notlar" 
+                              Lines="3" 
+                              Variant="Variant.Outlined"
+                              Placeholder="Yardım ile ilgili notlarınızı buraya yazabilirsiniz..." />
+            </MudPaper>
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">İptal</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)">
-            @(IsEdit ? "Güncelle" : "Ekle")
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Kaydet")
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -91,12 +139,9 @@
 
     private MudForm _form = null!;
     private bool _success;
-    private List<Village> _villages = new();
-    private string _instanceId = Guid.NewGuid().ToString("N");
-    private string _selectedVillage = string.Empty;
-    private string _selectedCity = string.Empty;
-    private bool _isRendered;
     private List<string> _academicYears = new();
+    private List<Member> _members = new();
+    private bool _isLoadingMembers = true;
     
     private readonly List<string> _izolluVillages = new()
     {
@@ -123,9 +168,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _villages = await VillageService.GetAllAsync();
+        _isLoadingMembers = true;
+        _members = await MemberService.GetAllAsync();
+        _isLoadingMembers = false;
         
-        // Load academic years from settings
         var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
         if (periodsFromSettings.Count > 0)
         {
@@ -133,18 +179,15 @@
         }
         else
         {
-            // Fallback: Generate academic years
             for (int startYear = 2025; startYear <= 2039; startYear++)
             {
                 _academicYears.Add($"{startYear}-{startYear + 1}");
             }
         }
         
-        // Initialize selected values from Aid entity
-        if (IsEdit)
+        if (!IsEdit && string.IsNullOrEmpty(Aid.AcademicYear) && _academicYears.Count > 0)
         {
-            _selectedVillage = Aid.Koy ?? string.Empty;
-            _selectedCity = Aid.Sehir ?? string.Empty;
+            Aid.AcademicYear = _academicYears.First();
         }
     }
 
@@ -152,12 +195,6 @@
     {
         if (firstRender)
         {
-            _isRendered = true;
-            await InitializeSelectPickersAsync();
-        }
-        else if (_isRendered)
-        {
-            // Reinitialize when IsIzollulu changes
             await InitializeSelectPickersAsync();
         }
     }
@@ -166,7 +203,6 @@
     {
         try
         {
-            await Task.Delay(100); // Small delay to ensure DOM is ready
             await JS.InvokeVoidAsync("bootstrapSelect.init");
         }
         catch (Exception ex)
@@ -175,38 +211,23 @@
         }
     }
 
-    private async Task OnIzollululChanged()
+    private async void OnIsIzolluluChanged(bool value)
     {
-        await Task.Delay(10); // Allow checkbox to update
+        Aid.IsIzollulu = value;
+        if (value)
+        {
+            Aid.Sehir = null;
+        }
+        else
+        {
+            Aid.Koy = null;
+        }
         StateHasChanged();
-        await Task.Delay(50); // Wait for DOM update
+        await Task.Delay(50);
         await InitializeSelectPickersAsync();
     }
 
-    private void OnVillageChanged(ChangeEventArgs e)
-    {
-        if (e.Value is string village)
-        {
-            _selectedVillage = village;
-            Aid.Koy = village;
-            Aid.Sehir = null;
-        }
-    }
-
-    private void OnCityChanged(ChangeEventArgs e)
-    {
-        if (e.Value is string city)
-        {
-            _selectedCity = city;
-            Aid.Sehir = city;
-            Aid.Koy = null;
-        }
-    }
-
-    private void Cancel()
-    {
-        MudDialog.Cancel();
-    }
+    private void Cancel() => MudDialog.Cancel();
 
     private async Task Submit()
     {
@@ -214,26 +235,34 @@
 
         if (_success)
         {
-            // Clear the unused location field
-            if (Aid.IsIzollulu)
+            try
             {
-                Aid.Sehir = null;
-            }
-            else
-            {
-                Aid.Koy = null;
-            }
+                if (Aid.IsIzollulu)
+                {
+                    Aid.Sehir = null;
+                }
+                else
+                {
+                    Aid.Koy = null;
+                }
 
-            if (IsEdit)
-            {
-                await AidService.UpdateAsync(Aid);
-            }
-            else
-            {
-                await AidService.CreateAsync(Aid);
-            }
+                if (IsEdit)
+                {
+                    await AidService.UpdateAsync(Aid);
+                    Snackbar.Add("Yardım başarıyla güncellendi.", Severity.Success);
+                }
+                else
+                {
+                    await AidService.CreateAsync(Aid);
+                    Snackbar.Add("Yardım başarıyla eklendi.", Severity.Success);
+                }
 
-            MudDialog.Close(DialogResult.Ok(true));
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            }
         }
     }
 }

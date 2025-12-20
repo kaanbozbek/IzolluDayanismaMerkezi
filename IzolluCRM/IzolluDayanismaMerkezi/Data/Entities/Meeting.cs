@@ -20,6 +20,10 @@ public class Meeting
     [StringLength(1000)]
     public string? Aciklama { get; set; }
 
+    public string? ToplantiNotlari { get; set; }
+
+    public bool IsActive { get; set; } = false;
+
     public DateTime Tarih { get; set; }
 
     public DateTime BitisTarihi { get; set; }

@@ -7,14 +7,14 @@
 @inject NavigationManager Navigation
 @inject AuthService AuthService
 
-<MudLayout>
+<MudLayout Class="app-layout">
     <!-- LEFT NAVIGATION -->
     <MudDrawer @bind-Open="@_drawerOpen"
                Anchor="Anchor.Left"
                Elevation="1"
                ClipMode="DrawerClipMode.Never"
                Variant="@DrawerVariant.Persistent"
-               Class="sidebar">
+               Class="sidebar app-drawer">
         <NavMenu />
     </MudDrawer>
 

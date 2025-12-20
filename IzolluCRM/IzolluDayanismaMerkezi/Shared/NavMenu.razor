@@ -1,6 +1,6 @@
 <div class="izollu-nav-menu sidebar">
     <!-- Logo Section -->
-    <div class="nav-header logo-container">
+    <div class="nav-header logo-container drawer-logo">
         <img src="/izollu-vakfi.png" alt="İzollu Dayanışma Merkezi" class="nav-logo" />
     </div>
 
@@ -17,8 +17,8 @@
         </MudNavLink>
     </MudNavMenu>
 
-    <!-- ÜYE İŞLEMLERİ -->
-    <div class="nav-section-title menu-title">ÜYE İŞLEMLERİ</div>
+    <!-- İŞLEMLER -->
+    <div class="nav-section-title menu-title">İŞLEMLER</div>
     
     <MudNavMenu Dense="true" Class="nav-menu">
         <MudNavLink Href="/students" 
@@ -52,12 +52,7 @@
                     ActiveClass="nav-item-active">
             Yardımlar
         </MudNavLink>
-    </MudNavMenu>
-
-    <!-- VERİ YÖNETİMİ -->
-    <div class="nav-section-title menu-title">VERİ YÖNETİMİ</div>
-    
-    <MudNavMenu Dense="true" Class="nav-menu">
+        
         <MudNavLink Href="/meetings" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.Event" 
@@ -65,7 +60,12 @@
                     ActiveClass="nav-item-active">
             Toplantılar
         </MudNavLink>
-        
+    </MudNavMenu>
+
+    <!-- SİSTEM -->
+    <div class="nav-section-title menu-title">SİSTEM</div>
+    
+    <MudNavMenu Dense="true" Class="nav-menu">
         <MudNavLink Href="/excel-import" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.UploadFile" 
@@ -73,12 +73,7 @@
                     ActiveClass="nav-item-active">
             Excel İçe Aktar
         </MudNavLink>
-    </MudNavMenu>
-
-    <!-- SİSTEM -->
-    <div class="nav-section-title menu-title">SİSTEM</div>
-    
-    <MudNavMenu Dense="true" Class="nav-menu">
+        
         <MudNavLink Href="/activity-logs" 
                     Match="NavLinkMatch.Prefix" 
                     Icon="@Icons.Material.Filled.History" 
@@ -138,7 +133,7 @@
         height: 100px;
         padding: 10px 16px;
         border-bottom: 1px solid #f1f5f9;
-        margin-bottom: 38px; /* 1cm boşluk */
+        margin-bottom: 8px;
         flex-shrink: 0;
         background: transparent;
     }
@@ -178,7 +173,11 @@
     }
     
     /* Modern Pill Navigation Items - REDUCED PADDING */
-    .nav-item {
+    .nav-item,
+    .nav-item a,
+    .izollu-nav-menu a,
+    .izollu-nav-menu .mud-nav-link,
+    .mud-nav-link {
         border-radius: 999px !important;
         margin: 1px 2px !important;
         padding: 10px 14px !important;
@@ -188,6 +187,15 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-decoration: none !important;
+    }
+    
+    .izollu-nav-menu a:hover,
+    .izollu-nav-menu a:focus,
+    .izollu-nav-menu a:active,
+    .mud-nav-link:hover,
+    .mud-nav-link:focus,
+    .mud-nav-link:active {
         text-decoration: none !important;
     }
     
@@ -224,8 +232,8 @@
     .nav-footer {
         width: 100%;
         padding: 0.5rem;
-        border-top: 1px solid #f1f5f9;
-        background: #fafafa;
+        border-top: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
         margin-top: auto;
     }
     

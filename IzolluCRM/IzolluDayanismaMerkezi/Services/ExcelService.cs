@@ -25,25 +25,53 @@ public class ExcelService
             worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
         }
 
-        // Örnek satır
-        worksheet.Cell(2, 1).Value = "2025001";
-        worksheet.Cell(2, 2).Value = "Örnek Öğrenci";
+        // Örnek satır 1
+        worksheet.Cell(2, 1).Value = "20001";  // Öğrenci sicil formatı: 2XXXX
+        worksheet.Cell(2, 2).Value = "Ayşe Yılmaz";
         worksheet.Cell(2, 3).Value = "12345678901";
-        worksheet.Cell(2, 4).Value = "ornek@example.com";
+        worksheet.Cell(2, 4).Value = "ayse.yilmaz@email.com";
         worksheet.Cell(2, 5).Value = "0532 123 4567";
         worksheet.Cell(2, 6).Value = "Kadın";
         worksheet.Cell(2, 7).Value = "15.05.2003";
-        worksheet.Cell(2, 8).Value = "Örnek Köy";
-        worksheet.Cell(2, 9).Value = "Ebeveyn Adı";
+        worksheet.Cell(2, 8).Value = "Gözeli";
+        worksheet.Cell(2, 9).Value = "Mehmet Yılmaz";
         worksheet.Cell(2, 10).Value = "0532 999 8888";
-        worksheet.Cell(2, 11).Value = "Adres bilgisi";
-        worksheet.Cell(2, 12).Value = "İstanbul Üniversitesi";
+        worksheet.Cell(2, 11).Value = "Gözeli Köyü, Akçadağ/Malatya";
+        worksheet.Cell(2, 12).Value = "Fırat Üniversitesi";
         worksheet.Cell(2, 13).Value = "Bilgisayar Mühendisliği";
-        worksheet.Cell(2, 14).Value = "1";
-        worksheet.Cell(2, 15).Value = "Referans kişi";
+        worksheet.Cell(2, 14).Value = "2";
+        worksheet.Cell(2, 15).Value = "Ahmet Demir";
         worksheet.Cell(2, 16).Value = "01.09.2024";
-        worksheet.Cell(2, 17).Value = "2025-2026";
+        worksheet.Cell(2, 17).Value = "2024-2025";
         worksheet.Cell(2, 18).Value = "TR330006100519786457841326";
+
+        // Örnek satır 2
+        worksheet.Cell(3, 1).Value = "20002";
+        worksheet.Cell(3, 2).Value = "Mehmet Kaya";
+        worksheet.Cell(3, 3).Value = "98765432109";
+        worksheet.Cell(3, 4).Value = "mehmet.kaya@email.com";
+        worksheet.Cell(3, 5).Value = "0533 456 7890";
+        worksheet.Cell(3, 6).Value = "Erkek";
+        worksheet.Cell(3, 7).Value = "22.11.2002";
+        worksheet.Cell(3, 8).Value = "İzollu";
+        worksheet.Cell(3, 9).Value = "Ali Kaya";
+        worksheet.Cell(3, 10).Value = "0544 111 2222";
+        worksheet.Cell(3, 11).Value = "İzollu Köyü, Akçadağ/Malatya";
+        worksheet.Cell(3, 12).Value = "İnönü Üniversitesi";
+        worksheet.Cell(3, 13).Value = "Tıp Fakültesi";
+        worksheet.Cell(3, 14).Value = "3";
+        worksheet.Cell(3, 15).Value = "Fatma Öztürk";
+        worksheet.Cell(3, 16).Value = "01.09.2023";
+        worksheet.Cell(3, 17).Value = "2024-2025";
+        worksheet.Cell(3, 18).Value = "TR440007200620897568952437";
+
+        // Açıklama satırı
+        worksheet.Cell(5, 1).Value = "NOT:";
+        worksheet.Cell(5, 1).Style.Font.Bold = true;
+        worksheet.Cell(5, 2).Value = "Sicil numarası 2 ile başlamalıdır (örn: 20001, 20002). Boş bırakılırsa otomatik atanır.";
+        worksheet.Cell(6, 2).Value = "Cinsiyet: Erkek veya Kadın";
+        worksheet.Cell(7, 2).Value = "Tarih formatı: GG.AA.YYYY (örn: 15.05.2003)";
+        worksheet.Cell(8, 2).Value = "Dönem formatı: YYYY-YYYY (örn: 2024-2025)";
 
         worksheet.Columns().AdjustToContents();
 
@@ -223,21 +251,61 @@ public class ExcelService
             worksheet.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
         }
 
-        // Örnek satır
-        worksheet.Cell(2, 1).Value = "UYE2025001";
-        worksheet.Cell(2, 2).Value = "Örnek Üye";
+        // Örnek satır 1
+        worksheet.Cell(2, 1).Value = "10001";  // Üye sicil formatı: 1XXXX
+        worksheet.Cell(2, 2).Value = "Ali Veli";
         worksheet.Cell(2, 3).Value = "12345678901";
-        worksheet.Cell(2, 4).Value = "uye@example.com";
+        worksheet.Cell(2, 4).Value = "ali.veli@email.com";
         worksheet.Cell(2, 5).Value = "0532 123 4567";
-        worksheet.Cell(2, 6).Value = "Adres bilgisi";
+        worksheet.Cell(2, 6).Value = "Atatürk Mah. No:15, Kadıköy/İstanbul";
         worksheet.Cell(2, 7).Value = "Mühendis";
-        worksheet.Cell(2, 8).Value = "Örnek Şirket A.Ş.";
+        worksheet.Cell(2, 8).Value = "ABC Teknoloji A.Ş.";
         worksheet.Cell(2, 9).Value = "15.05.1980";
-        worksheet.Cell(2, 10).Value = "Örnek Mahalle";
+        worksheet.Cell(2, 10).Value = "İzollu";
         worksheet.Cell(2, 11).Value = "Üye";
-        worksheet.Cell(2, 12).Value = "01.01.2025";
+        worksheet.Cell(2, 12).Value = "01.01.2024";
         worksheet.Cell(2, 13).Value = "Aktif";
-        worksheet.Cell(2, 14).Value = "Örnek not";
+        worksheet.Cell(2, 14).Value = "";
+
+        // Örnek satır 2 - Yönetim Kurulu Üyesi
+        worksheet.Cell(3, 1).Value = "10002";
+        worksheet.Cell(3, 2).Value = "Fatma Demir";
+        worksheet.Cell(3, 3).Value = "98765432109";
+        worksheet.Cell(3, 4).Value = "fatma.demir@email.com";
+        worksheet.Cell(3, 5).Value = "0533 456 7890";
+        worksheet.Cell(3, 6).Value = "Cumhuriyet Cad. No:25, Beşiktaş/İstanbul";
+        worksheet.Cell(3, 7).Value = "Avukat";
+        worksheet.Cell(3, 8).Value = "Demir Hukuk Bürosu";
+        worksheet.Cell(3, 9).Value = "22.11.1975";
+        worksheet.Cell(3, 10).Value = "Gözeli";
+        worksheet.Cell(3, 11).Value = "Yönetim Kurulu Üyesi";
+        worksheet.Cell(3, 12).Value = "01.06.2023";
+        worksheet.Cell(3, 13).Value = "Aktif";
+        worksheet.Cell(3, 14).Value = "Yönetim kurulu başkan yardımcısı";
+
+        // Örnek satır 3 - Mütevelli
+        worksheet.Cell(4, 1).Value = "10003";
+        worksheet.Cell(4, 2).Value = "Ahmet Yıldız";
+        worksheet.Cell(4, 3).Value = "45678912301";
+        worksheet.Cell(4, 4).Value = "ahmet.yildiz@email.com";
+        worksheet.Cell(4, 5).Value = "0544 789 0123";
+        worksheet.Cell(4, 6).Value = "Bağdat Cad. No:100, Kadıköy/İstanbul";
+        worksheet.Cell(4, 7).Value = "İş İnsanı";
+        worksheet.Cell(4, 8).Value = "Yıldız Holding";
+        worksheet.Cell(4, 9).Value = "10.03.1970";
+        worksheet.Cell(4, 10).Value = "Çavuşlu";
+        worksheet.Cell(4, 11).Value = "Mütevelli Heyeti Üyesi";
+        worksheet.Cell(4, 12).Value = "15.09.2022";
+        worksheet.Cell(4, 13).Value = "Aktif";
+        worksheet.Cell(4, 14).Value = "Vakıf kurucusu";
+
+        // Açıklama satırları
+        worksheet.Cell(6, 1).Value = "NOT:";
+        worksheet.Cell(6, 1).Style.Font.Bold = true;
+        worksheet.Cell(6, 2).Value = "Sicil numarası 1 ile başlamalıdır (örn: 10001, 10002). Boş bırakılırsa otomatik atanır.";
+        worksheet.Cell(7, 2).Value = "Tarih formatı: GG.AA.YYYY (örn: 15.05.1980)";
+        worksheet.Cell(8, 2).Value = "Üyelik Türü: Üye, Yönetim Kurulu Üyesi, Mütevelli Heyeti Üyesi, Denetim Kurulu Üyesi";
+        worksheet.Cell(9, 2).Value = "Durum: Aktif veya Pasif";
 
         worksheet.Columns().AdjustToContents();
 

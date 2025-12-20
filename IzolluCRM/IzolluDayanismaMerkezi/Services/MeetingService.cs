@@ -63,6 +63,23 @@ public class MeetingService
         await _logService.LogAsync("ToplantiSil", $"Toplantı silindi: {meeting.Baslik}");
     }
 
+    public async Task UpdateAsync(Meeting meeting)
+    {
+        var existing = await _context.Meetings.FindAsync(meeting.Id);
+        if (existing == null)
+            return;
+
+        existing.Baslik = meeting.Baslik;
+        existing.ToplantiTuru = meeting.ToplantiTuru;
+        existing.Konum = meeting.Konum;
+        existing.Tarih = meeting.Tarih;
+        existing.BitisTarihi = meeting.BitisTarihi;
+        existing.Aciklama = meeting.Aciklama;
+
+        await _context.SaveChangesAsync();
+        await _logService.LogAsync("ToplantiGuncelle", $"Toplantı güncellendi: {meeting.Baslik}");
+    }
+
     public async Task<List<StudentMeetingAttendance>> GetAttendancesForStudentAsync(int studentId)
     {
         return await _context.StudentMeetingAttendances

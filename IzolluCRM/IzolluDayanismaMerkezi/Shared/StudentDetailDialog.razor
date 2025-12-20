@@ -16,7 +16,7 @@
         {
             <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Centered="false" PanelClass="pa-4" @bind-ActivePanelIndex="_activePanelIndex">
                 <MudTabPanel Text="Genel Bilgiler" Icon="@Icons.Material.Filled.Person">
-                    <MudGrid Class="mt-4">
+                    <MudGrid Class="mt-4" Style="padding-left: 20px; padding-right: 20px;">
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.body2" Color="Color.Default"><strong>Ad Soyad:</strong> @_student.AdSoyad</MudText>
                         </MudItem>
@@ -30,7 +30,7 @@
                             <MudText Typo="Typo.body2"><strong>Telefon:</strong> @_student.Telefon</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudText Typo="Typo.body2"><strong>Doğum Tarihi:</strong> @_student.DogumTarihi?.ToString("dd.MM.yyyy")</MudText>
+                            <MudText Typo="Typo.body2"><strong>Doğum Tarihi:</strong> @_student.DogumTarihi?.ToString("dd/MM/yyyy")</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.body2"><strong>Yaş:</strong> @_student.Yas</MudText>
@@ -57,7 +57,7 @@
                 </MudTabPanel>
 
                 <MudTabPanel Text="Burs Bilgileri" Icon="@Icons.Material.Filled.CurrencyLira">
-                    <MudGrid Class="mt-4">
+                    <MudGrid Class="mt-4" Style="padding-left: 20px; padding-right: 20px;">
                         <MudItem xs="12" md="6">
                             <MudText Typo="Typo.body2"><strong>Bağışçı:</strong> @_student.BagisciAdi</MudText>
                         </MudItem>
@@ -65,10 +65,10 @@
                             <MudText Typo="Typo.body2"><strong>Aylık Tutar:</strong> @_student.AylikTutar.ToString("N2") ₺</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudText Typo="Typo.body2"><strong>Başlangıç:</strong> @_student.BursBaslangicTarihi?.ToString("dd.MM.yyyy")</MudText>
+                            <MudText Typo="Typo.body2"><strong>Başlangıç:</strong> @_student.BursBaslangicTarihi?.ToString("dd/MM/yyyy")</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudText Typo="Typo.body2"><strong>Bitiş:</strong> @_student.BursBitisTarihi?.ToString("dd.MM.yyyy")</MudText>
+                            <MudText Typo="Typo.body2"><strong>Bitiş:</strong> @_student.BursBitisTarihi?.ToString("dd/MM/yyyy")</MudText>
                         </MudItem>
                         <MudItem xs="12">
                             <MudPaper Elevation="2" Class="pa-4">
@@ -88,7 +88,7 @@
                                     <MudText Typo="Typo.body2"><strong>Burs Kesim Sebebi:</strong> @_student.ScholarshipCutReason</MudText>
                                     @if (_student.ScholarshipCutDate.HasValue)
                                     {
-                                        <MudText Typo="Typo.body2"><strong>Kesim Tarihi:</strong> @_student.ScholarshipCutDate.Value.ToString("dd.MM.yyyy HH:mm")</MudText>
+                                        <MudText Typo="Typo.body2"><strong>Kesim Tarihi:</strong> @_student.ScholarshipCutDate.Value.ToString("dd/MM/yyyy HH:mm")</MudText>
                                     }
                                 </MudAlert>
                             }
@@ -145,7 +145,7 @@
                                             @context.GNO.ToString("0.00")
                                         </MudChip>
                                     </MudTd>
-                                    <MudTd>@context.GirisTarihi.ToString("dd.MM.yyyy")</MudTd>
+                                    <MudTd>@context.GirisTarihi.ToString("dd/MM/yyyy")</MudTd>
                                     <MudTd>@(string.IsNullOrEmpty(context.Notlar) ? "-" : context.Notlar)</MudTd>
                                     <MudTd>
                                         @if (!string.IsNullOrEmpty(context.PdfDosyaYolu))
@@ -183,7 +183,7 @@
                         @if (_student.MezunMu)
                         {
                             <MudAlert Severity="Severity.Success" Class="mb-4">
-                                <strong>Mezuniyet Tarihi:</strong> @_student.MezuniyetTarihi?.ToString("dd.MM.yyyy")
+                                <strong>Mezuniyet Tarihi:</strong> @_student.MezuniyetTarihi?.ToString("dd/MM/yyyy")
                             </MudAlert>
                             
                             <MudGrid Class="mt-4">
@@ -229,7 +229,7 @@
                                     <MudTh>Katılım</MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
-                                    <MudTd DataLabel="Tarih">@context.Meeting.Tarih.ToString("dd.MM.yyyy")</MudTd>
+                                    <MudTd DataLabel="Tarih">@context.Meeting.Tarih.ToString("dd/MM/yyyy")</MudTd>
                                     <MudTd DataLabel="Tür">@context.Meeting.ToplantiTuru</MudTd>
                                     <MudTd DataLabel="Lokasyon">@(string.IsNullOrWhiteSpace(context.Meeting.Konum) ? "-" : context.Meeting.Konum)</MudTd>
                                     <MudTd DataLabel="Saat Aralığı">@context.Meeting.Tarih.ToString("HH:mm") - @context.Meeting.BitisTarihi.ToString("HH:mm")</MudTd>
@@ -263,7 +263,7 @@
                                     <MudTh>Kullanıcı</MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
-                                    <MudTd DataLabel="Tarih">@context.Tarih.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                                    <MudTd DataLabel="Tarih">@context.Tarih.ToString("dd/MM/yyyy HH:mm")</MudTd>
                                     <MudTd DataLabel="İşlem Tipi">
                                         <MudChip T="string" Size="Size.Small" Color="@GetLogTypeColor(context.IslemTipi)">
                                             @GetLogTypeText(context.IslemTipi)
