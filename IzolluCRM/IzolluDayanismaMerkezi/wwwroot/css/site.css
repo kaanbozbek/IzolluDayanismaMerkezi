@@ -43,6 +43,7 @@ html, body {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
+    bottom: 0 !important;
     width: 250px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -56,19 +57,30 @@ html, body {
     top: 0 !important;
     bottom: 0 !important;
     left: 0 !important;
-    height: 100dvh !important;
+    width: 250px !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
     background: #dde4ec !important;
 }
 
 /* Force background on MudBlazor drawer element */
 .app-drawer .mud-drawer {
-    height: 100dvh !important;
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
     background: #dde4ec !important;
 }
 
 /* Force background on drawer content wrapper */
 .app-drawer .mud-drawer-content {
-    height: 100% !important;
+    position: relative !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
     background: #dde4ec !important;
     overflow-y: auto !important;
 }
@@ -76,13 +88,29 @@ html, body {
 /* Force background on navigation menu */
 .app-drawer .mud-navmenu {
     background: #dde4ec !important;
-    min-height: 100% !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
 }
 
 /* Force background on izollu-nav-menu wrapper */
 .app-drawer .izollu-nav-menu {
-    background: #eef2f7 !important;
+    background: #dde4ec !important;
     min-height: 100vh !important;
+    min-height: 100dvh !important;
+}
+
+/* izollu-nav-menu flexbox düzeni - footer'ı alta sabitler */
+.izollu-nav-menu.sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    background: #dde4ec !important;
+}
+
+/* Sidebar içeriğinin büyümesi için */
+.sidebar .nav-menu {
+    flex-grow: 0 !important;
 }
 
 /* Page content sidebar genişliği kadar boşluk bırakır */
@@ -264,7 +292,21 @@ table thead,
 .sidebar .logout-section {
     margin-top: auto;
     padding-top: 15px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #c5cdd8;
+    background: #dde4ec !important;
+}
+
+/* Sidebar altındaki boşluğu kapatmak için */
+.sidebar::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: #dde4ec !important;
+    z-index: -1;
 }
 
 /* List Page Layout Styles */
@@ -359,11 +401,18 @@ table thead,
 
 .sidebar .nav-footer-link {
     color: #64748b !important;
+    background: #dde4ec !important;
 }
 
 .sidebar .nav-footer-link:hover {
     color: #ef4444 !important;
     background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Sidebar nav-footer tam arka plan */
+.sidebar .nav-footer {
+    background: #dde4ec !important;
+    padding-bottom: 20px !important;
 }
 
 /* ===== Form Controls - Transparent Background Style ===== */
@@ -521,3 +570,127 @@ input[type="date"].form-control-sm {
     height: 32px;
     font-size: 0.875rem;
 }
+/* Search highlight for user guide */
+.search-highlight {
+    background-color: #fef08a;
+    color: #000;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-weight: 500;
+}
+
+/* ============================================
+   TRANSPARENT FORM CONTROLS - MODERN DESIGN
+   ============================================ */
+
+/* Base styling for all form controls */
+.form-control,
+.form-select,
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    background-color: transparent !important;
+    color: #1f2937;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Placeholder styling - subtle but readable */
+.form-control::placeholder,
+textarea::placeholder,
+input::placeholder {
+    color: rgba(0, 0, 0, 0.45);
+    opacity: 1;
+}
+
+/* Focus state - transparent background with orange accent */
+.form-control:focus,
+.form-select:focus,
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+    background-color: transparent !important;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    outline: none;
+}
+
+/* Disabled state */
+.form-control:disabled,
+.form-select:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+    color: rgba(0, 0, 0, 0.38);
+    cursor: not-allowed;
+}
+
+/* MudBlazor specific overrides */
+.mud-input-root .mud-input,
+.mud-select .mud-input-slot,
+.mud-input-slot input,
+.mud-input-slot textarea {
+    background-color: transparent !important;
+}
+
+.mud-input-root.mud-input-outlined .mud-input-slot {
+    background-color: transparent !important;
+}
+
+.mud-input-outlined .mud-input-slot fieldset {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.mud-input-outlined.mud-input-adorned-end .mud-input-slot {
+    background-color: transparent !important;
+}
+
+/* MudBlazor focus state */
+.mud-input-root.mud-focused .mud-input-slot fieldset {
+    border-color: #f59e0b !important;
+    border-width: 2px;
+}
+
+/* Bootstrap Select styling */
+.bootstrap-select .dropdown-toggle {
+    background-color: transparent !important;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    color: #1f2937;
+}
+
+.bootstrap-select .dropdown-toggle:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    outline: none;
+}
+
+/* Select2 styling */
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+    background-color: transparent !important;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* Ensure readability on colored section backgrounds */
+.section-blue input,
+.section-blue textarea,
+.section-blue select,
+.section-green input,
+.section-green textarea,
+.section-green select,
+.section-yellow input,
+.section-yellow textarea,
+.section-yellow select {
+    background-color: transparent !important;
+}
+
