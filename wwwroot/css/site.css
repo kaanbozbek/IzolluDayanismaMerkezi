@@ -1404,3 +1404,74 @@ textarea.form-control:focus,
 .mud-input:focus-within input {
     background-color: transparent !important;
 }
+
+/* ========================================================================
+   FIX: Floating Label White Background Issue on Colored Containers
+   AGGRESSIVE override - targets all MudBlazor label background scenarios
+   ======================================================================== */
+
+/* APPROACH 1: Force inherit to pick up parent container color */
+.mud-input-label,
+.mud-input-label-inputcontrol,
+.mud-input-label-outlined,
+.mud-input-label-filled,
+.mud-input-label-text,
+.mud-input-control .mud-input-label,
+.mud-input-control-input-container .mud-input-label,
+.mud-select .mud-input-label,
+.mud-picker .mud-input-label,
+.mud-autocomplete .mud-input-label {
+    background-color: inherit !important;
+    background: inherit !important;
+}
+
+/* APPROACH 2: Fieldset and legend - force inherit */
+.mud-input-outlined fieldset,
+.mud-input-outlined fieldset legend,
+.mud-input-control-fieldset,
+.mud-input-control-fieldset legend,
+fieldset.mud-input-outlined-border,
+fieldset.mud-input-outlined-border legend {
+    background-color: inherit !important;
+    background: inherit !important;
+}
+
+/* APPROACH 3: Extra specificity for colored MudPaper sections */
+.mud-paper .mud-input-label,
+.mud-paper .mud-input-label-outlined,
+.mud-paper .mud-input-label-inputcontrol,
+.mud-paper .mud-select .mud-input-label,
+.mud-paper .mud-picker .mud-input-label,
+.mud-paper .mud-input-control .mud-input-label,
+.mud-paper fieldset legend {
+    background-color: inherit !important;
+    background: inherit !important;
+}
+
+/* APPROACH 4: Dialog context with colored sections */
+.mud-dialog .mud-paper .mud-input-label,
+.mud-dialog .mud-paper fieldset legend,
+.mud-dialog-content .mud-paper .mud-input-label {
+    background-color: inherit !important;
+    background: inherit !important;
+}
+
+/* APPROACH 5: Wildcard for any deeply nested label */
+[class*="mud-input"] label,
+[class*="mud-input"] legend,
+[class*="mud-input"] .mud-input-label {
+    background-color: inherit !important;
+    background: inherit !important;
+}
+
+/* FALLBACK: If inherit doesn't work, force transparent as last resort */
+.mud-input-outlined .mud-input-label::before,
+.mud-input-outlined .mud-input-label::after {
+    background-color: transparent !important;
+}
+
+/* Ensure label padding doesn't create white space */
+.mud-input-label {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}

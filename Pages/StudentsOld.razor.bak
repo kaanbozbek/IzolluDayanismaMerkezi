@@ -1,0 +1,469 @@
+@page "/students"
+@inject StudentService StudentService
+@inject TermService TermService
+@inject MeetingService MeetingService
+@inject ExcelService ExcelService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject TermChangeNotifier TermChangeNotifier
+@implements IDisposable
+
+<PageTitle>Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Öğrenciler</MudText>
+
+<MudTabs Rounded="true" Elevation="2">
+    <MudTabPanel Text="Öğrenciler" Icon="@Icons.Material.Filled.School">
+        <div Class="d-flex gap-2 mb-4 mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Yeni Öğrenci Ekle
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportToExcel">
+                Excel'e Aktar
+            </MudButton>
+        </div>
+
+<MudPaper Class="pa-3 mb-4" Elevation="1">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_searchString" Label="Ara" Placeholder="İsim, okul, sicil..." 
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <label class="form-label">Burs Durumu</label>
+            <select class="selectpicker" data-width="100%" data-style="btn-outline-primary" data-live-search="true"
+                    value="@_bursFilter" @onchange="OnBursFilterChanged" title="Tümü">
+                @foreach (var option in _bursFilterOptions)
+                {
+                    <option value="@option.Value">@option.Label</option>
+                }
+            </select>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <label class="form-label">Cinsiyet</label>
+            <select class="selectpicker" data-width="100%" data-style="btn-outline-primary"
+                    value="@_genderFilter" @onchange="OnGenderFilterChanged" title="Tümü">
+                <option value="">Tümü</option>
+                @foreach (var gender in _genderOptions)
+                {
+                    <option value="@gender">@gender</option>
+                }
+            </select>
+        </MudItem>
+        <MudItem xs="12" md="2" Class="d-flex align-center">
+            <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="ResetFilters">Temizle</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTable Items="@_students" Dense="true" Hover="true" Loading="@_loading" Filter="new Func<Student, bool>(FilterFunc)"
+          @bind-SelectedItem="_selectedStudent" SortLabel="Sırala" RowsPerPage="50">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.SicilNumarasi ?? string.Empty)">Sicil No</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.AdSoyad)">Adı Soyadı</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Sinif ?? 0)">Sınıfı</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Universite ?? string.Empty)">Okulu</MudTableSortLabel></MudTh>
+        <MudTh>Burs Durumu</MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Cinsiyet ?? string.Empty)">Cinsiyeti</MudTableSortLabel></MudTh>
+        <MudTh>Son Toplantı Katılımı</MudTh>
+        <MudTh>Transkript Notu</MudTh>
+        <MudTh>İşlemler</MudTh>
+    </HeaderContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 50, 100, 200 }" />
+    </PagerContent>
+    <RowTemplate>
+        <MudTd DataLabel="Sicil No">@(!string.IsNullOrWhiteSpace(context.SicilNumarasi) ? context.SicilNumarasi : "-")</MudTd>
+        <MudTd DataLabel="Adı Soyadı">
+            <MudLink OnClick="@(() => OpenDetailDialog(context))">@context.AdSoyad</MudLink>
+        </MudTd>
+        <MudTd DataLabel="Sınıfı">@(context.Sinif?.ToString() ?? "-")</MudTd>
+        <MudTd DataLabel="Okulu">@context.Universite</MudTd>
+        <MudTd DataLabel="Burs Durumu">
+            @if (context.AktifBursMu)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                    ₺ Burs Alıyor
+                </MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Default" Icon="@Icons.Material.Filled.Block">
+                    Burs Almıyor
+                </MudChip>
+            }
+        </MudTd>
+        <MudTd DataLabel="Cinsiyeti">@(string.IsNullOrWhiteSpace(context.Cinsiyet) ? "-" : context.Cinsiyet)</MudTd>
+        <MudTd DataLabel="Son Toplantı Katılımı">
+            @{
+                var attendance = GetLastMeetingAttendance(context.Id);
+                if (attendance != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="@(attendance.Katildi ? Color.Success : Color.Error)">
+                        @(attendance.Katildi ? "Katıldı" : "Katılmadı")
+                    </MudChip>
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            }
+        </MudTd>
+        <MudTd DataLabel="Transkript Notu">@(!string.IsNullOrWhiteSpace(context.TranskriptNotu) ? context.TranskriptNotu : "-")</MudTd>
+        <MudTd DataLabel="İşlemler">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteStudent(context.Id))" />
+            <MudIconButton Icon="@Icons.Material.Filled.School" Size="Size.Small" Color="Color.Success" OnClick="@(() => ConfirmGraduateStudent(context))" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Mezun Öğrenciler" Icon="@Icons.Material.Filled.School">
+        <MudPaper Class="pa-3 mb-4 mt-4" Elevation="1">
+            <MudTextField @bind-Value="_graduatedSearchString" Label="Ara" Placeholder="İsim, okul, sicil..." 
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudPaper>
+
+        <MudTable Items="@_graduatedStudents" Dense="true" Hover="true" Loading="@_graduatedLoading" 
+                  Filter="new Func<Student, bool>(FilterGraduatedFunc)" SortLabel="Sırala" RowsPerPage="50">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.SicilNumarasi ?? string.Empty)">Sicil No</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.AdSoyad)">Adı Soyadı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Meslek ?? string.Empty)">Mesleği</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Universite ?? string.Empty)">Okulu</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Yas ?? 0)">Yaşı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Cinsiyet ?? string.Empty)">Cinsiyeti</MudTableSortLabel></MudTh>
+                <MudTh>İletişim</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.MezuniyetTarihi ?? DateTime.MinValue)">Mezuniyet Tarihi</MudTableSortLabel></MudTh>
+                <MudTh>İşlemler</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Sicil No">@(!string.IsNullOrWhiteSpace(context.SicilNumarasi) ? context.SicilNumarasi : "-")</MudTd>
+                <MudTd DataLabel="Adı Soyadı">
+                    <MudLink OnClick="@(() => OpenGraduateDetailDialog(context))">@context.AdSoyad</MudLink>
+                </MudTd>
+                <MudTd DataLabel="Mesleği">@(context.Meslek ?? "-")</MudTd>
+                <MudTd DataLabel="Okulu">
+                    <div>@context.Universite</div>
+                    @if (!string.IsNullOrEmpty(context.Bolum))
+                    {
+                        <small class="text-muted">@context.Bolum</small>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Yaşı">@(context.Yas?.ToString() ?? "-")</MudTd>
+                <MudTd DataLabel="Cinsiyeti">@(string.IsNullOrWhiteSpace(context.Cinsiyet) ? "-" : context.Cinsiyet)</MudTd>
+                <MudTd DataLabel="İletişim">
+                    @if (!string.IsNullOrEmpty(context.Telefon))
+                    {
+                        <div>@context.Telefon</div>
+                    }
+                    @if (!string.IsNullOrEmpty(context.Email))
+                    {
+                        <small>@context.Email</small>
+                    }
+                    @if (string.IsNullOrEmpty(context.Telefon) && string.IsNullOrEmpty(context.Email))
+                    {
+                        <span>-</span>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Mezuniyet Tarihi">
+                    @if (context.MezuniyetTarihi.HasValue)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.School">
+                            @context.MezuniyetTarihi.Value.ToString("dd.MM.yyyy")
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <span>-</span>
+                    }
+                </MudTd>
+                <MudTd DataLabel="İşlemler">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" 
+                                   OnClick="@(() => OpenGraduateDetailDialog(context))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 50, 100, 200 }" />
+            </PagerContent>
+        </MudTable>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private List<Student> _students = new();
+    private List<Student> _graduatedStudents = new();
+    private Student? _selectedStudent;
+    private bool _loading = true;
+    private bool _graduatedLoading = true;
+    private string _searchString = string.Empty;
+    private string _graduatedSearchString = string.Empty;
+    private string _genderFilter = string.Empty;
+    private string _bursFilter = string.Empty;
+    private int? _selectedTermId;
+    private Dictionary<int, StudentMeetingAttendance?> _lastMeetingAttendances = new();
+    private readonly List<string> _genderOptions = new() { "Kadın", "Erkek", "Diğer" };
+    private readonly List<BursFilterOption> _bursFilterOptions = new()
+    {
+        new(string.Empty, "Tümü"),
+        new("Aktif", "Burs Alan"),
+        new("Pasif", "Burs Almayan")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to term change notifications
+        TermChangeNotifier.OnTermChanged += OnTermChangedHandler;
+        
+        await LoadData();
+    }
+    
+    private async void OnTermChangedHandler()
+    {
+        // Reload when active term changes in Settings
+        await LoadData();
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        TermChangeNotifier.OnTermChanged -= OnTermChangedHandler;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload data when term changes
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _graduatedLoading = true;
+        
+        // Always use active term from Settings
+        var activeTerm = await TermService.GetActiveTermAsync();
+        if (activeTerm != null)
+        {
+            // Use term-based queries with active term
+            _students = await StudentService.GetActiveStudentsByTermAsync(activeTerm.Id);
+            _graduatedStudents = await StudentService.GetGraduatedStudentsByTermAsync(activeTerm.Id);
+        }
+        else
+        {
+            // Fallback to legacy queries if no term exists
+            _students = await StudentService.GetCurrentStudentsAsync();
+            _graduatedStudents = await StudentService.GetGraduatedStudentsAsync();
+        }
+        
+        // Load last meeting attendance for each student
+        _lastMeetingAttendances.Clear();
+        foreach (var student in _students)
+        {
+            var attendances = await MeetingService.GetAttendancesForStudentAsync(student.Id);
+            _lastMeetingAttendances[student.Id] = attendances.FirstOrDefault();
+        }
+        
+        _loading = false;
+        _graduatedLoading = false;
+    }
+
+    private StudentMeetingAttendance? GetLastMeetingAttendance(int studentId)
+    {
+        return _lastMeetingAttendances.TryGetValue(studentId, out var attendance) ? attendance : null;
+    }
+
+    private bool FilterGraduatedFunc(Student student)
+    {
+        if (string.IsNullOrWhiteSpace(_graduatedSearchString))
+            return true;
+
+        var search = _graduatedSearchString.Trim();
+        return student.AdSoyad.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || (student.Universite?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+            || (student.SicilNumarasi?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+            || (student.Meslek?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
+    }
+
+    private async Task OpenGraduateDetailDialog(Student student)
+    {
+        var parameters = new DialogParameters { ["Student"] = student };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+        await DialogService.ShowAsync<GraduateStudentDialog>("Mezun Öğrenci Detayları", parameters, options);
+    }
+
+    private bool FilterFunc(Student student)
+    {
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            var search = _searchString.Trim();
+            var matches = student.AdSoyad.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || (student.Universite?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+                || (student.SicilNumarasi?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+                || (student.Cinsiyet?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
+
+            if (!matches)
+            {
+                return false;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(_genderFilter) && !string.Equals(student.Cinsiyet, _genderFilter, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (_bursFilter == "Aktif" && !student.AktifBursMu)
+        {
+            return false;
+        }
+
+        if (_bursFilter == "Pasif" && student.AktifBursMu)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool _selectPickerReady;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeSelectPickersAsync();
+            _selectPickerReady = true;
+        }
+    }
+
+    private async Task InitializeSelectPickersAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("bootstrapSelect.init");
+        await JSRuntime.InvokeVoidAsync("bootstrapSelect.refresh");
+    }
+
+    private Task RefreshSelectPickersAsync()
+    {
+        if (!_selectPickerReady)
+        {
+            return Task.CompletedTask;
+        }
+
+        return JSRuntime.InvokeVoidAsync("bootstrapSelect.refresh").AsTask();
+    }
+
+    private async Task ResetFilters()
+    {
+        _searchString = string.Empty;
+        _genderFilter = string.Empty;
+        _bursFilter = string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnBursFilterChanged(ChangeEventArgs args)
+    {
+        _bursFilter = args.Value?.ToString() ?? string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnGenderFilterChanged(ChangeEventArgs args)
+    {
+        _genderFilter = args.Value?.ToString() ?? string.Empty;
+        await RefreshSelectPickersAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters { ["IsEdit"] = false };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<StudentDialog>("Yeni Öğrenci Ekle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Öğrenci başarıyla eklendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Student student)
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["IsEdit"] = true,
+            ["Student"] = student
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<StudentDialog>("Öğrenci Düzenle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Öğrenci başarıyla güncellendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenDetailDialog(Student student)
+    {
+        var parameters = new DialogParameters { ["StudentId"] = student.Id };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+        await DialogService.ShowAsync<StudentDetailDialog>("Öğrenci Detayı", parameters, options);
+    }
+
+    private async Task DeleteStudent(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            "Bu öğrenciyi silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            await StudentService.DeleteAsync(id);
+            await LoadData();
+            Snackbar.Add("Öğrenci silindi.", Severity.Info);
+        }
+    }
+
+    private async Task ConfirmGraduateStudent(Student student)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<GraduateStudentDialog>("Öğrenciyi Mezun Et", parameters: new DialogParameters(), options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is DateTime mezuniyetTarihi)
+        {
+            await StudentService.GraduateStudentAsync(student.Id, mezuniyetTarihi);
+            await LoadData();
+            Snackbar.Add($"{student.AdSoyad} mezun edildi.", Severity.Success);
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var allStudents = await StudentService.GetAllAsync();
+            var filteredStudents = allStudents.Where(FilterFunc).ToList();
+            
+            var excelBytes = ExcelService.ExportStudents(filteredStudents);
+            var fileName = $"Ogrenciler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelBytes));
+            Snackbar.Add($"{filteredStudents.Count} öğrenci Excel'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel'e aktarma hatası: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private sealed record BursFilterOption(string Value, string Label);
+}

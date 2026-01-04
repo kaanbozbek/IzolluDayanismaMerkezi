@@ -812,6 +812,7 @@ public class PdfService
                         // Üniversite Dağılımı
                         if (universityData.Any())
                         {
+                            column.Item().PageBreak();
                             column.Item().PaddingTop(10).Text("Üniversiteye Göre Öğrenci Dağılımı").FontSize(12).Bold();
                             column.Item().PaddingTop(5).Column(uniCol =>
                             {
