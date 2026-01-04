@@ -1,0 +1,205 @@
+@page "/aids"
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject AidService AidService
+@inject SettingsService SettingsService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Yardımlar - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    @* Statistics Cards *@
+    <MudGrid Class="mb-4" Spacing="3">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_aids.Count</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Yardım</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_aids.Count(a => a.IsIzollulu)</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">İzollulu</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.Home" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@_aids.Count(a => !a.IsIzollulu)</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Dışarıdan</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.Public" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @* FILTER BAR *@
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <div class="d-flex align-center gap-3">
+            <MudTextField @bind-Value="_searchString"
+                          Label="Ara"
+                          Placeholder="İsim, telefon, adres..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Style="flex: 1; max-width: 400px;" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Yeni Yardım Ekle
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    <MudTable Items="@_aids" Dense="true" Hover="true" Filter="new Func<Aid, bool>(FilterFunc)" SortLabel="Sırala">
+        <ToolBarContent>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Ad)">Ad</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Telefon ?? string.Empty)">Telefon</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.Adres ?? string.Empty)">Adres</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.RefereEden ?? string.Empty)">Refere Eden</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Aid, object>(x => x.IsIzollulu)">Durum</MudTableSortLabel></MudTh>
+            <MudTh>Konum</MudTh>
+            <MudTh>İşlemler</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Ad">
+                <MudLink Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))">
+                    <strong>@context.Ad</strong>
+                </MudLink>
+            </MudTd>
+            <MudTd DataLabel="Telefon">@context.Telefon</MudTd>
+            <MudTd DataLabel="Adres">@context.Adres</MudTd>
+            <MudTd DataLabel="Refere Eden">@context.RefereEden</MudTd>
+            <MudTd DataLabel="Durum">
+                @if (context.IsIzollulu)
+                {
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small">İzollulu</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Info" Size="Size.Small">Dışarıdan</MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Konum">
+                @if (context.IsIzollulu)
+                {
+                    <span>@context.Koy</span>
+                }
+                else
+                {
+                    <span>@context.Sehir</span>
+                }
+            </MudTd>
+            <MudTd DataLabel="İşlemler">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteAid(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private List<Aid> _aids = new();
+    private string _searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _aids = await AidService.GetAllAsync();
+    }
+
+    private bool FilterFunc(Aid aid)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (aid.Ad?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Telefon?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Adres?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.RefereEden?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Koy?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (aid.Sehir?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters<AidDialog>
+        {
+            { x => x.Aid, new Aid() }
+        };
+
+        var dialog = await DialogService.ShowAsync<AidDialog>("Yeni Yardım Ekle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Yardım başarıyla eklendi", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Aid aid)
+    {
+        var parameters = new DialogParameters<AidDialog>
+        {
+            { x => x.Aid, aid },
+            { x => x.IsEdit, true }
+        };
+
+        var dialog = await DialogService.ShowAsync<AidDialog>("Yardım Düzenle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Yardım başarıyla güncellendi", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAid(int id)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Uyarı",
+            "Bu yardımı silmek istediğinize emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            await AidService.DeleteAsync(id);
+            await LoadData();
+            Snackbar.Add("Yardım başarıyla silindi", Severity.Success);
+        }
+    }
+}

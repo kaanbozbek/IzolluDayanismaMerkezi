@@ -1,0 +1,269 @@
+@inject MeetingService MeetingService
+@inject SettingsService SettingsService
+@inject TermService TermService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog Style="max-width: 600px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Toplantı Düzenle" : "Yeni Toplantı Ekle")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            @* Toplantı Bilgileri *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <MudText Typo="Typo.subtitle2" Style="color: #b45309;" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Class="mr-1" />
+                    Toplantı Bilgileri
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_meeting.Baslik" Label="Toplantı Adı" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Toplantı Türü *</label>
+                            <select class="selectpicker form-control" data-live-search="false" data-width="100%"
+                                    @onchange="@(e => _meeting.ToplantiTuru = e.Value?.ToString())">
+                                <option value="">Seçiniz</option>
+                                @foreach (var type in _meetingTypes)
+                                {
+                                    <option value="@type" selected="@(_meeting.ToplantiTuru == type)">@type</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Toplantı Lokasyonu *</label>
+                            <select class="selectpicker form-control" data-live-search="true" data-width="100%"
+                                    @onchange="@(e => _meeting.Konum = e.Value?.ToString())">
+                                <option value="">Seçiniz</option>
+                                @foreach (var loc in _locations)
+                                {
+                                    <option value="@loc" selected="@(_meeting.Konum == loc)">@loc</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Dönem</label>
+                            <select class="selectpicker form-control" data-live-search="true" data-width="100%"
+                                    @onchange="@(e => _meeting.TermId = int.TryParse(e.Value?.ToString(), out var id) ? id : null)">
+                                <option value="">Dönem Seçiniz (Opsiyonel)</option>
+                                @foreach (var term in _terms)
+                                {
+                                    <option value="@term.Id" selected="@(_meeting.TermId == term.Id)">@term.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Tarih ve Saat *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Info" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                    Tarih ve Saat
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <div class="form-group">
+                            <label class="form-label">Toplantı Tarihi *</label>
+                            <input type="date" class="form-control" 
+                                   value="@(_tarih?.ToString("yyyy-MM-dd"))"
+                                   @onchange="@(e => _tarih = DateTime.TryParse(e.Value?.ToString(), out var dt) ? dt : null)" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <div class="form-group">
+                            <label class="form-label">Başlangıç Saati *</label>
+                            <select class="selectpicker form-control" data-live-search="false" data-width="100%"
+                                    @onchange="@(e => _baslangicSaati = e.Value?.ToString() ?? "18:00")">
+                                @foreach (var time in _timeOptions)
+                                {
+                                    <option value="@time" selected="@(_baslangicSaati == time)">@time</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <div class="form-group">
+                            <label class="form-label">Bitiş Saati *</label>
+                            <select class="selectpicker form-control" data-live-search="false" data-width="100%"
+                                    @onchange="@(e => _bitisSaati = e.Value?.ToString() ?? "20:00")">
+                                @foreach (var time in _timeOptions)
+                                {
+                                    <option value="@time" selected="@(_bitisSaati == time)">@time</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Notlar *@
+            <MudTextField @bind-Value="_meeting.Aciklama" 
+                          Label="Toplantı Notu" 
+                          Lines="3" 
+                          Variant="Variant.Outlined"
+                          Placeholder="Toplantı ile ilgili notları buraya yazabilirsiniz..." />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Kaydet")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public Meeting? Meeting { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private Meeting _meeting = new();
+    private DateTime? _tarih;
+    private string _baslangicSaati = "18:00";
+    private string _bitisSaati = "20:00";
+    private List<string> _meetingTypes = new();
+    private List<string> _locations = new();
+    private List<Term> _terms = new();
+
+    private readonly List<string> _timeOptions = new()
+    {
+        "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+        "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+        "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+        "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+        "20:00", "20:30", "21:00", "21:30", "22:00"
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("bootstrapSelect.init");
+            }
+            catch (JSDisconnectedException)
+            {
+                // Component disposed, ignore
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load meeting types and locations from settings
+        _meetingTypes = await SettingsService.GetListValueAsync("MeetingTypes");
+        _locations = await SettingsService.GetListValueAsync("MeetingLocations");
+        
+        // Load terms
+        _terms = await TermService.GetAllTermsAsync();
+
+        // If empty, set defaults
+        if (_meetingTypes == null || !_meetingTypes.Any())
+        {
+            _meetingTypes = new List<string> { "Yönetim Kurulu", "Kurucular Heyeti", "Burs Komitesi", "Genel Toplantı" };
+            await SettingsService.SetListValueAsync("MeetingTypes", _meetingTypes, "Toplantı türleri listesi");
+        }
+        
+        if (_locations == null || !_locations.Any())
+        {
+            _locations = new List<string> { "Online – Zoom", "Online – Teams", "Merkez Ofis", "Dernek Salonu" };
+            await SettingsService.SetListValueAsync("MeetingLocations", _locations, "Toplantı lokasyonları listesi");
+        }
+
+        if (IsEdit && Meeting != null)
+        {
+            _meeting = new Meeting
+            {
+                Id = Meeting.Id,
+                Baslik = Meeting.Baslik,
+                ToplantiTuru = Meeting.ToplantiTuru,
+                Konum = Meeting.Konum,
+                Tarih = Meeting.Tarih,
+                BitisTarihi = Meeting.BitisTarihi,
+                Aciklama = Meeting.Aciklama,
+                OlusturmaTarihi = Meeting.OlusturmaTarihi,
+                TermId = Meeting.TermId
+            };
+            _tarih = Meeting.Tarih.Date;
+            _baslangicSaati = Meeting.Tarih.ToString("HH:mm");
+            _bitisSaati = Meeting.BitisTarihi.ToString("HH:mm");
+        }
+        else
+        {
+            // Auto-select active term for new meetings
+            var activeTerm = _terms.FirstOrDefault(t => t.IsActive);
+            
+            _meeting = new Meeting
+            {
+                ToplantiTuru = _meetingTypes?.FirstOrDefault() ?? string.Empty,
+                Konum = _locations?.FirstOrDefault() ?? string.Empty,
+                TermId = activeTerm?.Id
+            };
+            _tarih = DateTime.Today;
+        }
+        
+        StateHasChanged();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+
+        if (string.IsNullOrWhiteSpace(_meeting.Baslik))
+        {
+            Snackbar.Add("Lütfen toplantı adını girin.", Severity.Warning);
+            return;
+        }
+
+        if (_tarih is null)
+        {
+            Snackbar.Add("Lütfen toplantı tarihini belirtin.", Severity.Warning);
+            return;
+        }
+
+        if (!TimeSpan.TryParse(_baslangicSaati, out var baslangicTime) || !TimeSpan.TryParse(_bitisSaati, out var bitisTime))
+        {
+            Snackbar.Add("Geçersiz saat formatı.", Severity.Warning);
+            return;
+        }
+
+        var baslangic = _tarih.Value.Date + baslangicTime;
+        var bitis = _tarih.Value.Date + bitisTime;
+
+        if (bitis <= baslangic)
+        {
+            Snackbar.Add("Bitiş saati başlangıç saatinden sonra olmalıdır.", Severity.Warning);
+            return;
+        }
+
+        _meeting.Tarih = baslangic;
+        _meeting.BitisTarihi = bitis;
+
+        if (IsEdit)
+        {
+            await MeetingService.UpdateAsync(_meeting);
+        }
+        else
+        {
+            await MeetingService.CreateAsync(_meeting);
+        }
+
+        MudDialog.Close(DialogResult.Ok(_meeting));
+    }
+}

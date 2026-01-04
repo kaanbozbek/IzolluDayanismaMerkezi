@@ -1,0 +1,55 @@
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">@Donor.AdSoyad</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Meslek:</strong> @Donor.Meslek</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Şirket:</strong> @Donor.Sirket</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Email:</strong> @Donor.Email</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Telefon:</strong> @Donor.Telefon</MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.body2"><strong>Adres:</strong> @Donor.Adres</MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Sektör:</strong> @Donor.Sektor</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Burs Adedi:</strong> @Donor.BursAdedi</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Birim Burs Tutarı:</strong> @Donor.BirimBursTutari.ToString("N2") ₺</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2" Color="Color.Primary"><strong>Toplam Tutar:</strong> @Donor.ToplamTutar.ToString("N2") ₺</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>İlk Burs Tarihi:</strong> @Donor.IlkBursVerdigiTarih?.ToString("dd/MM/yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.body2"><strong>Son Burs Tarihi:</strong> @Donor.SonBursVerdigiTarih?.ToString("dd/MM/yyyy")</MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Close">Kapat</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Donor Donor { get; set; } = null!;
+
+    private void Close() => MudDialog.Close();
+}

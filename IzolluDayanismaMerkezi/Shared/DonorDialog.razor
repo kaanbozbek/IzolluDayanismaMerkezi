@@ -1,0 +1,224 @@
+@inject DonorService DonorService
+@inject SettingsService SettingsService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog Style="max-width: 700px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Bağışçı Düzenle" : "Yeni Bağışçı Ekle")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            @* Kişisel Bilgiler *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                    Kişisel Bilgiler
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_donor.AdSoyad" Label="Ad Soyad" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_donor.Meslek" Label="Meslek" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_donor.Sirket" Label="Şirket" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        @if (_isLoading)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Sektör</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="_donor.Sektor">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var sector in _sectors)
+                                    {
+                                        <option value="@sector">@sector</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* İletişim Bilgileri *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #d1fae5; border-radius: 12px; border-left: 4px solid #22c55e;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.ContactPhone" Size="Size.Small" Class="mr-1" />
+                    İletişim Bilgileri
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_donor.Email" Label="Email" Variant="Variant.Outlined" Margin="Margin.Dense" InputType="InputType.Email" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_donor.Telefon" Label="Telefon" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_donor.Adres" Label="Adres" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Burs Bilgileri *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #fdf4ff; border-radius: 8px; border-left: 4px solid #a855f7;">
+                <MudText Typo="Typo.subtitle2" Style="color: #9333ea;" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Class="mr-1" />
+                    Burs Bilgileri
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudNumericField Value="_donor.BursAdedi" 
+                                       ValueChanged="@((int val) => OnBursCountChanged(val))"
+                                       Label="Burs Adedi" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField Value="_donor.BirimBursTutari" 
+                                       ValueChanged="@((decimal val) => OnBursAmountChanged(val))"
+                                       Label="1 Burs Tutarı (₺)" Min="0" Format="N2" 
+                                       Step="0.01M" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">İlk Burs Verdiği Tarih</label>
+                            <input type="date" class="form-control" 
+                                   value="@(_ilkBursTarihi?.ToString("yyyy-MM-dd"))"
+                                   @onchange="@(e => _ilkBursTarihi = DateTime.TryParse(e.Value?.ToString(), out var dt) ? dt : null)" />
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Son Burs Verdiği Tarih</label>
+                            <input type="date" class="form-control" 
+                                   value="@(_sonBursTarihi?.ToString("yyyy-MM-dd"))"
+                                   @onchange="@(e => _sonBursTarihi = DateTime.TryParse(e.Value?.ToString(), out var dt) ? dt : null)" />
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Özet *@
+            <MudAlert Severity="Severity.Info" Class="mt-2">
+                <strong>Toplam Tutar:</strong> @CalculateTotalAmount().ToString("N2") ₺
+                <small class="ms-2">(Adet: @_donor.BursAdedi x Tutar: @_donor.BirimBursTutari.ToString("N2") ₺)</small>
+            </MudAlert>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Kaydet")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public Donor? Donor { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private Donor _donor = new();
+    private DateTime? _ilkBursTarihi;
+    private DateTime? _sonBursTarihi;
+    private List<string> _sectors = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        _sectors = await SettingsService.GetListValueAsync("Sektorler");
+        _isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isLoading)
+        {
+            await InitializeSelectPickersAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickersAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsEdit && Donor != null)
+        {
+            _donor = Donor;
+            _ilkBursTarihi = _donor.IlkBursVerdigiTarih;
+            _sonBursTarihi = _donor.SonBursVerdigiTarih;
+        }
+        else if (!IsEdit)
+        {
+            _donor.BirimBursTutari = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
+        }
+    }
+
+    private void OnBursCountChanged(int value)
+    {
+        _donor.BursAdedi = value;
+        _donor.ToplamTutar = CalculateTotalAmount();
+    }
+
+    private void OnBursAmountChanged(decimal value)
+    {
+        _donor.BirimBursTutari = value;
+        _donor.ToplamTutar = CalculateTotalAmount();
+    }
+
+    private decimal CalculateTotalAmount() => _donor.BursAdedi * _donor.BirimBursTutari;
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (_success)
+        {
+            try
+            {
+                _donor.IlkBursVerdigiTarih = _ilkBursTarihi;
+                _donor.SonBursVerdigiTarih = _sonBursTarihi;
+                _donor.ToplamTutar = CalculateTotalAmount();
+
+                if (IsEdit)
+                {
+                    await DonorService.UpdateAsync(_donor);
+                    Snackbar.Add("Bağışçı başarıyla güncellendi.", Severity.Success);
+                }
+                else
+                {
+                    await DonorService.CreateAsync(_donor);
+                    Snackbar.Add("Bağışçı başarıyla eklendi.", Severity.Success);
+                }
+
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,24 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@inject AuthService AuthService
+
+<RouteView RouteData="@RouteData" DefaultLayout="@GetLayout()" />
+<FocusOnNavigate RouteData="@RouteData" Selector="h1" />
+
+@code {
+    [Parameter]
+    public RouteData RouteData { get; set; } = default!;
+
+    private Type GetLayout()
+    {
+        // Login sayfası için boş layout
+        var pageType = RouteData.PageType;
+        if (pageType.Name == "Login")
+        {
+            return typeof(EmptyLayout);
+        }
+        
+        // Diğer sayfalar için authorized layout
+        return typeof(AuthorizedLayout);
+    }
+}

@@ -1,0 +1,1442 @@
+@page "/members"
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Data.Models
+@using IzolluVakfi.Services
+@using IzolluVakfi.Models
+@using MudBlazor
+@inject MemberService MemberService
+@inject DonorService DonorService
+@inject MemberScholarshipCommitmentService CommitmentService
+@inject SettingsService SettingsService
+@inject PdfService PdfService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Üyeler</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+    @* Statistics Cards *@
+    <MudGrid Class="mb-4" Spacing="3">
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalMembers</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Üye</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.People" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@ActiveMembers</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Aktif Üyeler</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.Check" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #34d399 0%, #10b981 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@ScholarshipGivers</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Burs Verenler</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.VolunteerActivism" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalPledgedScholarships</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Taahhüt Edilen Burs</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.Handshake" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: white; border-radius: 12px;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalGivenScholarships</MudText>
+                        <MudText Typo="Typo.body2" Style="opacity: 0.9;">Gerçekleşen Burs</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Outlined.CheckCircle" Size="Size.Large" Style="opacity: 0.8;" />
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudTabs Elevation="2" Rounded="true" ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
+        
+        @* Tab 1: Tüm Üyeler *@
+        <MudTabPanel Text="Tüm Üyeler" Icon="@Icons.Material.Filled.Group">
+            @* Action Buttons *@
+            <div class="d-flex gap-2 mb-4 mt-4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add" 
+                           OnClick="OpenAddDialog">
+                    Yeni Üye Ekle
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Outlined.FileDownload"
+                           OnClick="ExportToExcel">
+                    Excel'e Aktar
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                           OnClick="ExportToPdf">
+                    PDF'e Aktar
+                </MudButton>
+            </div>
+
+            @* FILTER BAR *@
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <div class="d-flex align-center gap-3">
+                    <MudTextField @bind-Value="_filters.SearchText"
+                                  Label="Ara"
+                                  Placeholder="İsim, meslek, sicil..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  DebounceInterval="300"
+                                  OnDebounceIntervalElapsed="ApplyFilters"
+                                  Style="flex: 1; max-width: 400px;" />
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Tune"
+                               OnClick="@(() => _showFilters = !_showFilters)">
+                        Filtreler
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Default"
+                               OnClick="ClearAllFilters">
+                        TEMİZLE
+                    </MudButton>
+                </div>
+            </MudPaper>
+
+            @* SELECTED FILTER CHIPS *@
+            @if (_filters.HasAnyFilter())
+            {
+                <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f5f5f5;">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Seçilen Filtreler:</strong></MudText>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (_filters.Status != MemberStatusFilter.All)
+                        {
+                            <MudChip T="string" OnClose="RemoveStatusFilter" Color="Color.Info" Size="Size.Small">
+                                Durum: @GetStatusFilterText()
+                            </MudChip>
+                        }
+                        @if (_filters.BursVeriyor != BursVeriyorFilter.All)
+                        {
+                            <MudChip T="string" OnClose="RemoveBursVeriyorFilter" Color="Color.Info" Size="Size.Small">
+                                Burs Veriyor: @GetBursVeriyorFilterText()
+                            </MudChip>
+                        }
+                        @if (_filters.SelectedProfessions.Any())
+                        {
+                            <MudChip T="string" OnClose="RemoveProfessionsFilter" Color="Color.Info" Size="Size.Small">
+                                Meslek: @_filters.SelectedProfessions.Count seçili
+                            </MudChip>
+                        }
+                        @if (_filters.SelectedCities.Any())
+                        {
+                            <MudChip T="string" OnClose="RemoveCitiesFilter" Color="Color.Info" Size="Size.Small">
+                                İl/Köy: @_filters.SelectedCities.Count seçili
+                            </MudChip>
+                        }
+                        @if (_filters.SelectedMembershipTypes.Any())
+                        {
+                            <MudChip T="string" OnClose="RemoveMembershipTypesFilter" Color="Color.Info" Size="Size.Small">
+                                Üyelik Türü: @_filters.SelectedMembershipTypes.Count seçili
+                            </MudChip>
+                        }
+                        @if (_filters.Role != RoleFilter.All)
+                        {
+                            <MudChip T="string" OnClose="RemoveRoleFilter" Color="Color.Info" Size="Size.Small">
+                                Rol: @GetRoleFilterText()
+                            </MudChip>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_filters.SelectedPeriod))
+                        {
+                            <MudChip T="string" OnClose="RemovePeriodFilter" Color="Color.Info" Size="Size.Small">
+                                Dönem: @_filters.SelectedPeriod
+                            </MudChip>
+                        }
+                        @if (_filters.MembershipStartFrom.HasValue || _filters.MembershipStartTo.HasValue)
+                        {
+                            <MudChip T="string" OnClose="RemoveDateRangeFilter" Color="Color.Info" Size="Size.Small">
+                                Üyelik Tarihi: @GetDateRangeText()
+                            </MudChip>
+                        }
+                        @if (_filters.AgeFrom.HasValue || _filters.AgeTo.HasValue)
+                        {
+                            <MudChip T="string" OnClose="RemoveAgeRangeFilter" Color="Color.Info" Size="Size.Small">
+                                Yaş: @GetAgeRangeText()
+                            </MudChip>
+                        }
+                    </div>
+                </MudPaper>
+            }
+
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudTable Items="@GetFilteredMembersForAllTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading"
+                          @bind-SelectedItem="_selectedMember" RowsPerPage="50" SortLabel="Sırala">
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.SicilNumarasi ?? string.Empty)">Sicil No</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.AdSoyad)">Adı Soyadı</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.Meslek ?? string.Empty)">Mesleği</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.Firma ?? string.Empty)">Firma</MudTableSortLabel></MudTh>
+                        <MudTh>İletişim</MudTh>
+                        <MudTh>Roller</MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<Member, object>(x => x.AktifMi)">Durum</MudTableSortLabel></MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Sicil No">@context.SicilNumarasi</MudTd>
+                        <MudTd DataLabel="Adı Soyadı">
+                            <MudLink Color="Color.Primary" Underline="Underline.Hover" Style="cursor: pointer;" @onclick="@(() => OpenEditDialog(context))">
+                                @context.AdSoyad
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
+                        <MudTd DataLabel="İletişim">
+                            @if (!string.IsNullOrWhiteSpace(context.Telefon))
+                            {
+                                <div>@context.Telefon</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(context.Email))
+                            {
+                                <div>@context.Email</div>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Roller">
+                            @if (context.IsMutevelli)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Kurucular Heyeti</MudChip>
+                            }
+                            @if (context.IsYonetimKurulu)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Yönetim Kurulu</MudChip>
+                            }
+                            @if (context.IsDenetimKurulu)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">Denetim Kurulu</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Durum">
+                            @if (context.AktifMi)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Aktif</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Pasif</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => DeleteMember(context.Id))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+
+        @* Tab 2: Bağışçılar *@
+        <MudTabPanel Text="Bağışçılar" Icon="@Icons.Material.Filled.VolunteerActivism">
+            <MudPaper Elevation="2" Class="pa-4 mt-4">
+                <MudTable Items="@GetFilteredMembersForDonorsTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
+                    <HeaderContent>
+                        <MudTh>Sicil No</MudTh>
+                        <MudTh>Adı Soyadı</MudTh>
+                        <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
+                        <MudTh>İletişim</MudTh>
+                        <MudTh>Dönem</MudTh>
+                        <MudTh>Taahhüt</MudTh>
+                        <MudTh>Verilen</MudTh>
+                        <MudTh>Kalan</MudTh>
+                        <MudTh>Durum</MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Sicil No">@context.SicilNumarasi</MudTd>
+                        <MudTd DataLabel="Adı Soyadı">
+                            <MudLink Color="Color.Primary" Underline="Underline.Hover" Style="cursor: pointer;" @onclick="@(() => OpenEditDialog(context))">
+                                @context.AdSoyad
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
+                        <MudTd DataLabel="İletişim">
+                            @if (!string.IsNullOrWhiteSpace(context.Telefon))
+                            {
+                                <div>@context.Telefon</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(context.Email))
+                            {
+                                <div>@context.Email</div>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Dönem">
+                            @if (_memberCommitmentsWithYear.ContainsKey(context.Id))
+                            {
+                                @_memberCommitmentsWithYear[context.Id]
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Taahhüt">
+                            @if (_memberCommitments.ContainsKey(context.Id))
+                            {
+                                @_memberCommitments[context.Id].PledgedCount
+                            }
+                            else
+                            {
+                                <span>0</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Verilen">
+                            @if (_memberCommitments.ContainsKey(context.Id))
+                            {
+                                @_memberCommitments[context.Id].GivenCount
+                            }
+                            else
+                            {
+                                <span>0</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Kalan">
+                            @if (_memberCommitments.ContainsKey(context.Id))
+                            {
+                                @_memberCommitments[context.Id].RemainingCount
+                            }
+                            else
+                            {
+                                <span>0</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Durum">
+                            @if (context.AktifMi)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Aktif</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Pasif</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => DeleteMember(context.Id))" />
+                            <MudButton Variant="Variant.Text" 
+                                       Color="Color.Info" 
+                                       Size="Size.Small" 
+                                       OnClick="@(() => OpenPledgeDialog(context))">
+                                Taahhütler
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+
+        @* Tab 3: Kurucular Heyeti *@
+        <MudTabPanel Text="Kurucular Heyeti" Icon="@Icons.Material.Filled.AdminPanelSettings">
+            <MudPaper Elevation="2" Class="pa-4 mt-4">
+                <MudTable Items="@GetFilteredMembersForMutevelliTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
+                    <HeaderContent>
+                        <MudTh>Sicil No</MudTh>
+                        <MudTh>Adı Soyadı</MudTh>
+                        <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
+                        <MudTh>İletişim</MudTh>
+                        <MudTh>Görev Dönemi</MudTh>
+                        <MudTh>Roller</MudTh>
+                        <MudTh>Durum</MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Sicil No">@context.SicilNumarasi</MudTd>
+                        <MudTd DataLabel="Adı Soyadı">
+                            <MudLink Color="Color.Primary" Underline="Underline.Hover" Style="cursor: pointer;" @onclick="@(() => OpenEditDialog(context))">
+                                @context.AdSoyad
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
+                        <MudTd DataLabel="İletişim">
+                            @if (!string.IsNullOrWhiteSpace(context.Telefon))
+                            {
+                                <div>@context.Telefon</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(context.Email))
+                            {
+                                <div>@context.Email</div>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Görev Dönemi">
+                            @if (!string.IsNullOrWhiteSpace(context.MembershipPeriod))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.MembershipPeriod</MudChip>
+                            }
+                            else if (context.RoleStartDate.HasValue || context.RoleEndDate.HasValue)
+                            {
+                                <span>@context.RoleStartDate?.ToString("yyyy") - @context.RoleEndDate?.ToString("yyyy")</span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Roller">
+                            @if (context.IsMutevelli)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Kurucular Heyeti</MudChip>
+                            }
+                            @if (context.IsYonetimKurulu)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Yönetim Kurulu</MudChip>
+                            }
+                            @if (context.IsDenetimKurulu)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">Denetim Kurulu</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Durum">
+                            @if (context.AktifMi)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Aktif</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Pasif</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => DeleteMember(context.Id))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+
+        @* Tab 4: Yönetim Kurulu *@
+        <MudTabPanel Text="Yönetim Kurulu" Icon="@Icons.Material.Filled.BusinessCenter">
+            <MudPaper Elevation="2" Class="pa-4 mt-4">
+                <MudTable Items="@GetFilteredMembersForYonetimTab()" Hover="true" Dense="true" Striped="true" Loading="@_loading" RowsPerPage="50">
+                    <HeaderContent>
+                        <MudTh>Sicil No</MudTh>
+                        <MudTh>Adı Soyadı</MudTh>
+                        <MudTh>Mesleği</MudTh>
+                        <MudTh>Firma</MudTh>
+                        <MudTh>İletişim</MudTh>
+                        <MudTh>Roller</MudTh>
+                        <MudTh>Durum</MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                    </PagerContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Sicil No">@context.SicilNumarasi</MudTd>
+                        <MudTd DataLabel="Adı Soyadı">
+                            <MudLink Color="Color.Primary" Underline="Underline.Hover" Style="cursor: pointer;" @onclick="@(() => OpenEditDialog(context))">
+                                @context.AdSoyad
+                            </MudLink>
+                        </MudTd>
+                        <MudTd DataLabel="Mesleği">@context.Meslek</MudTd>
+                        <MudTd DataLabel="Firma">@context.Firma</MudTd>
+                        <MudTd DataLabel="İletişim">
+                            @if (!string.IsNullOrWhiteSpace(context.Telefon))
+                            {
+                                <div>@context.Telefon</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(context.Email))
+                            {
+                                <div>@context.Email</div>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Roller">
+                            @if (context.IsMutevelli)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">Kurucular Heyeti</MudChip>
+                            }
+                            @if (context.IsYonetimKurulu)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Yönetim Kurulu</MudChip>
+                            }
+                            @if (context.IsDenetimKurulu)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">Denetim Kurulu</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Durum">
+                            @if (context.AktifMi)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Aktif</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Pasif</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => DeleteMember(context.Id))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudTabPanel>
+
+    </MudTabs>
+
+    @* FILTER DRAWER *@
+    <MudDrawer @bind-Open="_showFilters" Anchor="Anchor.End" Elevation="2" Variant="DrawerVariant.Temporary" Width="350px">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Filtreler</MudText>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            <div class="pa-3">
+                @* Filter Group 1: Durum (Status) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Durum</strong></MudText>
+            <MudRadioGroup T="MemberStatusFilter" @bind-Value="_filters.Status">
+                <MudRadio T="MemberStatusFilter" Value="MemberStatusFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                <MudRadio T="MemberStatusFilter" Value="MemberStatusFilter.Active" Color="Color.Success">Aktif</MudRadio>
+                <MudRadio T="MemberStatusFilter" Value="MemberStatusFilter.Inactive" Color="Color.Default">Pasif</MudRadio>
+            </MudRadioGroup>
+        </MudPaper>
+
+        @* Filter Group 2: Burs Veriyor *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Burs Veriyor</strong></MudText>
+            <MudRadioGroup T="BursVeriyorFilter" @bind-Value="_filters.BursVeriyor">
+                <MudRadio T="BursVeriyorFilter" Value="BursVeriyorFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                <MudRadio T="BursVeriyorFilter" Value="BursVeriyorFilter.Yes" Color="Color.Success">Evet</MudRadio>
+                <MudRadio T="BursVeriyorFilter" Value="BursVeriyorFilter.No" Color="Color.Default">Hayır</MudRadio>
+            </MudRadioGroup>
+        </MudPaper>
+
+        @* Filter Group 3: Meslek (Profession) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Meslek</strong></MudText>
+            <MudTextField @bind-Value="_professionSearchText" 
+                          Label="Ara" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" />
+            <div style="max-height: 200px; overflow-y: auto; margin-top: 8px;">
+                @foreach (var profession in GetFilteredProfessions())
+                {
+                    bool isChecked = _filters.SelectedProfessions.Contains(profession);
+                    <MudCheckBox T="bool" Value="@isChecked" 
+                                 ValueChanged="@((bool val) => SetProfessionCheckedBinding(profession, val))" 
+                                 Color="Color.Primary" 
+                                 Dense="true">
+                        @profession
+                    </MudCheckBox>
+                }
+            </div>
+        </MudPaper>
+
+        @* Filter Group 4: İl/Köy (City) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>İl/Köy</strong></MudText>
+            <MudTextField @bind-Value="_citySearchText" 
+                          Label="Ara" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" />
+            <div style="max-height: 200px; overflow-y: auto; margin-top: 8px;">
+                @foreach (var city in GetFilteredCities())
+                {
+                    bool isChecked = _filters.SelectedCities.Contains(city);
+                    <MudCheckBox T="bool" Value="@isChecked" 
+                                 ValueChanged="@((bool val) => SetCityCheckedBinding(city, val))" 
+                                 Color="Color.Primary" 
+                                 Dense="true">
+                        @city
+                    </MudCheckBox>
+                }
+            </div>
+        </MudPaper>
+
+        @* Filter Group 5: Üyelik Türü (Membership Type) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Üyelik Türü</strong></MudText>
+            <MudTextField @bind-Value="_membershipTypeSearchText" 
+                          Label="Ara" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" />
+            <div style="max-height: 200px; overflow-y: auto; margin-top: 8px;">
+                @foreach (var type in GetFilteredMembershipTypes())
+                {
+                    bool isChecked = _filters.SelectedMembershipTypes.Contains(type);
+                    <MudCheckBox T="bool" Value="@isChecked" 
+                                 ValueChanged="@((bool val) => SetMembershipTypeCheckedBinding(type, val))" 
+                                 Color="Color.Primary" 
+                                 Dense="true">
+                        @type
+                    </MudCheckBox>
+                }
+            </div>
+        </MudPaper>
+
+        @* Filter Group 6: Rol (Role) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Rol</strong></MudText>
+            <MudRadioGroup T="RoleFilter" @bind-Value="_filters.Role">
+                <MudRadio T="RoleFilter" Value="RoleFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                <MudRadio T="RoleFilter" Value="RoleFilter.Mutevelli" Color="Color.Primary">Kurucular Heyeti</MudRadio>
+                <MudRadio T="RoleFilter" Value="RoleFilter.YonetimKurulu" Color="Color.Secondary">Yönetim Kurulu</MudRadio>
+            </MudRadioGroup>
+        </MudPaper>
+
+        @* Filter Group 6.5: Dönem (Period) for Donors *@
+        @if (_activeTabIndex == 1)
+        {
+            <MudPaper Elevation="1" Class="pa-3 mb-3">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Dönem</strong></MudText>
+                <div>
+                    <label class="form-label">Dönem Seçiniz</label>
+                    <select id="period-filter-selector" class="selectpicker" data-width="100%" 
+                            data-style="btn-outline-primary" data-live-search="true"
+                            value="@_filters.SelectedPeriod" @onchange="OnPeriodFilterChanged" title="Tümü">
+                        <option value="">Tümü</option>
+                        @foreach (var period in _allPeriods)
+                        {
+                            <option value="@period">@period</option>
+                        }
+                    </select>
+                </div>
+            </MudPaper>
+        }
+
+        @* Filter Group 7: Üyelik Başlangıç Tarihi (Membership Start Date) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Üyelik Başlangıç Tarihi</strong></MudText>
+            <div class="form-group">
+                <label class="form-label">Başlangıç</label>
+                <InputDate @bind-Value="_filters.MembershipStartFrom" class="form-control" />
+            </div>
+            <div class="form-group mt-2">
+                <label class="form-label">Bitiş</label>
+                <InputDate @bind-Value="_filters.MembershipStartTo" class="form-control" />
+            </div>
+        </MudPaper>
+
+        @* Filter Group 8: Yaş Aralığı (Age Range) *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true"><strong>Yaş Aralığı</strong></MudText>
+            <MudNumericField @bind-Value="_filters.AgeFrom" 
+                             Label="Min Yaş" 
+                             Variant="Variant.Outlined" 
+                             Margin="Margin.Dense" 
+                             Min="0" 
+                             Max="150" />
+            <MudNumericField @bind-Value="_filters.AgeTo" 
+                             Label="Max Yaş" 
+                             Variant="Variant.Outlined" 
+                             Margin="Margin.Dense" 
+                             Min="0" 
+                             Max="150" 
+                             Class="mt-2" />
+        </MudPaper>
+
+                    <MudDivider Class="my-3" />
+
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               FullWidth="true" 
+                               OnClick="@(() => { ApplyFilters(); _showFilters = false; })"
+                               Class="mb-2">
+                        Filtreleri Uygula
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Secondary" 
+                               FullWidth="true" 
+                               OnClick="ClearAllFilters">
+                        Temizle
+                    </MudButton>
+            </div>
+        </MudNavMenu>
+    </MudDrawer>
+</MudContainer>
+
+@code {
+    // State Variables
+    private MemberFilterModel _filters = new();
+    private List<Member> _allMembers = new();
+    private List<Member> _filteredMembers = new();
+    private Dictionary<int, (int PledgedCount, int GivenCount, int RemainingCount)> _memberCommitments = new();
+    private Dictionary<int, string> _memberCommitmentsWithYear = new();
+    private Dictionary<int, List<MemberScholarshipCommitment>> _allMemberCommitments = new();
+    private bool _loading = true;
+    private bool _showFilters = true;
+    private int _activeTabIndex = 0;
+    private List<string> _allPeriods = new();
+    private bool _selectPickerInitialized = false;
+
+    // Filter Options
+    private List<string> _allProfessions = new();
+    private List<string> _allCities = new();
+    private List<string> _allMembershipTypes = new();
+
+    // Search Texts for Multi-Select
+    private string _professionSearchText = string.Empty;
+    private string _citySearchText = string.Empty;
+    private string _membershipTypeSearchText = string.Empty;
+
+    private bool _disposed = false;
+    private Member? _selectedMember;
+
+    // Statistics properties
+    private int TotalMembers => _allMembers.Count;
+    private int ActiveMembers => _allMembers.Count(m => m.AktifMi);
+    private int ScholarshipGivers => _allMembers.Count(m => m.BursVeriyor && m.AktifMi);
+    private int TotalPledgedScholarships => GetFilteredMembersForStatistics().Sum(m => 
+        _memberCommitments.ContainsKey(m.Id) ? _memberCommitments[m.Id].PledgedCount : 0);
+    private int TotalGivenScholarships => GetFilteredMembersForStatistics().Sum(m => 
+        _memberCommitments.ContainsKey(m.Id) ? _memberCommitments[m.Id].GivenCount : 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await LoadPeriodsFromSettings();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || !_selectPickerInitialized)
+        {
+            await Task.Delay(200);
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+            _selectPickerInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async Task LoadPeriodsFromSettings()
+    {
+        try
+        {
+            _allPeriods = await SettingsService.GetListValueAsync("AcademicPeriods");
+            if (_allPeriods.Count == 0)
+            {
+                // Fallback to generating periods
+                for (int year = 2025; year <= 2039; year++)
+                {
+                    _allPeriods.Add($"{year}-{year + 1}");
+                }
+            }
+            _allPeriods = _allPeriods.OrderBy(p => p).ToList();
+        }
+        catch
+        {
+            _allPeriods = new List<string>();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _allMembers = await MemberService.GetAllAsync();
+
+            await LoadFilterOptions();
+            await LoadMemberCommitments();
+            await ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadFilterOptions()
+    {
+        _allProfessions = _allMembers
+            .Where(m => !string.IsNullOrWhiteSpace(m.Meslek))
+            .Select(m => m.Meslek!)
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+
+        _allCities = _allMembers
+            .Where(m => !string.IsNullOrWhiteSpace(m.Koy))
+            .Select(m => m.Koy!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+
+        _allMembershipTypes = _allMembers
+            .Where(m => !string.IsNullOrWhiteSpace(m.UyelikTuru))
+            .Select(m => m.UyelikTuru!)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+    }
+
+    private async Task LoadMemberCommitments()
+    {
+        // Load commitments for all members
+        var allMemberIds = _allMembers.Select(m => m.Id).ToList();
+        var commitmentTasks = allMemberIds.Select(memberId => CommitmentService.GetByMemberAsync(memberId));
+        var commitmentResults = await Task.WhenAll(commitmentTasks);
+        
+        var allCommitments = commitmentResults.SelectMany(c => c).ToList();
+        
+        // Store all commitments by member
+        _allMemberCommitments = allCommitments
+            .GroupBy(c => c.MemberId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        
+        // Calculate commitments based on selected period filter
+        UpdateCommitmentStatistics();
+    }
+
+    private void UpdateCommitmentStatistics()
+    {
+        if (string.IsNullOrWhiteSpace(_filters.SelectedPeriod))
+        {
+            // Show most recent period for each member
+            var latestCommitments = _allMemberCommitments
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value
+                        .Where(c => !string.IsNullOrWhiteSpace(c.AcademicYear))
+                        .OrderByDescending(c => c.AcademicYear)
+                        .FirstOrDefault()
+                );
+            
+            _memberCommitments = latestCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => (
+                        PledgedCount: kvp.Value!.PledgedCount,
+                        GivenCount: kvp.Value!.GivenCount,
+                        RemainingCount: kvp.Value!.RemainingCount
+                    )
+                );
+            
+            _memberCommitmentsWithYear = latestCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.AcademicYear ?? "-"
+                );
+        }
+        else
+        {
+            // Filter by selected period
+            var periodCommitments = _allMemberCommitments
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.FirstOrDefault(c => c.AcademicYear == _filters.SelectedPeriod)
+                );
+            
+            _memberCommitments = periodCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => (
+                        PledgedCount: kvp.Value!.PledgedCount,
+                        GivenCount: kvp.Value!.GivenCount,
+                        RemainingCount: kvp.Value!.RemainingCount
+                    )
+                );
+            
+            _memberCommitmentsWithYear = periodCommitments
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.AcademicYear ?? "-"
+                );
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        IEnumerable<Member> query = _allMembers;
+
+        // Search Text Filter
+        if (!string.IsNullOrWhiteSpace(_filters.SearchText))
+        {
+            var searchLower = _filters.SearchText.ToLower();
+            query = query.Where(m =>
+                (m.AdSoyad != null && m.AdSoyad.ToLower().Contains(searchLower)) ||
+                (m.Meslek != null && m.Meslek.ToLower().Contains(searchLower)) ||
+                (m.SicilNumarasi != null && m.SicilNumarasi.ToLower().Contains(searchLower))
+            );
+        }
+
+        // Status Filter
+        if (_filters.Status == MemberStatusFilter.Active)
+        {
+            query = query.Where(m => m.AktifMi);
+        }
+        else if (_filters.Status == MemberStatusFilter.Inactive)
+        {
+            query = query.Where(m => !m.AktifMi);
+        }
+
+        // BursVeriyor Filter
+        if (_filters.BursVeriyor == BursVeriyorFilter.Yes)
+        {
+            query = query.Where(m => m.BursVeriyor);
+        }
+        else if (_filters.BursVeriyor == BursVeriyorFilter.No)
+        {
+            query = query.Where(m => !m.BursVeriyor);
+        }
+
+        // Professions Filter
+        if (_filters.SelectedProfessions.Any())
+        {
+            query = query.Where(m => m.Meslek != null && _filters.SelectedProfessions.Contains(m.Meslek));
+        }
+
+        // Cities Filter
+        if (_filters.SelectedCities.Any())
+        {
+            query = query.Where(m => m.Koy != null && _filters.SelectedCities.Contains(m.Koy));
+        }
+
+        // Membership Types Filter
+        if (_filters.SelectedMembershipTypes.Any())
+        {
+            query = query.Where(m => m.UyelikTuru != null && _filters.SelectedMembershipTypes.Contains(m.UyelikTuru));
+        }
+
+        // Role Filter
+        if (_filters.Role == RoleFilter.Mutevelli)
+        {
+            query = query.Where(m => m.IsMutevelli);
+        }
+        else if (_filters.Role == RoleFilter.YonetimKurulu)
+        {
+            query = query.Where(m => m.IsYonetimKurulu);
+        }
+
+        // Membership Start Date Range Filter
+        if (_filters.MembershipStartFrom.HasValue)
+        {
+            query = query.Where(m => m.UyelikBaslangicTarihi.HasValue && m.UyelikBaslangicTarihi.Value >= _filters.MembershipStartFrom.Value);
+        }
+        if (_filters.MembershipStartTo.HasValue)
+        {
+            query = query.Where(m => m.UyelikBaslangicTarihi.HasValue && m.UyelikBaslangicTarihi.Value <= _filters.MembershipStartTo.Value);
+        }
+
+        // Age Range Filter
+        if (_filters.AgeFrom.HasValue)
+        {
+            query = query.Where(m => m.Yas.HasValue && m.Yas.Value >= _filters.AgeFrom.Value);
+        }
+        if (_filters.AgeTo.HasValue)
+        {
+            query = query.Where(m => m.Yas.HasValue && m.Yas.Value <= _filters.AgeTo.Value);
+        }
+
+        _filteredMembers = query.ToList();
+    }
+
+    // Tab-Specific Filtered Lists
+    private IEnumerable<Member> GetFilteredMembersForAllTab()
+    {
+        return _filteredMembers;
+    }
+
+    private IEnumerable<Member> GetFilteredMembersForDonorsTab()
+    {
+        var donors = _filteredMembers.Where(m => m.BursVeriyor);
+        
+        // If period filter is active, only show donors with commitments for that period
+        if (!string.IsNullOrWhiteSpace(_filters.SelectedPeriod))
+        {
+            donors = donors.Where(m => _memberCommitmentsWithYear.ContainsKey(m.Id));
+        }
+        
+        return donors;
+    }
+
+    private IEnumerable<Member> GetFilteredMembersForStatistics()
+    {
+        // For statistics cards, use donors tab if active, otherwise all filtered members
+        if (_activeTabIndex == 1)
+        {
+            return GetFilteredMembersForDonorsTab();
+        }
+        return _filteredMembers;
+    }
+
+    private bool IsPledgeCompleted(int memberId)
+    {
+        if (!_memberCommitments.ContainsKey(memberId))
+            return false;
+        
+        var commitment = _memberCommitments[memberId];
+        return commitment.PledgedCount > 0 && commitment.GivenCount >= commitment.PledgedCount;
+    }
+
+    private async Task OnPeriodFilterChanged(ChangeEventArgs e)
+    {
+        _filters.SelectedPeriod = e.Value?.ToString() ?? string.Empty;
+        UpdateCommitmentStatistics();
+        await ApplyFilters();
+        StateHasChanged();
+    }
+
+    private async Task RemovePeriodFilter()
+    {
+        _filters.SelectedPeriod = string.Empty;
+        UpdateCommitmentStatistics();
+        await ApplyFilters();
+    }
+
+    private IEnumerable<Member> GetFilteredMembersForMutevelliTab()
+    {
+        return _filteredMembers.Where(m => m.IsMutevelli);
+    }
+
+    private IEnumerable<Member> GetFilteredMembersForYonetimTab()
+    {
+        return _filteredMembers.Where(m => m.IsYonetimKurulu);
+    }
+
+    // Filter Helper Methods
+    private IEnumerable<string> GetFilteredProfessions()
+    {
+        if (string.IsNullOrWhiteSpace(_professionSearchText))
+            return _allProfessions;
+
+        return _allProfessions.Where(p => p.ToLower().Contains(_professionSearchText.ToLower()));
+    }
+
+    private IEnumerable<string> GetFilteredCities()
+    {
+        if (string.IsNullOrWhiteSpace(_citySearchText))
+            return _allCities;
+
+        return _allCities.Where(c => c.ToLower().Contains(_citySearchText.ToLower()));
+    }
+
+    private IEnumerable<string> GetFilteredMembershipTypes()
+    {
+        if (string.IsNullOrWhiteSpace(_membershipTypeSearchText))
+            return _allMembershipTypes;
+
+        return _allMembershipTypes.Where(t => t.ToLower().Contains(_membershipTypeSearchText.ToLower()));
+    }
+
+    // Checkbox Binding Helpers
+    private void SetProfessionCheckedBinding(string profession, bool value)
+    {
+        if (value)
+        {
+            if (!_filters.SelectedProfessions.Contains(profession))
+                _filters.SelectedProfessions.Add(profession);
+        }
+        else
+        {
+            _filters.SelectedProfessions.Remove(profession);
+        }
+    }
+
+    private void SetCityCheckedBinding(string city, bool value)
+    {
+        if (value)
+        {
+            if (!_filters.SelectedCities.Contains(city))
+                _filters.SelectedCities.Add(city);
+        }
+        else
+        {
+            _filters.SelectedCities.Remove(city);
+        }
+    }
+
+    private void SetMembershipTypeCheckedBinding(string type, bool value)
+    {
+        if (value)
+        {
+            if (!_filters.SelectedMembershipTypes.Contains(type))
+                _filters.SelectedMembershipTypes.Add(type);
+        }
+        else
+        {
+            _filters.SelectedMembershipTypes.Remove(type);
+        }
+    }
+
+    // Chip Removal Methods
+    private async Task RemoveStatusFilter()
+    {
+        _filters.Status = MemberStatusFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveBursVeriyorFilter()
+    {
+        _filters.BursVeriyor = BursVeriyorFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveProfessionsFilter()
+    {
+        _filters.SelectedProfessions.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveCitiesFilter()
+    {
+        _filters.SelectedCities.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveMembershipTypesFilter()
+    {
+        _filters.SelectedMembershipTypes.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveRoleFilter()
+    {
+        _filters.Role = RoleFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveDateRangeFilter()
+    {
+        _filters.MembershipStartFrom = null;
+        _filters.MembershipStartTo = null;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveAgeRangeFilter()
+    {
+        _filters.AgeFrom = null;
+        _filters.AgeTo = null;
+        await ApplyFilters();
+    }
+
+    private async Task ClearAllFilters()
+    {
+        _filters.Clear();
+        await ApplyFilters();
+    }
+
+    // Filter Text Helpers
+    private string GetStatusFilterText()
+    {
+        return _filters.Status switch
+        {
+            MemberStatusFilter.Active => "Aktif",
+            MemberStatusFilter.Inactive => "Pasif",
+            _ => "Tümü"
+        };
+    }
+
+    private string GetBursVeriyorFilterText()
+    {
+        return _filters.BursVeriyor switch
+        {
+            BursVeriyorFilter.Yes => "Evet",
+            BursVeriyorFilter.No => "Hayır",
+            _ => "Tümü"
+        };
+    }
+
+    private string GetRoleFilterText()
+    {
+        return _filters.Role switch
+        {
+            RoleFilter.Mutevelli => "Kurucular Heyeti",
+            RoleFilter.YonetimKurulu => "Yönetim Kurulu",
+            _ => "Tümü"
+        };
+    }
+
+    private string GetDateRangeText()
+    {
+        if (_filters.MembershipStartFrom.HasValue && _filters.MembershipStartTo.HasValue)
+            return $"{_filters.MembershipStartFrom.Value:dd/MM/yyyy} - {_filters.MembershipStartTo.Value:dd/MM/yyyy}";
+        else if (_filters.MembershipStartFrom.HasValue)
+            return $"{_filters.MembershipStartFrom.Value:dd/MM/yyyy} sonrası";
+        else if (_filters.MembershipStartTo.HasValue)
+            return $"{_filters.MembershipStartTo.Value:dd/MM/yyyy} öncesi";
+        else
+            return string.Empty;
+    }
+
+    private string GetAgeRangeText()
+    {
+        if (_filters.AgeFrom.HasValue && _filters.AgeTo.HasValue)
+            return $"{_filters.AgeFrom.Value} - {_filters.AgeTo.Value}";
+        else if (_filters.AgeFrom.HasValue)
+            return $"{_filters.AgeFrom.Value}+";
+        else if (_filters.AgeTo.HasValue)
+            return $"0 - {_filters.AgeTo.Value}";
+        else
+            return string.Empty;
+    }
+
+    private int GetActiveFilterCount()
+    {
+        int count = 0;
+        if (_filters.Status != MemberStatusFilter.All) count++;
+        if (_filters.BursVeriyor != BursVeriyorFilter.All) count++;
+        if (_filters.SelectedProfessions.Any()) count++;
+        if (_filters.SelectedCities.Any()) count++;
+        if (_filters.SelectedMembershipTypes.Any()) count++;
+        if (_filters.Role != RoleFilter.All) count++;
+        if (_filters.MembershipStartFrom.HasValue || _filters.MembershipStartTo.HasValue) count++;
+        if (_filters.AgeFrom.HasValue || _filters.AgeTo.HasValue) count++;
+        if (!string.IsNullOrWhiteSpace(_filters.SelectedPeriod)) count++;
+        return count;
+    }
+
+    // Tab Change Handler
+    private async void OnTabChanged(int newIndex)
+    {
+        _activeTabIndex = newIndex;
+        StateHasChanged();
+        await Task.Delay(100);
+        await InitializeSelectPickerAsync();
+    }
+
+    // CRUD Dialog Methods
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            ["Member"] = new Member(),
+            ["IsEdit"] = false
+        };
+
+        var dialog = await DialogService.ShowAsync<MemberDialog>("Yeni Üye Ekle", parameters, new DialogOptions { MaxWidth = MaxWidth.Medium });
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Üye başarıyla eklendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Member member)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Member"] = member,
+            ["IsEdit"] = true
+        };
+
+        var dialog = await DialogService.ShowAsync<MemberDialog>("Üye Düzenle", parameters, new DialogOptions { MaxWidth = MaxWidth.Medium });
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Üye başarıyla güncellendi.", Severity.Success);
+        }
+    }
+
+    private async Task DeleteMember(int memberId)
+    {
+        var dialog = await DialogService.ShowMessageBox("Üye Sil", "Bu üyeyi silmek istediğinize emin misiniz?", "Evet", "Hayır");
+
+        if (dialog == true)
+        {
+            try
+            {
+                await MemberService.DeleteAsync(memberId);
+                await LoadData();
+                Snackbar.Add("Üye başarıyla silindi.", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Silme hatası: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task OpenPledgeDialog(Member member)
+    {
+        var donor = _allMembers.FirstOrDefault(m => m.Id == member.Id && m.BursVeriyor);
+        if (donor == null)
+        {
+            Snackbar.Add("Bu üye bir bağışçı değil.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "MemberId", member.Id },
+            { "MemberName", member.AdSoyad }
+        };
+
+        var dialog = await DialogService.ShowAsync<PledgeHistoryDialog>($"{member.AdSoyad} - Taahhütler", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true });
+
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var membersToExport = _filteredMembers.ToList();
+            
+            if (!membersToExport.Any())
+            {
+                Snackbar.Add("Dışa aktarılacak üye bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            // Excel verilerini hazırla
+            var excelData = new List<Dictionary<string, object>>();
+            
+            foreach (var member in membersToExport)
+            {
+                excelData.Add(new Dictionary<string, object>
+                {
+                    { "Sicil No", member.SicilNumarasi ?? "" },
+                    { "Ad Soyad", member.AdSoyad ?? "" },
+                    { "Meslek", member.Meslek ?? "" },
+                    { "Firma", member.Firma ?? "" },
+                    { "Telefon", member.Telefon ?? "" },
+                    { "Email", member.Email ?? "" },
+                    { "Köy", member.Koy ?? "" },
+                    { "Adres", member.Adres ?? "" },
+                    { "Üyelik Türü", member.UyelikTuru ?? "" },
+                    { "Kurucular", member.IsMutevelli ? "Evet" : "Hayır" },
+                    { "Burs Veriyor", member.BursVeriyor ? "Evet" : "Hayır" },
+                    { "Aktif", member.AktifMi ? "Evet" : "Hayır" },
+                    { "Notlar", member.Notlar ?? "" }
+                });
+            }
+
+            var fileName = $"Uyeler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JS.InvokeVoidAsync("downloadExcel", excelData, fileName);
+            
+            Snackbar.Add($"{membersToExport.Count} üye Excel'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel aktarma hatası: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var membersToExport = _filteredMembers.ToList();
+            
+            if (!membersToExport.Any())
+            {
+                Snackbar.Add("Dışa aktarılacak üye bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            var pdfBytes = PdfService.GenerateMembersPdfReport(membersToExport);
+            var fileName = $"Uyeler_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+            await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(pdfBytes));
+            Snackbar.Add($"{membersToExport.Count} üye PDF'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF aktarma hatası: {ex.Message}", Severity.Error);
+        }
+    }
+
+}

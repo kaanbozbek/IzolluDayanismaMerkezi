@@ -1,0 +1,1741 @@
+@page "/students"
+@using IzolluVakfi.Models
+@inject StudentService StudentService
+@inject MeetingService MeetingService
+@inject MemberService MemberService
+@inject ExcelService ExcelService
+@inject PdfService PdfService
+@inject SettingsService SettingsService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Öğrenciler - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+@* STATISTICS CARDS *@
+<MudGrid Class="mb-4" Spacing="3">
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border-radius: 12px;">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@TotalStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;">Toplam Öğrenci</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Outlined.School" Size="Size.Large" Style="opacity: 0.8;" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; border-radius: 12px;">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@ActiveScholarshipStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;">Aktif Burs Alan</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Outlined.Payments" Size="Size.Large" Style="opacity: 0.8;" />
+            </div>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="4">
+        <MudPaper Elevation="2" Class="pa-4" Style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%); color: white; border-radius: 12px;">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h5" Style="font-weight: bold;">@GraduatedStudents</MudText>
+                    <MudText Typo="Typo.body2" Style="opacity: 0.9;">Mezun Öğrenci</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Outlined.EmojiEvents" Size="Size.Large" Style="opacity: 0.8;" />
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudTabs Rounded="true" Elevation="2" Class="section-gap">
+    <MudTabPanel Text="Öğrenciler" Icon="@Icons.Material.Filled.School">
+        <div Class="d-flex gap-2 mt-4 card-gap">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Yeni Öğrenci Ekle
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportToExcel">
+                Excel'e Aktar
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportToPdf">
+                PDF'e Aktar
+            </MudButton>
+        </div>
+
+        @* FILTER BAR *@
+        <MudPaper Class="pa-3 mb-3" Elevation="1">
+            <div class="d-flex align-center gap-3">
+                <MudTextField @bind-Value="_filters.SearchText"
+                              Label="Ara"
+                              Placeholder="İsim, okul, sicil..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="ApplyFilters"
+                              Style="flex: 1; max-width: 400px;" />
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Tune"
+                           OnClick="@(() => _filterDrawerOpen = true)">
+                    Filtreler
+                </MudButton>
+
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Default"
+                           OnClick="ClearAllFilters">
+                    TEMİZLE
+                </MudButton>
+            </div>
+        </MudPaper>
+
+        @* SELECTED FILTER CHIPS *@
+        @if (_filters.HasAnyFilter())
+        {
+            <MudPaper Class="pa-3 mb-3" Elevation="0" Style="background-color: #f5f5f5;">
+                <MudText Typo="Typo.body2" Class="mb-2"><strong>Seçilen Filtreler:</strong></MudText>
+                <div class="d-flex flex-wrap gap-2">
+                    @if (!string.IsNullOrWhiteSpace(_filters.SearchText))
+                    {
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" OnClose="@(() => RemoveSearchFilter())">
+                            Arama: @_filters.SearchText
+                        </MudChip>
+                    }
+                    @if (_filters.ScholarshipStatus != ScholarshipStatusFilter.All)
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" OnClose="@(() => RemoveScholarshipStatusFilter())">
+                            Burs Durumu: @GetScholarshipStatusText(_filters.ScholarshipStatus)
+                        </MudChip>
+                    }
+                    @if (_filters.Gender != GenderFilter.All)
+                    {
+                        <MudChip T="string" Color="Color.Secondary" Size="Size.Small" OnClose="@(() => RemoveGenderFilter())">
+                            Cinsiyet: @GetGenderText(_filters.Gender)
+                        </MudChip>
+                    }
+                    @if (_filters.MalatyaLocation != MalatyaLocationFilter.All)
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" OnClose="@(() => RemoveMalatyaLocationFilter())">
+                            Konum: @GetMalatyaLocationText(_filters.MalatyaLocation)
+                        </MudChip>
+                    }
+                    @if (_filters.SelectedUniversities.Any())
+                    {
+                        <MudChip T="string" Color="Color.Tertiary" Size="Size.Small" OnClose="@(() => RemoveUniversitiesFilter())">
+                            Üniversite: @string.Join(", ", _filters.SelectedUniversities.Take(2))@((_filters.SelectedUniversities.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_filters.SelectedDepartments.Any())
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" OnClose="@(() => RemoveDepartmentsFilter())">
+                            Bölüm: @string.Join(", ", _filters.SelectedDepartments.Take(2))@((_filters.SelectedDepartments.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_filters.SelectedClassLevels.Any())
+                    {
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" OnClose="@(() => RemoveClassLevelsFilter())">
+                            Sınıf: @string.Join(", ", _filters.SelectedClassLevels)
+                        </MudChip>
+                    }
+                    @if (_filters.SelectedProfessions.Any())
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" OnClose="@(() => RemoveProfessionsFilter())">
+                            Meslek: @string.Join(", ", _filters.SelectedProfessions.Take(2))@((_filters.SelectedProfessions.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_filters.SelectedCities.Any())
+                    {
+                        <MudChip T="string" Color="Color.Dark" Size="Size.Small" OnClose="@(() => RemoveCitiesFilter())">
+                            İl: @string.Join(", ", _filters.SelectedCities.Take(2))@((_filters.SelectedCities.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_filters.ScholarshipStartFrom.HasValue || _filters.ScholarshipStartTo.HasValue)
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small" OnClose="@(() => RemoveDateRangeFilter())">
+                            Tarih: @(_filters.ScholarshipStartFrom?.ToString("dd/MM/yyyy") ?? "...") - @(_filters.ScholarshipStartTo?.ToString("dd/MM/yyyy") ?? "...")
+                        </MudChip>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        @* STUDENTS TABLE *@
+        <MudTable Items="@_filteredStudents" Dense="true" Hover="true" Loading="@_loading"
+                  @bind-SelectedItem="_selectedStudent" SortLabel="Sırala" RowsPerPage="50">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.SicilNumarasi ?? string.Empty)">Sicil No</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.AdSoyad)">Adı Soyadı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Sinif ?? 0)">Sınıfı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Universite ?? string.Empty)">Okulu</MudTableSortLabel></MudTh>
+                <MudTh>Burs Durumu</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Student, object>(x => x.Cinsiyet ?? string.Empty)">Cinsiyeti</MudTableSortLabel></MudTh>
+                <MudTh>Son Toplantı Katılımı</MudTh>
+                <MudTh>Transkript Notu</MudTh>
+                <MudTh>İşlemler</MudTh>
+            </HeaderContent>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 50, 100, 200 }" />
+            </PagerContent>
+            <RowTemplate>
+                <MudTd DataLabel="Sicil No">@(!string.IsNullOrWhiteSpace(context.SicilNumarasi) ? context.SicilNumarasi : "-")</MudTd>
+                <MudTd DataLabel="Adı Soyadı">
+                    <div class="d-flex align-center gap-2">
+                        <MudLink OnClick="@(() => OpenDetailDialog(context))">@context.AdSoyad</MudLink>
+                        @if (context.IsMaxGradeReached)
+                        {
+                            <MudTooltip Text="Maximum grade reached. Action required." Placement="Placement.Right">
+                                <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning" />
+                            </MudTooltip>
+                        }
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Sınıfı">@(context.Sinif?.ToString() ?? "-")</MudTd>
+                <MudTd DataLabel="Okulu">@context.Universite</MudTd>
+                <MudTd DataLabel="Burs Durumu">
+                    @if (context.AktifBursMu)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                            ₺ Burs Alıyor
+                        </MudChip>
+                    }
+                    else if (context.ScholarshipCutDate.HasValue)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">
+                            Bursu Kesildi
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Icon="@Icons.Material.Filled.Block">
+                            Burs Almıyor
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Cinsiyeti">@(string.IsNullOrWhiteSpace(context.Cinsiyet) ? "-" : context.Cinsiyet)</MudTd>
+                <MudTd DataLabel="Son Toplantı Katılımı">
+                    @{
+                        var attendance = GetLastMeetingAttendance(context.Id);
+                        if (attendance != null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="@(attendance.Katildi ? Color.Success : Color.Error)">
+                                @(attendance.Katildi ? "Katıldı" : "Katılmadı")
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    }
+                </MudTd>
+                <MudTd DataLabel="Transkript Notu">@(!string.IsNullOrWhiteSpace(context.TranskriptNotu) ? context.TranskriptNotu : "-")</MudTd>
+                <MudTd DataLabel="İşlemler">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => OpenEditDialog(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteStudent(context.Id))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.School" Size="Size.Small" Color="Color.Success" OnClick="@(() => ConfirmGraduateStudent(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Mezun Öğrenciler" Icon="@Icons.Material.Filled.School">
+        <div Class="d-flex gap-2 mb-4 mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddGraduatedStudentDialog">
+                Mezun Öğrenci Ekle
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportGraduatedStudentsToExcel">
+                Excel'e Aktar
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="ExportGraduatedStudentsToPdf">
+                PDF'e Aktar
+            </MudButton>
+        </div>
+
+        @* FILTER BAR *@
+        <MudPaper Class="pa-3 mb-3" Elevation="1">
+            <div class="d-flex align-center gap-3">
+                <MudTextField @bind-Value="_graduatedFilters.SearchText"
+                              Label="Ara"
+                              Placeholder="İsim, meslek, okul, sicil..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="ApplyGraduatedFilters"
+                              Style="flex: 1; max-width: 400px;" />
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Tune"
+                           OnClick="@(() => _graduatedFilterDrawerOpen = true)">
+                    Filtreler
+                </MudButton>
+
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Default"
+                           OnClick="ClearAllGraduatedFilters">
+                    TEMİZLE
+                </MudButton>
+            </div>
+        </MudPaper>
+
+        @* SELECTED FILTER CHIPS *@
+        @if (_graduatedFilters.HasAnyFilter())
+        {
+            <MudPaper Class="pa-3 mb-3" Elevation="0" Style="background-color: #f5f5f5;">
+                <MudText Typo="Typo.body2" Class="mb-2"><strong>Seçilen Filtreler:</strong></MudText>
+                <div class="d-flex flex-wrap gap-2">
+                    @if (!string.IsNullOrWhiteSpace(_graduatedFilters.SearchText))
+                    {
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" OnClose="@(() => RemoveGraduatedSearchFilter())">
+                            Arama: @_graduatedFilters.SearchText
+                        </MudChip>
+                    }
+                    @if (_graduatedFilters.Gender != GenderFilter.All)
+                    {
+                        <MudChip T="string" Color="Color.Secondary" Size="Size.Small" OnClose="@(() => RemoveGraduatedGenderFilter())">
+                            Cinsiyet: @GetGenderText(_graduatedFilters.Gender)
+                        </MudChip>
+                    }
+                    @if (_graduatedFilters.SelectedUniversities.Any())
+                    {
+                        <MudChip T="string" Color="Color.Tertiary" Size="Size.Small" OnClose="@(() => RemoveGraduatedUniversitiesFilter())">
+                            Üniversite: @string.Join(", ", _graduatedFilters.SelectedUniversities.Take(2))@((_graduatedFilters.SelectedUniversities.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_graduatedFilters.SelectedDepartments.Any())
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" OnClose="@(() => RemoveGraduatedDepartmentsFilter())">
+                            Bölüm: @string.Join(", ", _graduatedFilters.SelectedDepartments.Take(2))@((_graduatedFilters.SelectedDepartments.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_graduatedFilters.SelectedProfessions.Any())
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" OnClose="@(() => RemoveGraduatedProfessionsFilter())">
+                            Meslek: @string.Join(", ", _graduatedFilters.SelectedProfessions.Take(2))@((_graduatedFilters.SelectedProfessions.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                    @if (_graduatedFilters.SelectedCities.Any())
+                    {
+                        <MudChip T="string" Color="Color.Dark" Size="Size.Small" OnClose="@(() => RemoveGraduatedCitiesFilter())">
+                            İl: @string.Join(", ", _graduatedFilters.SelectedCities.Take(2))@((_graduatedFilters.SelectedCities.Count > 2) ? "..." : "")
+                        </MudChip>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        @if (_graduatedUploading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+        }
+
+        <MudTable Items="@_filteredGraduatedStudents" Dense="true" Hover="true" Loading="@_graduatedLoading" 
+                  SortLabel="Sırala" RowsPerPage="50">
+            <HeaderContent>
+                <MudTh>Sicil No</MudTh>
+                <MudTh>Adı Soyadı</MudTh>
+                <MudTh>Meslek</MudTh>
+                <MudTh>Firma</MudTh>
+                <MudTh>Okul/Bölüm</MudTh>
+                <MudTh>İletişim</MudTh>
+                <MudTh>Mezuniyet Tarihi</MudTh>
+                <MudTh>İşlemler</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="student">
+                <MudTd DataLabel="Sicil No">@(!string.IsNullOrWhiteSpace(student.SicilNumarasi) ? student.SicilNumarasi : "-")</MudTd>
+                <MudTd DataLabel="Adı Soyadı">
+                    <MudLink OnClick="@(() => OpenGraduateDetailDialog(student))" Style="cursor: pointer;">
+                        @student.AdSoyad
+                    </MudLink>
+                    @if (student.IsIzollulu)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.Home">İzollulu</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Meslek">
+                    @if (!string.IsNullOrEmpty(student.Meslek))
+                    {
+                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Small" /> @student.Meslek</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Firma">
+                    @if (!string.IsNullOrEmpty(student.Firma))
+                    {
+                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" /> @student.Firma</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Okul/Bölüm">
+                    @if (!string.IsNullOrEmpty(student.Universite))
+                    {
+                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" /> @student.Universite</MudText>
+                    }
+                    @if (!string.IsNullOrEmpty(student.Bolum))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@student.Bolum</MudText>
+                    }
+                    @if (string.IsNullOrEmpty(student.Universite))
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="İletişim">
+                    @if (!string.IsNullOrEmpty(student.Telefon))
+                    {
+                        <MudText Typo="Typo.body2"><MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" /> @student.Telefon</MudText>
+                    }
+                    @if (!string.IsNullOrEmpty(student.Email))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary"><MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" /> @student.Email</MudText>
+                    }
+                    @if (string.IsNullOrEmpty(student.Telefon) && string.IsNullOrEmpty(student.Email))
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Mezuniyet Tarihi">
+                    @if (student.MezuniyetTarihi.HasValue)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.School">
+                            @student.MezuniyetTarihi.Value.ToString("dd/MM/yyyy")
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="İşlemler">
+                    <div class="d-flex gap-1 align-center">
+                        @if (_memberStudentIds.Contains(student.Id))
+                        {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle">Üye</MudChip>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Text" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.PersonAdd"
+                                       OnClick="@(() => ConvertToMemberAsync(student))">
+                                Üye Olarak Ekle
+                            </MudButton>
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                       Color="Color.Error" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => DeleteGraduatedStudentAsync(student))" />
+                    </div>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 50, 100, 200 }" />
+            </PagerContent>
+        </MudTable>
+    </MudTabPanel>
+</MudTabs>
+
+@* FILTER DRAWER *@
+<MudDrawer @bind-Open="_filterDrawerOpen" Anchor="Anchor.End" Elevation="2" Width="450px" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Filtreler</MudText>
+    </MudDrawerHeader>
+    <MudDrawerContainer Class="pa-4" Style="overflow-y: auto;">
+        <MudStack Spacing="4">
+            
+            @* Burs Durumu *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Burs Durumu</strong></MudText>
+                <MudRadioGroup @bind-Value="_filters.ScholarshipStatus">
+                    <MudRadio Value="ScholarshipStatusFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                    <MudRadio Value="ScholarshipStatusFilter.HasScholarship" Color="Color.Success">Burs Alan</MudRadio>
+                    <MudRadio Value="ScholarshipStatusFilter.NoScholarship" Color="Color.Default">Burs Almayan</MudRadio>
+                    <MudRadio Value="ScholarshipStatusFilter.ScholarshipCut" Color="Color.Error">Bursu Kesildi</MudRadio>
+                </MudRadioGroup>
+            </div>
+
+            @* Cinsiyet *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Cinsiyet</strong></MudText>
+                <MudRadioGroup @bind-Value="_filters.Gender">
+                    <MudRadio Value="GenderFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                    <MudRadio Value="GenderFilter.Male" Color="Color.Info">Erkek</MudRadio>
+                    <MudRadio Value="GenderFilter.Female" Color="Color.Secondary">Kadın</MudRadio>
+                </MudRadioGroup>
+            </div>
+
+            @* Malatya Konum *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Malatya Konum</strong></MudText>
+                <MudRadioGroup @bind-Value="_filters.MalatyaLocation">
+                    <MudRadio Value="MalatyaLocationFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                    <MudRadio Value="MalatyaLocationFilter.MalatyaIci" Color="Color.Success">Malatya İçi</MudRadio>
+                    <MudRadio Value="MalatyaLocationFilter.MalatyaDisi" Color="Color.Warning">Malatya Dışı</MudRadio>
+                </MudRadioGroup>
+            </div>
+
+            @* Üniversite *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Üniversite</strong></MudText>
+                <MudTextField @bind-Value="_universitySearchText" 
+                              Label="Üniversite ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var uni in GetFilteredUniversities())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_filters.SelectedUniversities.Contains(uni)" 
+                                     ValueChanged="@(val => ToggleUniversity(uni, val))"
+                                     Label="@uni"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* Bölüm *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Bölüm</strong></MudText>
+                <MudTextField @bind-Value="_departmentSearchText" 
+                              Label="Bölüm ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var dept in GetFilteredDepartments())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_filters.SelectedDepartments.Contains(dept)" 
+                                     ValueChanged="@(val => ToggleDepartment(dept, val))"
+                                     Label="@dept"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* Sınıf *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Sınıf</strong></MudText>
+                <div class="d-flex flex-wrap gap-2">
+                    @for (int i = 1; i <= 6; i++)
+                    {
+                        var classLevel = i;
+                        <MudCheckBox T="bool" 
+                                     Value="@_filters.SelectedClassLevels.Contains(classLevel)" 
+                                     ValueChanged="@(val => ToggleClassLevel(classLevel, val))"
+                                     Label="@classLevel.ToString()"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* Meslek *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Meslek</strong></MudText>
+                <MudTextField @bind-Value="_professionSearchText" 
+                              Label="Meslek ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var prof in GetFilteredProfessions())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_filters.SelectedProfessions.Contains(prof)" 
+                                     ValueChanged="@(val => ToggleProfession(prof, val))"
+                                     Label="@prof"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* İl *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>İl</strong></MudText>
+                <MudTextField @bind-Value="_citySearchText" 
+                              Label="İl ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var city in GetFilteredCities())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_filters.SelectedCities.Contains(city)" 
+                                     ValueChanged="@(val => ToggleCity(city, val))"
+                                     Label="@city"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* Burs Tarihleri *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Burs Başlangıç Tarihi</strong></MudText>
+                <div class="form-group">
+                    <label class="form-label">En erken</label>
+                    <InputDate @bind-Value="_filters.ScholarshipStartFrom" class="form-control" />
+                </div>
+                <div class="form-group mt-2">
+                    <label class="form-label">En geç</label>
+                    <InputDate @bind-Value="_filters.ScholarshipStartTo" class="form-control" />
+                </div>
+            </div>
+
+        </MudStack>
+        
+        <div Class="pa-4 mt-4">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       OnClick="ApplyFiltersAndClose">
+                Filtreleri Uygula
+            </MudButton>
+        </div>
+    </MudDrawerContainer>
+</MudDrawer>
+
+@* GRADUATED STUDENTS FILTER DRAWER *@
+<MudDrawer @bind-Open="_graduatedFilterDrawerOpen" Anchor="Anchor.End" Elevation="2" Width="450px" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h6">Filtreler</MudText>
+    </MudDrawerHeader>
+    <MudDrawerContainer Class="pa-4" Style="overflow-y: auto;">
+        <MudStack Spacing="4">
+            
+            @* Cinsiyet *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Cinsiyet</strong></MudText>
+                <MudRadioGroup @bind-Value="_graduatedFilters.Gender">
+                    <MudRadio Value="GenderFilter.All" Color="Color.Primary">Tümü</MudRadio>
+                    <MudRadio Value="GenderFilter.Male" Color="Color.Info">Erkek</MudRadio>
+                    <MudRadio Value="GenderFilter.Female" Color="Color.Secondary">Kadın</MudRadio>
+                </MudRadioGroup>
+            </div>
+
+            @* Üniversite *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Üniversite</strong></MudText>
+                <MudTextField @bind-Value="_graduatedUniversitySearchText" 
+                              Label="Üniversite ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var uni in GetFilteredGraduatedUniversities())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_graduatedFilters.SelectedUniversities.Contains(uni)" 
+                                     ValueChanged="@(val => ToggleGraduatedUniversity(uni, val))"
+                                     Label="@uni"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* Bölüm *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Bölüm</strong></MudText>
+                <MudTextField @bind-Value="_graduatedDepartmentSearchText" 
+                              Label="Bölüm ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var dept in GetFilteredGraduatedDepartments())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_graduatedFilters.SelectedDepartments.Contains(dept)" 
+                                     ValueChanged="@(val => ToggleGraduatedDepartment(dept, val))"
+                                     Label="@dept"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* Meslek *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>Meslek</strong></MudText>
+                <MudTextField @bind-Value="_graduatedProfessionSearchText" 
+                              Label="Meslek ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var prof in GetFilteredGraduatedProfessions())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_graduatedFilters.SelectedProfessions.Contains(prof)" 
+                                     ValueChanged="@(val => ToggleGraduatedProfession(prof, val))"
+                                     Label="@prof"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+            @* İl/Köy *@
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>İl/Köy</strong></MudText>
+                <MudTextField @bind-Value="_graduatedCitySearchText" 
+                              Label="İl/Köy ara..." 
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense" />
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin-top: 8px; padding: 8px;">
+                    @foreach (var city in GetFilteredGraduatedCities())
+                    {
+                        <MudCheckBox T="bool" 
+                                     Value="@_graduatedFilters.SelectedCities.Contains(city)" 
+                                     ValueChanged="@(val => ToggleGraduatedCity(city, val))"
+                                     Label="@city"
+                                     Dense="true" />
+                    }
+                </div>
+            </div>
+
+        </MudStack>
+
+        <div Class="pa-4 mt-4">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       OnClick="ApplyGraduatedFiltersAndClose">
+                Filtreleri Uygula
+            </MudButton>
+        </div>
+    </MudDrawerContainer>
+</MudDrawer>
+
+@code {
+    // State
+    private StudentFilterModel _filters = new();
+    private StudentFilterModel _graduatedFilters = new();
+    private List<Student> _allStudents = new();
+    private List<Student> _filteredStudents = new();
+    private List<Student> _graduatedStudents = new();
+    private List<Student> _filteredGraduatedStudents = new();
+    private Student? _selectedStudent;
+    private bool _loading = false;
+    private bool _graduatedLoading = false;
+    private bool _graduatedUploading = false;
+    private bool _filterDrawerOpen = false;
+    private bool _graduatedFilterDrawerOpen = false;
+    private HashSet<int> _memberStudentIds = new();
+
+    // Filter options (extracted from all students)
+    private List<string> _allUniversities = new();
+    private List<string> _allDepartments = new();
+    private List<string> _allProfessions = new();
+    private List<string> _allCities = new();
+
+    // Search texts for filter dropdowns
+    private string _universitySearchText = string.Empty;
+    private string _departmentSearchText = string.Empty;
+    private string _professionSearchText = string.Empty;
+    private string _citySearchText = string.Empty;
+
+    // Graduated students search texts for filter dropdowns
+    private string _graduatedUniversitySearchText = string.Empty;
+    private string _graduatedDepartmentSearchText = string.Empty;
+    private string _graduatedProfessionSearchText = string.Empty;
+    private string _graduatedCitySearchText = string.Empty;
+
+    // Meeting attendance cache
+    private Dictionary<int, StudentMeetingAttendance?> _lastMeetingAttendances = new();
+
+    // Statistics Properties
+    private int TotalStudents => _allStudents.Count;
+    private int ActiveScholarshipStudents => _allStudents.Count(s => s.AktifBursMu);
+    private int GraduatedStudents => _graduatedStudents.Count;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await LoadFilterOptions();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _graduatedLoading = true;
+
+        try
+        {
+            _allStudents = await StudentService.GetCurrentStudentsAsync();
+            _graduatedStudents = await StudentService.GetGraduatedStudentsAsync();
+
+            await LoadLastMeetingAttendances();
+            await LoadMemberStudentIds();
+
+            await ApplyFilters();
+            await ApplyGraduatedFilters();
+        }
+        finally
+        {
+            _loading = false;
+            _graduatedLoading = false;
+        }
+    }
+
+    private async Task LoadFilterOptions()
+    {
+        var allData = await StudentService.GetAllAsync();
+
+        _allUniversities = allData
+            .Where(s => !string.IsNullOrWhiteSpace(s.Universite))
+            .Select(s => s.Universite!)
+            .Distinct()
+            .OrderBy(u => u)
+            .ToList();
+
+        _allDepartments = allData
+            .Where(s => !string.IsNullOrWhiteSpace(s.Bolum))
+            .Select(s => s.Bolum!)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        _allProfessions = allData
+            .Where(s => !string.IsNullOrWhiteSpace(s.Meslek))
+            .Select(s => s.Meslek!)
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+
+        _allCities = allData
+            .Where(s => !string.IsNullOrWhiteSpace(s.Koy))
+            .Select(s => s.Koy!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+    }
+
+    private async Task LoadLastMeetingAttendances()
+    {
+        _lastMeetingAttendances.Clear();
+        foreach (var student in _allStudents)
+        {
+            var attendances = await MeetingService.GetAttendancesForStudentAsync(student.Id);
+            _lastMeetingAttendances[student.Id] = attendances.FirstOrDefault();
+        }
+    }
+
+    private StudentMeetingAttendance? GetLastMeetingAttendance(int studentId)
+    {
+        return _lastMeetingAttendances.TryGetValue(studentId, out var attendance) ? attendance : null;
+    }
+
+    // FILTERING LOGIC
+    private async Task ApplyFilters()
+    {
+        await Task.Run(() =>
+        {
+            IEnumerable<Student> query = _allStudents;
+
+            // Search text
+            if (!string.IsNullOrWhiteSpace(_filters.SearchText))
+            {
+                var searchLower = _filters.SearchText.Trim().ToLower();
+                query = query.Where(s =>
+                    s.AdSoyad.ToLower().Contains(searchLower) ||
+                    (s.Universite != null && s.Universite.ToLower().Contains(searchLower)) ||
+                    (s.SicilNumarasi != null && s.SicilNumarasi.ToLower().Contains(searchLower)));
+            }
+
+            // Scholarship status
+            if (_filters.ScholarshipStatus == ScholarshipStatusFilter.HasScholarship)
+                query = query.Where(s => s.AktifBursMu);
+            else if (_filters.ScholarshipStatus == ScholarshipStatusFilter.NoScholarship)
+                query = query.Where(s => !s.AktifBursMu && s.ScholarshipCutDate == null);
+            else if (_filters.ScholarshipStatus == ScholarshipStatusFilter.ScholarshipCut)
+                query = query.Where(s => !s.AktifBursMu && s.ScholarshipCutDate != null);
+
+            // Gender
+            if (_filters.Gender == GenderFilter.Male)
+                query = query.Where(s => s.Cinsiyet == "Erkek");
+            else if (_filters.Gender == GenderFilter.Female)
+                query = query.Where(s => s.Cinsiyet == "Kadın");
+
+            // Malatya Location
+            if (_filters.MalatyaLocation == MalatyaLocationFilter.MalatyaIci)
+                query = query.Where(s => s.IsMalatyaUniversity);
+            else if (_filters.MalatyaLocation == MalatyaLocationFilter.MalatyaDisi)
+                query = query.Where(s => !s.IsMalatyaUniversity);
+
+            // Universities
+            if (_filters.SelectedUniversities.Any())
+                query = query.Where(s => s.Universite != null && _filters.SelectedUniversities.Contains(s.Universite));
+
+            // Departments
+            if (_filters.SelectedDepartments.Any())
+                query = query.Where(s => s.Bolum != null && _filters.SelectedDepartments.Contains(s.Bolum));
+
+            // Class levels
+            if (_filters.SelectedClassLevels.Any())
+                query = query.Where(s => s.Sinif.HasValue && _filters.SelectedClassLevels.Contains(s.Sinif.Value));
+
+            // Professions
+            if (_filters.SelectedProfessions.Any())
+                query = query.Where(s => s.Meslek != null && _filters.SelectedProfessions.Contains(s.Meslek));
+
+            // Cities
+            if (_filters.SelectedCities.Any())
+                query = query.Where(s => s.Koy != null && _filters.SelectedCities.Contains(s.Koy));
+
+            // Date range
+            if (_filters.ScholarshipStartFrom.HasValue)
+                query = query.Where(s => s.BursBaslangicTarihi >= _filters.ScholarshipStartFrom.Value);
+
+            if (_filters.ScholarshipStartTo.HasValue)
+                query = query.Where(s => s.BursBaslangicTarihi <= _filters.ScholarshipStartTo.Value);
+
+            _filteredStudents = query.ToList();
+        });
+
+        StateHasChanged();
+    }
+
+    private async Task ApplyFiltersAndClose()
+    {
+        _filterDrawerOpen = false;
+        await ApplyFilters();
+    }
+
+    private async Task ClearAllFilters()
+    {
+        _filters.Clear();
+        _universitySearchText = string.Empty;
+        _departmentSearchText = string.Empty;
+        _professionSearchText = string.Empty;
+        _citySearchText = string.Empty;
+        await ApplyFilters();
+    }
+
+    // FILTER CHIP REMOVAL METHODS
+    private async Task RemoveSearchFilter()
+    {
+        _filters.SearchText = null;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveScholarshipStatusFilter()
+    {
+        _filters.ScholarshipStatus = ScholarshipStatusFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveGenderFilter()
+    {
+        _filters.Gender = GenderFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveMalatyaLocationFilter()
+    {
+        _filters.MalatyaLocation = MalatyaLocationFilter.All;
+        await ApplyFilters();
+    }
+
+    private async Task RemoveUniversitiesFilter()
+    {
+        _filters.SelectedUniversities.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveDepartmentsFilter()
+    {
+        _filters.SelectedDepartments.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveClassLevelsFilter()
+    {
+        _filters.SelectedClassLevels.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveProfessionsFilter()
+    {
+        _filters.SelectedProfessions.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveCitiesFilter()
+    {
+        _filters.SelectedCities.Clear();
+        await ApplyFilters();
+    }
+
+    private async Task RemoveDateRangeFilter()
+    {
+        _filters.ScholarshipStartFrom = null;
+        _filters.ScholarshipStartTo = null;
+        await ApplyFilters();
+    }
+
+    // FILTER DRAWER TOGGLE METHODS
+    private void ToggleUniversity(string university, bool selected)
+    {
+        if (selected)
+        {
+            if (!_filters.SelectedUniversities.Contains(university))
+                _filters.SelectedUniversities.Add(university);
+        }
+        else
+        {
+            _filters.SelectedUniversities.Remove(university);
+        }
+    }
+
+    private void ToggleDepartment(string department, bool selected)
+    {
+        if (selected)
+        {
+            if (!_filters.SelectedDepartments.Contains(department))
+                _filters.SelectedDepartments.Add(department);
+        }
+        else
+        {
+            _filters.SelectedDepartments.Remove(department);
+        }
+    }
+
+    private void ToggleClassLevel(int classLevel, bool selected)
+    {
+        if (selected)
+        {
+            if (!_filters.SelectedClassLevels.Contains(classLevel))
+                _filters.SelectedClassLevels.Add(classLevel);
+        }
+        else
+        {
+            _filters.SelectedClassLevels.Remove(classLevel);
+        }
+    }
+
+    private void ToggleProfession(string profession, bool selected)
+    {
+        if (selected)
+        {
+            if (!_filters.SelectedProfessions.Contains(profession))
+                _filters.SelectedProfessions.Add(profession);
+        }
+        else
+        {
+            _filters.SelectedProfessions.Remove(profession);
+        }
+    }
+
+    private void ToggleCity(string city, bool selected)
+    {
+        if (selected)
+        {
+            if (!_filters.SelectedCities.Contains(city))
+                _filters.SelectedCities.Add(city);
+        }
+        else
+        {
+            _filters.SelectedCities.Remove(city);
+        }
+    }
+
+    // FILTER OPTIONS WITH SEARCH
+    private IEnumerable<string> GetFilteredUniversities()
+    {
+        if (string.IsNullOrWhiteSpace(_universitySearchText))
+            return _allUniversities;
+        
+        var searchLower = _universitySearchText.ToLower();
+        return _allUniversities.Where(u => u.ToLower().Contains(searchLower));
+    }
+
+    private IEnumerable<string> GetFilteredDepartments()
+    {
+        if (string.IsNullOrWhiteSpace(_departmentSearchText))
+            return _allDepartments;
+        
+        var searchLower = _departmentSearchText.ToLower();
+        return _allDepartments.Where(d => d.ToLower().Contains(searchLower));
+    }
+
+    private IEnumerable<string> GetFilteredProfessions()
+    {
+        if (string.IsNullOrWhiteSpace(_professionSearchText))
+            return _allProfessions;
+        
+        var searchLower = _professionSearchText.ToLower();
+        return _allProfessions.Where(p => p.ToLower().Contains(searchLower));
+    }
+
+    private IEnumerable<string> GetFilteredCities()
+    {
+        if (string.IsNullOrWhiteSpace(_citySearchText))
+            return _allCities;
+        
+        var searchLower = _citySearchText.ToLower();
+        return _allCities.Where(c => c.ToLower().Contains(searchLower));
+    }
+
+    // HELPER TEXT METHODS
+    private string GetScholarshipStatusText(ScholarshipStatusFilter status) => status switch
+    {
+        ScholarshipStatusFilter.HasScholarship => "Burs Alan",
+        ScholarshipStatusFilter.NoScholarship => "Burs Almayan",
+        ScholarshipStatusFilter.ScholarshipCut => "Bursu Kesildi",
+        _ => "Tümü"
+    };
+
+    private string GetGenderText(GenderFilter gender) => gender switch
+    {
+        GenderFilter.Male => "Erkek",
+        GenderFilter.Female => "Kadın",
+        _ => "Tümü"
+    };
+
+    private string GetMalatyaLocationText(MalatyaLocationFilter location) => location switch
+    {
+        MalatyaLocationFilter.MalatyaIci => "Malatya İçi",
+        MalatyaLocationFilter.MalatyaDisi => "Malatya Dışı",
+        _ => "Tümü"
+    };
+
+    // DIALOG METHODS
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters { ["IsEdit"] = false };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<StudentDialog>("Yeni Öğrenci Ekle", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+            await LoadFilterOptions();
+            Snackbar.Add("Öğrenci başarıyla eklendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Student student)
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["IsEdit"] = true,
+            ["Student"] = student
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<StudentDialog>("Öğrenci Düzenle", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+            await LoadFilterOptions();
+            Snackbar.Add("Öğrenci başarıyla güncellendi.", Severity.Success);
+        }
+    }
+
+    private async Task OpenDetailDialog(Student student)
+    {
+        var parameters = new DialogParameters { ["StudentId"] = student.Id };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<StudentDetailDialog>("Öğrenci Detayı", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task OpenGraduateDetailDialog(Student student)
+    {
+        var parameters = new DialogParameters { ["StudentId"] = student.Id };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true };
+        await DialogService.ShowAsync<StudentDetailDialog>("Mezun Öğrenci Detayları", parameters, options);
+    }
+
+    private async Task DeleteStudent(int studentId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            "Bu öğrenciyi silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            await StudentService.DeleteAsync(studentId);
+            await LoadData();
+            await LoadFilterOptions();
+            Snackbar.Add("Öğrenci silindi.", Severity.Info);
+        }
+    }
+
+    private async Task ConfirmGraduateStudent(Student student)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<GraduateStudentDialog>("Öğrenciyi Mezun Et", parameters: new DialogParameters(), options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is GraduateStudentDialog.GraduationResult graduationResult)
+        {
+            await StudentService.GraduateStudentAsync(student.Id, graduationResult.MezuniyetTarihi, graduationResult.Meslek, graduationResult.Firma);
+            await LoadData();
+            await LoadFilterOptions();
+            Snackbar.Add($"{student.AdSoyad} mezun edildi.", Severity.Success);
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var studentsToExport = _filteredStudents;
+            
+            if (studentsToExport.Count == 0)
+            {
+                Snackbar.Add("Dışa aktarılacak öğrenci bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            var excelBytes = ExcelService.ExportStudents(studentsToExport);
+            var fileName = $"Ogrenciler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelBytes));
+            Snackbar.Add($"{studentsToExport.Count} öğrenci Excel'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel aktarımı başarısız: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var studentsToExport = _filteredStudents;
+            
+            if (studentsToExport.Count == 0)
+            {
+                Snackbar.Add("Dışa aktarılacak öğrenci bulunamadı.", Severity.Warning);
+                return;
+            }
+
+            var pdfBytes = PdfService.GenerateStudentsPdfReport(studentsToExport);
+            var fileName = $"Ogrenciler_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(pdfBytes));
+            Snackbar.Add($"{studentsToExport.Count} öğrenci PDF'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel'e aktarma hatası: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // GRADUATED STUDENTS METHODS
+    private async Task ExportGraduatedStudentsToPdf()
+    {
+        try
+        {
+            var fileBytes = PdfService.GenerateGraduatedStudentsPdf(_filteredGraduatedStudents);
+            await JSRuntime.InvokeVoidAsync("downloadFile", $"mezun_ogrenciler_{DateTime.Now:yyyyMMdd}.pdf", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Mezun öğrenci listesi PDF'e aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // Graduated filter methods
+    private async Task ApplyGraduatedFilters()
+    {
+        _filteredGraduatedStudents = _graduatedStudents.Where(s =>
+        {
+            // Search text
+            if (!string.IsNullOrWhiteSpace(_graduatedFilters.SearchText))
+            {
+                var searchLower = _graduatedFilters.SearchText.ToLower();
+                if (!s.AdSoyad.ToLower().Contains(searchLower) &&
+                    !(s.Meslek?.ToLower().Contains(searchLower) ?? false) &&
+                    !(s.Firma?.ToLower().Contains(searchLower) ?? false) &&
+                    !(s.Universite?.ToLower().Contains(searchLower) ?? false) &&
+                    !(s.SicilNumarasi?.ToLower().Contains(searchLower) ?? false))
+                    return false;
+            }
+
+            // Gender
+            if (_graduatedFilters.Gender != GenderFilter.All)
+            {
+                var genderMatch = _graduatedFilters.Gender switch
+                {
+                    GenderFilter.Male => s.Cinsiyet?.Equals("Erkek", StringComparison.OrdinalIgnoreCase) ?? false,
+                    GenderFilter.Female => s.Cinsiyet?.Equals("Kadın", StringComparison.OrdinalIgnoreCase) ?? false,
+                    _ => true
+                };
+                if (!genderMatch) return false;
+            }
+
+            // Universities
+            if (_graduatedFilters.SelectedUniversities.Any())
+            {
+                if (string.IsNullOrWhiteSpace(s.Universite) || !_graduatedFilters.SelectedUniversities.Contains(s.Universite))
+                    return false;
+            }
+
+            // Departments
+            if (_graduatedFilters.SelectedDepartments.Any())
+            {
+                if (string.IsNullOrWhiteSpace(s.Bolum) || !_graduatedFilters.SelectedDepartments.Contains(s.Bolum))
+                    return false;
+            }
+
+            // Professions
+            if (_graduatedFilters.SelectedProfessions.Any())
+            {
+                if (string.IsNullOrWhiteSpace(s.Meslek) || !_graduatedFilters.SelectedProfessions.Contains(s.Meslek))
+                    return false;
+            }
+
+            // Cities
+            if (_graduatedFilters.SelectedCities.Any())
+            {
+                if (string.IsNullOrWhiteSpace(s.Koy) || !_graduatedFilters.SelectedCities.Contains(s.Koy))
+                    return false;
+            }
+
+            return true;
+        }).ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task ApplyGraduatedFiltersAndClose()
+    {
+        await ApplyGraduatedFilters();
+        _graduatedFilterDrawerOpen = false;
+    }
+
+    private async Task ClearAllGraduatedFilters()
+    {
+        _graduatedFilters = new StudentFilterModel();
+        await ApplyGraduatedFilters();
+    }
+
+    private async Task RemoveGraduatedSearchFilter()
+    {
+        _graduatedFilters.SearchText = string.Empty;
+        await ApplyGraduatedFilters();
+    }
+
+    private async Task RemoveGraduatedGenderFilter()
+    {
+        _graduatedFilters.Gender = GenderFilter.All;
+        await ApplyGraduatedFilters();
+    }
+
+    private async Task RemoveGraduatedUniversitiesFilter()
+    {
+        _graduatedFilters.SelectedUniversities.Clear();
+        await ApplyGraduatedFilters();
+    }
+
+    private async Task RemoveGraduatedDepartmentsFilter()
+    {
+        _graduatedFilters.SelectedDepartments.Clear();
+        await ApplyGraduatedFilters();
+    }
+
+    private async Task RemoveGraduatedProfessionsFilter()
+    {
+        _graduatedFilters.SelectedProfessions.Clear();
+        await ApplyGraduatedFilters();
+    }
+
+    private async Task RemoveGraduatedCitiesFilter()
+    {
+        _graduatedFilters.SelectedCities.Clear();
+        await ApplyGraduatedFilters();
+    }
+
+    // Search methods for autocomplete
+    private async Task<IEnumerable<string>> SearchUniversities(string value, CancellationToken token)
+    {
+        await Task.Delay(1, token); // Simulate async
+        if (string.IsNullOrWhiteSpace(value))
+            return _allUniversities;
+        return _allUniversities.Where(u => u.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<string>> SearchProfessions(string value, CancellationToken token)
+    {
+        await Task.Delay(1, token); // Simulate async
+        if (string.IsNullOrWhiteSpace(value))
+            return _allProfessions;
+        return _allProfessions.Where(p => p.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<string>> SearchCities(string value, CancellationToken token)
+    {
+        await Task.Delay(1, token); // Simulate async
+        if (string.IsNullOrWhiteSpace(value))
+            return _allCities;
+        return _allCities.Where(c => c.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    // GRADUATED STUDENTS FILTER METHODS
+    private IEnumerable<string> GetFilteredGraduatedUniversities()
+    {
+        var graduatedUniversities = _graduatedStudents
+            .Select(s => s.Universite)
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Distinct()
+            .OrderBy(u => u)
+            .ToList();
+        
+        if (string.IsNullOrWhiteSpace(_graduatedUniversitySearchText))
+            return graduatedUniversities!;
+        
+        var searchLower = _graduatedUniversitySearchText.ToLower();
+        return graduatedUniversities.Where(u => u!.ToLower().Contains(searchLower))!;
+    }
+
+    private IEnumerable<string> GetFilteredGraduatedDepartments()
+    {
+        var graduatedDepartments = _graduatedStudents
+            .Select(s => s.Bolum)
+            .Where(d => !string.IsNullOrWhiteSpace(d))
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+        
+        if (string.IsNullOrWhiteSpace(_graduatedDepartmentSearchText))
+            return graduatedDepartments!;
+        
+        var searchLower = _graduatedDepartmentSearchText.ToLower();
+        return graduatedDepartments.Where(d => d!.ToLower().Contains(searchLower))!;
+    }
+
+    private IEnumerable<string> GetFilteredGraduatedProfessions()
+    {
+        var graduatedProfessions = _graduatedStudents
+            .Select(s => s.Meslek)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Distinct()
+            .OrderBy(p => p)
+            .ToList();
+        
+        if (string.IsNullOrWhiteSpace(_graduatedProfessionSearchText))
+            return graduatedProfessions!;
+        
+        var searchLower = _graduatedProfessionSearchText.ToLower();
+        return graduatedProfessions.Where(p => p!.ToLower().Contains(searchLower))!;
+    }
+
+    private IEnumerable<string> GetFilteredGraduatedCities()
+    {
+        var graduatedCities = _graduatedStudents
+            .Select(s => s.Koy)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+        
+        if (string.IsNullOrWhiteSpace(_graduatedCitySearchText))
+            return graduatedCities!;
+        
+        var searchLower = _graduatedCitySearchText.ToLower();
+        return graduatedCities.Where(c => c!.ToLower().Contains(searchLower))!;
+    }
+
+    private void ToggleGraduatedUniversity(string university, bool selected)
+    {
+        if (selected)
+        {
+            if (!_graduatedFilters.SelectedUniversities.Contains(university))
+                _graduatedFilters.SelectedUniversities.Add(university);
+        }
+        else
+        {
+            _graduatedFilters.SelectedUniversities.Remove(university);
+        }
+    }
+
+    private void ToggleGraduatedDepartment(string department, bool selected)
+    {
+        if (selected)
+        {
+            if (!_graduatedFilters.SelectedDepartments.Contains(department))
+                _graduatedFilters.SelectedDepartments.Add(department);
+        }
+        else
+        {
+            _graduatedFilters.SelectedDepartments.Remove(department);
+        }
+    }
+
+    private void ToggleGraduatedProfession(string profession, bool selected)
+    {
+        if (selected)
+        {
+            if (!_graduatedFilters.SelectedProfessions.Contains(profession))
+                _graduatedFilters.SelectedProfessions.Add(profession);
+        }
+        else
+        {
+            _graduatedFilters.SelectedProfessions.Remove(profession);
+        }
+    }
+
+    private void ToggleGraduatedCity(string city, bool selected)
+    {
+        if (selected)
+        {
+            if (!_graduatedFilters.SelectedCities.Contains(city))
+                _graduatedFilters.SelectedCities.Add(city);
+        }
+        else
+        {
+            _graduatedFilters.SelectedCities.Remove(city);
+        }
+    }
+
+    private void AddGraduatedUniversity(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !_graduatedFilters.SelectedUniversities.Contains(value))
+        {
+            _graduatedFilters.SelectedUniversities.Add(value);
+            _universitySearchText = string.Empty;
+        }
+    }
+
+    private void RemoveGraduatedUniversity(string value)
+    {
+        _graduatedFilters.SelectedUniversities.Remove(value);
+    }
+
+    private void AddGraduatedProfession(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !_graduatedFilters.SelectedProfessions.Contains(value))
+        {
+            _graduatedFilters.SelectedProfessions.Add(value);
+            _professionSearchText = string.Empty;
+        }
+    }
+
+    private void RemoveGraduatedProfession(string value)
+    {
+        _graduatedFilters.SelectedProfessions.Remove(value);
+    }
+
+    private void AddGraduatedCity(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !_graduatedFilters.SelectedCities.Contains(value))
+        {
+            _graduatedFilters.SelectedCities.Add(value);
+            _citySearchText = string.Empty;
+        }
+    }
+
+    private void RemoveGraduatedCity(string value)
+    {
+        _graduatedFilters.SelectedCities.Remove(value);
+    }
+
+    private async Task OpenAddGraduatedStudentDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddGraduatedStudentDialog>("Mezun Öğrenci Ekle", parameters, options);
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Mezun öğrenci başarıyla eklendi.", Severity.Success);
+        }
+    }
+
+    private async Task DownloadGraduatedStudentTemplate()
+    {
+        try
+        {
+            var fileBytes = ExcelService.GenerateGraduatedStudentTemplate();
+            await JSRuntime.InvokeVoidAsync("downloadFile", "mezun_ogrenci_sablonu.xlsx", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Şablon dosyası indirildi.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportGraduatedStudentsToExcel()
+    {
+        try
+        {
+            var fileBytes = ExcelService.ExportGraduatedStudents(_graduatedStudents);
+            await JSRuntime.InvokeVoidAsync("downloadFile", $"mezun_ogrenciler_{DateTime.Now:yyyyMMdd}.xlsx", Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Mezun öğrenci listesi dışa aktarıldı.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UploadGraduatedStudentFile(IBrowserFile file)
+    {
+        if (file == null) return;
+
+        _graduatedUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            using var memoryStream = new MemoryStream();
+            using (var fileStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+            {
+                await fileStream.CopyToAsync(memoryStream);
+            }
+            memoryStream.Position = 0;
+            
+            var graduatedStudents = ExcelService.ImportGraduatedStudents(memoryStream);
+
+            foreach (var student in graduatedStudents)
+            {
+                await StudentService.CreateAsync(student);
+            }
+
+            await LoadData();
+            Snackbar.Add($"Başarıyla {graduatedStudents.Count} mezun öğrenci eklendi.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _graduatedUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMemberStudentIds()
+    {
+        var allMembers = await MemberService.GetAllAsync();
+        
+        _memberStudentIds = allMembers
+            .Where(m => _graduatedStudents.Any(s => 
+                (!string.IsNullOrEmpty(m.TCNo) && !string.IsNullOrEmpty(s.TCNo) && m.TCNo == s.TCNo) ||
+                (!string.IsNullOrEmpty(m.AdSoyad) && !string.IsNullOrEmpty(s.AdSoyad) && m.AdSoyad.Equals(s.AdSoyad, StringComparison.OrdinalIgnoreCase))
+            ))
+            .Select(m => _graduatedStudents.First(s => 
+                (!string.IsNullOrEmpty(m.TCNo) && !string.IsNullOrEmpty(s.TCNo) && m.TCNo == s.TCNo) ||
+                (!string.IsNullOrEmpty(m.AdSoyad) && !string.IsNullOrEmpty(s.AdSoyad) && m.AdSoyad.Equals(s.AdSoyad, StringComparison.OrdinalIgnoreCase))
+            ).Id)
+            .ToHashSet();
+    }
+
+    private async Task ConvertToMemberAsync(Student student)
+    {
+        var confirm = await DialogService.ShowMessageBox(
+            "Onay", 
+            $"{student.AdSoyad} adlı mezun öğrenciyi üye olarak eklemek istediğinizden emin misiniz?",
+            yesText: "Evet", cancelText: "Hayır");
+        
+        if (confirm != true) return;
+        
+        try
+        {
+            var member = new Member
+            {
+                AdSoyad = student.AdSoyad,
+                TCNo = student.TCNo,
+                DogumTarihi = student.DogumTarihi,
+                Yas = student.Yas,
+                Telefon = student.Telefon,
+                Email = student.Email,
+                Adres = student.Adres,
+                Koy = student.Koy,
+                Meslek = student.Meslek,
+                SicilNumarasi = student.SicilNumarasi,
+                AktifMi = true,
+                BursVeriyor = false,
+                IsMutevelli = false,
+                IsYonetimKurulu = false,
+                IsDenetimKurulu = false,
+                IsIzollulu = student.IsIzollulu,
+                UyelikTuru = "Mezun Öğrenci",
+                UyelikBaslangicTarihi = DateTime.Now,
+                Notlar = $"Mezun öğrenciden dönüştürüldü. Mezuniyet Tarihi: {student.MezuniyetTarihi?.ToString("dd/MM/yyyy")}",
+                OlusturmaTarihi = DateTime.Now
+            };
+            
+            await MemberService.CreateAsync(member);
+            
+            _memberStudentIds.Add(student.Id);
+            
+            Snackbar.Add($"{student.AdSoyad} başarıyla üye olarak eklendi.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteGraduatedStudentAsync(Student student)
+    {
+        var confirm = await DialogService.ShowMessageBox(
+            "Onay", 
+            $"{student.AdSoyad} adlı mezun öğrenciyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+            yesText: "Evet", cancelText: "Hayır");
+        
+        if (confirm != true) return;
+        
+        try
+        {
+            await StudentService.DeleteAsync(student.Id);
+            await LoadData();
+            Snackbar.Add($"{student.AdSoyad} başarıyla silindi.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+}
+
+</MudContainer>

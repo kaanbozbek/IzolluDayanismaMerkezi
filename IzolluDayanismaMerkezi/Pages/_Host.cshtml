@@ -1,0 +1,74 @@
+@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@namespace IzolluVakfi.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>İzollu Dayanışma Merkezi</title>
+    <base href="~/" />
+    <link rel="icon" type="image/png" href="~/izollu-vakfi.png" />
+    <link rel="apple-touch-icon" href="~/izollu-vakfi.png" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="css/site.css" rel="stylesheet" />
+</head>
+<body>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            Bir hata oluştu.
+        </environment>
+        <environment include="Development">
+            Beklenmeyen bir hata oluştu. Daha fazla bilgi için tarayıcı geliştirme araçlarına bakın.
+        </environment>
+        <a href="" class="reload">Yenile</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="js/bootstrap-select-init.js"></script>
+    <script src="js/select2-helper.js"></script>
+    <script src="js/doc-search.js"></script>
+    <script src="_framework/blazor.server.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        window.downloadFile = function (filename, base64String) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = "data:application/octet-stream;base64," + base64String;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.downloadExcel = function (data, filename) {
+            try {
+                // JSON array'i worksheet'e çevir
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                
+                // Yeni workbook oluştur
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Üyeler");
+                
+                // Excel dosyası oluştur ve indir
+                XLSX.writeFile(workbook, filename);
+            } catch (error) {
+                console.error('Excel export error:', error);
+                alert('Excel dosyası oluşturulurken hata oluştu: ' + error.message);
+            }
+        };
+    </script>
+</body>
+</html>

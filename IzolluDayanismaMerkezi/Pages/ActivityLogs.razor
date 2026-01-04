@@ -1,0 +1,152 @@
+@page "/activity-logs"
+@using Microsoft.AspNetCore.Components.Forms
+@inject ActivityLogService LogService
+@inject IJSRuntime JS
+
+<PageTitle>Aktivite Logları - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-4">Filtreler</MudText>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="3">
+                    <label class="form-label"><strong>Başlangıç Tarihi</strong></label>
+                    <InputDate @bind-Value="_startDate" class="form-control" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <label class="form-label"><strong>Bitiş Tarihi</strong></label>
+                    <InputDate @bind-Value="_endDate" class="form-control" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2"><strong>İşlem Tipi</strong></MudText>
+                    <div>
+                        <select id="activity-type-filter" class="selectpicker" data-width="100%" 
+                                data-style="btn-outline-primary" data-live-search="true"
+                                @onchange="OnTypeChanged" title="Tümü">
+                            <option value="Tümü">Tümü</option>
+                            <option value="OgrenciEkle">Öğrenci Ekle</option>
+                            <option value="OgrenciGuncelle">Öğrenci Güncelle</option>
+                            <option value="OgrenciSil">Öğrenci Sil</option>
+                            <option value="OgrenciMezun">Öğrenci Mezun</option>
+                            <option value="BursKesildi">Burs Kesildi</option>
+                            <option value="IsAdamiEkle">İş Adamı Ekle</option>
+                            <option value="UyeEkle">Üye Ekle</option>
+                            <option value="DonemAc">Dönem Aç</option>
+                        </select>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" md="2" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               OnClick="FilterLogs" 
+                               FullWidth="true"
+                               Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.FilterAlt">
+                        Filtrele
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+<MudTable Items="@_logs" Dense="true" Hover="true" Loading="@_loading">
+    <HeaderContent>
+        <MudTh>Tarih</MudTh>
+        <MudTh>Kullanıcı</MudTh>
+        <MudTh>İşlem Tipi</MudTh>
+        <MudTh>Detay</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Tarih">@context.Tarih.ToString("dd/MM/yyyy HH:mm:ss")</MudTd>
+        <MudTd DataLabel="Kullanıcı">
+            <MudChip T="string" Size="Size.Small">@context.KullaniciAdi</MudChip>
+        </MudTd>
+        <MudTd DataLabel="İşlem Tipi">
+            <MudChip T="string" Size="Size.Small" Color="@GetChipColor(context.IslemTipi)">@context.IslemTipi</MudChip>
+        </MudTd>
+        <MudTd DataLabel="Detay">@context.Detay</MudTd>
+    </RowTemplate>
+</MudTable>
+</MudContainer>
+
+@code {
+    private List<ActivityLog> _logs = new();
+    private bool _loading = true;
+    private DateTime? _startDate;
+    private DateTime? _endDate;
+    private string _selectedType = "Tümü";
+    private bool _selectPickerInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || !_selectPickerInitialized)
+        {
+            await Task.Delay(200);
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", "if (typeof jQuery !== 'undefined') { jQuery('.selectpicker').selectpicker('refresh'); }");
+            _selectPickerInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _logs = await LogService.GetAllAsync();
+        _loading = false;
+    }
+
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        _selectedType = e.Value?.ToString() ?? "Tümü";
+    }
+
+    private async Task FilterLogs()
+    {
+        _loading = true;
+
+        if (_startDate != null && _endDate != null)
+        {
+            _logs = await LogService.GetByDateRangeAsync(_startDate.Value, _endDate.Value);
+        }
+        else
+        {
+            _logs = await LogService.GetAllAsync();
+        }
+
+        if (_selectedType != "Tümü")
+        {
+            _logs = _logs.Where(l => l.IslemTipi == _selectedType).ToList();
+        }
+
+        _loading = false;
+    }
+
+    private Color GetChipColor(string islemTipi)
+    {
+        return islemTipi switch
+        {
+            "OgrenciEkle" or "IsAdamiEkle" or "UyeEkle" or "DonemAc" => Color.Success,
+            "OgrenciSil" or "IsAdamiSil" or "UyeSil" or "BursKesildi" => Color.Error,
+            "OgrenciMezun" => Color.Info,
+            "OgrenciGuncelle" or "IsAdamiGuncelle" or "UyeGuncelle" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+}

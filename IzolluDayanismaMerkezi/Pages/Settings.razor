@@ -1,0 +1,864 @@
+@page "/settings"
+@using IzolluVakfi.Data.Models
+@using IzolluVakfi.Data.Entities
+@using Microsoft.JSInterop
+@inject SettingsService SettingsService
+@inject SystemSettingsService SystemSettingsService
+@inject TranscriptService TranscriptService
+@inject MeetingService MeetingService
+@inject ExcelService ExcelService
+@inject MemberScholarshipCommitmentService CommitmentService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>Ayarlar - İzollu Dayanışma Merkezi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+    <MudTabPanel Text="Transkript Kontrolü">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Transkript Kontrolü</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2" Class="mb-4">
+                    Bu kontrol, GNO'su 2.0'ın altında olan aktif burslu öğrencilerin burslarını keser ve gerekçe olarak "Transkript" notunu ekler.
+                </MudText>
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Warning" 
+                          StartIcon="@Icons.Material.Filled.Assignment"
+                          OnClick="RunTranscriptCheck"
+                          Disabled="_processingTranscript">
+                    @if (_processingTranscript)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <span class="ms-2">İşleniyor...</span>
+                    }
+                    else
+                    {
+                        <span>Transkript Kontrolü Başlat</span>
+                    }
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+
+        @if (_transcriptCutStudents.Any())
+        {
+            <MudCard Class="mt-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Error">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" />
+                            Bursu Kesilen Öğrenciler (@_transcriptCutStudents.Count)
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable Items="@_transcriptCutStudents" Dense="true" Hover="true" Striped="true" Bordered="true">
+                        <HeaderContent>
+                            <MudTh>Ad Soyad</MudTh>
+                            <MudTh>Üniversite</MudTh>
+                            <MudTh>Bölüm</MudTh>
+                            <MudTh>Kesim Sebebi</MudTh>
+                            <MudTh>Kesim Tarihi</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Ad Soyad"><strong>@context.AdSoyad</strong></MudTd>
+                            <MudTd DataLabel="Üniversite">@context.Universite</MudTd>
+                            <MudTd DataLabel="Bölüm">@context.Bolum</MudTd>
+                            <MudTd DataLabel="Kesim Sebebi">
+                                <MudText Typo="Typo.body2" Color="Color.Error"><strong>@context.ScholarshipCutReason</strong></MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Kesim Tarihi">@context.ScholarshipCutDate?.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudTabPanel>
+
+    <MudTabPanel Text="Toplantı Kontrolü">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Toplantı Katılım Kontrolü</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2" Class="mb-4">
+                    Bu kontrol, en son toplantıya katılmayan aktif burslu öğrencilerin burslarını keser ve gerekçe olarak "Toplantıya katılmama" notunu ekler.
+                </MudText>
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Warning" 
+                          StartIcon="@Icons.Material.Filled.EventBusy"
+                          OnClick="RunMeetingCheck"
+                          Disabled="_processingMeeting">
+                    @if (_processingMeeting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <span class="ms-2">İşleniyor...</span>
+                    }
+                    else
+                    {
+                        <span>Toplantı Kontrolü Başlat</span>
+                    }
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+
+        @if (_meetingCutStudents.Any())
+        {
+            <MudCard Class="mt-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Color="Color.Error">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" />
+                            Bursu Kesilen Öğrenciler (@_meetingCutStudents.Count)
+                        </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable Items="@_meetingCutStudents" Dense="true" Hover="true" Striped="true" Bordered="true">
+                        <HeaderContent>
+                            <MudTh>Ad Soyad</MudTh>
+                            <MudTh>Üniversite</MudTh>
+                            <MudTh>Bölüm</MudTh>
+                            <MudTh>Kesim Sebebi</MudTh>
+                            <MudTh>Kesim Tarihi</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Ad Soyad"><strong>@context.AdSoyad</strong></MudTd>
+                            <MudTd DataLabel="Üniversite">@context.Universite</MudTd>
+                            <MudTd DataLabel="Bölüm">@context.Bolum</MudTd>
+                            <MudTd DataLabel="Kesim Sebebi">
+                                <MudText Typo="Typo.body2" Color="Color.Error"><strong>@context.ScholarshipCutReason</strong></MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Kesim Tarihi">@context.ScholarshipCutDate?.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudTabPanel>
+
+    <MudTabPanel Text="Sektörler">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Sektör Listesi</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Add"
+                              OnClick="AddSektor">
+                        Yeni Sektör Ekle
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudList T="string">
+                    @foreach (var sektor in _sektorler)
+                    {
+                        <MudListItem T="string">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText>@sektor</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                             Color="Color.Error" 
+                                             Size="Size.Small"
+                                             OnClick="() => DeleteSektor(sektor)" />
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Üniversiteler">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Üniversite Listesi</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Add"
+                              OnClick="AddUniversite">
+                        Yeni Üniversite Ekle
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudList T="string">
+                    @foreach (var uni in _universiteler)
+                    {
+                        <MudListItem T="string">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText>@uni</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                             Color="Color.Error" 
+                                             Size="Size.Small"
+                                             OnClick="() => DeleteUniversite(uni)" />
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Bölümler">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Bölüm Listesi</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Add"
+                              OnClick="AddBolum">
+                        Yeni Bölüm Ekle
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudList T="string">
+                    @foreach (var bolum in _bolumler)
+                    {
+                        <MudListItem T="string">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText>@bolum</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                             Color="Color.Error" 
+                                             Size="Size.Small"
+                                             OnClick="() => DeleteBolum(bolum)" />
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Dönemler">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Dönem Yönetimi</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddPeriodDialog">
+                        Yeni Dönem Ekle
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTable Items="@_periods" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Dönem</MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Dönem">@context</MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeletePeriod(context))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Burs Tutarları">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Dönem Bazlı Burs Tutarları</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddScholarshipDialog">
+                        Yeni Burs Tutarı Ekle
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTable Items="@_scholarshipAmounts" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Dönem</MudTh>
+                        <MudTh>Aylık Burs Tutarı</MudTh>
+                        <MudTh>Dönemlik Tutar (8 Ay)</MudTh>
+                        <MudTh>İşlemler</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Dönem">@context.Period</MudTd>
+                        <MudTd DataLabel="Aylık Burs Tutarı">@context.Amount.ToString("N2") ₺</MudTd>
+                        <MudTd DataLabel="Dönemlik Tutar (8 Ay)">@((context.Amount * 8).ToString("N2")) ₺</MudTd>
+                        <MudTd DataLabel="İşlemler">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => OpenEditScholarshipDialog(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteScholarshipAmount(context))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Nasıl Kullanılır?" Icon="@Icons.Material.Filled.Help">
+        <MudCard Class="mt-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h5">
+                        <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="mr-2" />
+                        Kullanım Kılavuzu
+                    </MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField @bind-Value="_searchQuery" 
+                             Label="Kılavuzda Ara" 
+                             Variant="Variant.Outlined" 
+                             Adornment="Adornment.End" 
+                             AdornmentIcon="@Icons.Material.Filled.Search"
+                             OnKeyUp="@OnSearchKeyUp"
+                             Immediate="true"
+                             Class="mb-4" />
+                <MudPaper id="user-guide-content" Class="pa-4" Style="max-height: 70vh; overflow-y: auto;">
+                    @((MarkupString)_userGuideHtml)
+                </MudPaper>
+            </MudCardContent>
+        </MudCard>
+    </MudTabPanel>
+</MudTabs>
+
+</MudContainer>
+
+@code {
+    private List<string> _sektorler = new();
+    private List<string> _universiteler = new();
+    private List<string> _bolumler = new();
+    private List<string> _periods = new();
+    private List<ScholarshipAmountModel> _scholarshipAmounts = new();
+    private bool _processingTranscript;
+    private bool _processingMeeting;
+    private List<Student> _transcriptCutStudents = new();
+    private List<Student> _meetingCutStudents = new();
+    private string _userGuideHtml = string.Empty;
+    private string _searchQuery = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSettings();
+        await LoadUserGuide();
+    }
+
+    private async Task LoadUserGuide()
+    {
+        try
+        {
+            var markdownPath = "KULLANICI_DOKUMANI.md";
+            var markdownContent = await System.IO.File.ReadAllTextAsync(markdownPath);
+            _userGuideHtml = ConvertMarkdownToHtml(markdownContent);
+        }
+        catch (Exception ex)
+        {
+            _userGuideHtml = $"<div class='mud-alert mud-alert-error'><p>Kullanım kılavuzu yüklenemedi: {ex.Message}</p></div>";
+        }
+    }
+
+    private string ConvertMarkdownToHtml(string markdown)
+    {
+        var html = new System.Text.StringBuilder();
+        var lines = markdown.Split('\n');
+        bool inCodeBlock = false;
+        bool inTable = false;
+        
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.Trim();
+            
+            // Code blocks
+            if (trimmedLine.StartsWith("```"))
+            {
+                inCodeBlock = !inCodeBlock;
+                html.Append(inCodeBlock ? "<pre><code>" : "</code></pre>");
+                continue;
+            }
+            
+            if (inCodeBlock)
+            {
+                html.AppendLine(System.Web.HttpUtility.HtmlEncode(line));
+                continue;
+            }
+            
+            // Headers
+            if (trimmedLine.StartsWith("### "))
+            {
+                html.AppendLine($"<h3 style='color: #f59e0b; margin-top: 1.5rem;'>{trimmedLine.Substring(4)}</h3>");
+            }
+            else if (trimmedLine.StartsWith("## "))
+            {
+                html.AppendLine($"<h2 style='color: #f59e0b; margin-top: 2rem; border-bottom: 2px solid #f59e0b; padding-bottom: 0.5rem;'>{trimmedLine.Substring(3)}</h2>");
+            }
+            else if (trimmedLine.StartsWith("# "))
+            {
+                html.AppendLine($"<h1 style='color: #f59e0b; text-align: center; margin-bottom: 2rem;'>{trimmedLine.Substring(2)}</h1>");
+            }
+            // Lists
+            else if (trimmedLine.StartsWith("- ") || trimmedLine.StartsWith("* "))
+            {
+                html.AppendLine($"<li style='margin-left: 2rem;'>{ProcessInlineMarkdown(trimmedLine.Substring(2))}</li>");
+            }
+            // Table rows
+            else if (trimmedLine.StartsWith("|") && trimmedLine.EndsWith("|"))
+            {
+                if (!inTable)
+                {
+                    html.AppendLine("<table class='mud-table' style='width: 100%; border-collapse: collapse; margin: 1rem 0;'>");
+                    inTable = true;
+                }
+                
+                var cells = trimmedLine.Split('|').Where(c => !string.IsNullOrWhiteSpace(c)).ToArray();
+                
+                // Skip separator rows
+                if (cells.All(c => c.Trim().All(ch => ch == '-' || ch == ' ' || ch == ':')))
+                    continue;
+                
+                html.Append("<tr>");
+                foreach (var cell in cells)
+                {
+                    html.Append($"<td style='border: 1px solid #ddd; padding: 0.5rem;'>{ProcessInlineMarkdown(cell.Trim())}</td>");
+                }
+                html.AppendLine("</tr>");
+            }
+            else if (inTable && !trimmedLine.StartsWith("|"))
+            {
+                html.AppendLine("</table>");
+                inTable = false;
+            }
+            // Horizontal rule
+            else if (trimmedLine == "---")
+            {
+                html.AppendLine("<hr style='margin: 2rem 0; border: 1px solid #ddd;' />");
+            }
+            // Blockquotes
+            else if (trimmedLine.StartsWith("> "))
+            {
+                var type = "info";
+                var icon = "💡";
+                if (trimmedLine.Contains("⚠️")) { type = "warning"; icon = "⚠️"; }
+                else if (trimmedLine.Contains("❌")) { type = "error"; icon = "❌"; }
+                else if (trimmedLine.Contains("✅")) { type = "success"; icon = "✅"; }
+                
+                html.AppendLine($"<div class='mud-alert mud-alert-{type}' style='margin: 1rem 0; padding: 1rem; border-radius: 4px;'><strong>{icon}</strong> {ProcessInlineMarkdown(trimmedLine.Substring(2))}</div>");
+            }
+            // Regular paragraphs
+            else if (!string.IsNullOrWhiteSpace(trimmedLine))
+            {
+                html.AppendLine($"<p style='margin: 0.5rem 0;'>{ProcessInlineMarkdown(trimmedLine)}</p>");
+            }
+            else
+            {
+                html.AppendLine("<br />");
+            }
+        }
+        
+        if (inTable)
+            html.AppendLine("</table>");
+        
+        return html.ToString();
+    }
+
+    private string ProcessInlineMarkdown(string text)
+    {
+        // Bold
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+        
+        // Inline code
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"`(.+?)`", "<code style='background: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px;'>$1</code>");
+        
+        // Links
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[(.+?)\]\((.+?)\)", "<a href='$2' target='_blank' style='color: #f59e0b;'>$1</a>");
+        
+        return text;
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        await JS.InvokeVoidAsync("highlightSearchText", _searchQuery);
+    }
+
+    private async Task LoadSettings()
+    {
+        _sektorler = await SettingsService.GetListValueAsync("Sektorler");
+        _universiteler = await SettingsService.GetListValueAsync("Universiteler");
+        _bolumler = await SettingsService.GetListValueAsync("Bolumler");
+        _periods = await SettingsService.GetListValueAsync("AcademicPeriods");
+        
+        // Eğer dönemler boşsa varsayılan dönemleri ekle (2024-2025'ten 2039-2040'a kadar)
+        if (!_periods.Any())
+        {
+            var defaultPeriods = new List<string>();
+            for (int startYear = 2024; startYear <= 2039; startYear++)
+            {
+                defaultPeriods.Add($"{startYear}-{startYear + 1}");
+            }
+            _periods = defaultPeriods.OrderBy(p => p).ToList();
+            await SettingsService.SetListValueAsync("AcademicPeriods", _periods, "Akademik dönemler listesi");
+        }
+        else
+        {
+            // Mevcut dönemleri de küçükten büyüğe sırala
+            _periods = _periods.OrderBy(p => p).ToList();
+        }
+        
+        // Load scholarship amounts
+        var amountsJson = await SettingsService.GetValueAsync("ScholarshipAmountsByPeriod");
+        if (!string.IsNullOrWhiteSpace(amountsJson))
+        {
+            try
+            {
+                _scholarshipAmounts = System.Text.Json.JsonSerializer.Deserialize<List<ScholarshipAmountModel>>(amountsJson) ?? new();
+            }
+            catch
+            {
+                _scholarshipAmounts = new();
+            }
+        }
+    }
+
+    private async Task OpenAddPeriodDialog()
+    {
+        var parameters = new DialogParameters<SimpleInputDialog>
+        {
+            { x => x.Title, "Yeni Dönem Ekle" },
+            { x => x.Label, "Dönem (örn: 2025-2026)" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Yeni Dönem", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string newPeriod && !string.IsNullOrWhiteSpace(newPeriod))
+        {
+            if (!_periods.Contains(newPeriod))
+            {
+                _periods.Add(newPeriod);
+                _periods = _periods.OrderByDescending(p => p).ToList();
+                await SettingsService.SetListValueAsync("AcademicPeriods", _periods, "Akademik dönemler listesi");
+                Snackbar.Add("Dönem eklendi", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Bu dönem zaten mevcut", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task DeletePeriod(string period)
+    {
+        bool? result = await DialogService.ShowMessageBox("Uyarı", $"'{period}' dönemini silmek istediğinize emin misiniz?", yesText: "Sil", cancelText: "İptal");
+        if (result == true)
+        {
+            _periods.Remove(period);
+            await SettingsService.SetListValueAsync("AcademicPeriods", _periods, "Akademik dönemler listesi");
+            Snackbar.Add("Dönem silindi", Severity.Info);
+        }
+    }
+
+    private async Task OpenAddScholarshipDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            ["Periods"] = _periods,
+            ["IsEdit"] = false
+        };
+        var dialog = await DialogService.ShowAsync<ScholarshipAmountDialog>("Yeni Burs Tutarı Ekle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ScholarshipAmountModel newAmount)
+        {
+            var existing = _scholarshipAmounts.FirstOrDefault(x => x.Period == newAmount.Period);
+            if (existing != null)
+            {
+                Snackbar.Add("Bu dönem için zaten bir tutar mevcut!", Severity.Warning);
+                return;
+            }
+            
+            _scholarshipAmounts.Add(newAmount);
+            await SaveScholarshipAmounts();
+            Snackbar.Add("Burs tutarı eklendi", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditScholarshipDialog(ScholarshipAmountModel amount)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Periods"] = _periods,
+            ["Amount"] = amount,
+            ["IsEdit"] = true
+        };
+        var dialog = await DialogService.ShowAsync<ScholarshipAmountDialog>("Burs Tutarını Düzenle", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ScholarshipAmountModel updatedAmount)
+        {
+            var existing = _scholarshipAmounts.FirstOrDefault(x => x.Period == amount.Period);
+            if (existing != null)
+            {
+                existing.Amount = updatedAmount.Amount;
+                await SaveScholarshipAmounts();
+                
+                // Update all commitments for this period with the new yearly amount (8 months * monthly)
+                var yearlyAmount = updatedAmount.Amount * 8;
+                var updatedCount = await CommitmentService.UpdateAmountByPeriodAsync(amount.Period, yearlyAmount);
+                
+                if (updatedCount > 0)
+                {
+                    Snackbar.Add($"Burs tutarı güncellendi ve {updatedCount} taahhüt kaydı güncellendi", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Burs tutarı güncellendi", Severity.Success);
+                }
+            }
+        }
+    }
+
+    private async Task DeleteScholarshipAmount(ScholarshipAmountModel amount)
+    {
+        bool? result = await DialogService.ShowMessageBox("Uyarı", $"'{amount.Period}' dönemi için burs tutarını silmek istediğinize emin misiniz?", yesText: "Sil", cancelText: "İptal");
+        if (result == true)
+        {
+            _scholarshipAmounts.Remove(amount);
+            await SaveScholarshipAmounts();
+            Snackbar.Add("Burs tutarı silindi", Severity.Info);
+        }
+    }
+
+    private async Task SaveScholarshipAmounts()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(_scholarshipAmounts);
+        await SettingsService.SetValueAsync("ScholarshipAmountsByPeriod", json, "Dönem bazlı burs tutarları");
+    }
+
+    private async Task AddSektor()
+    {
+        var parameters = new DialogParameters<SimpleInputDialog>
+        {
+            { x => x.Title, "Yeni Sektör Ekle" },
+            { x => x.Label, "Sektör Adı" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Yeni Sektör", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string newSektor && !string.IsNullOrWhiteSpace(newSektor))
+        {
+            if (!_sektorler.Contains(newSektor))
+            {
+                _sektorler.Add(newSektor);
+                await SettingsService.SetListValueAsync("Sektorler", _sektorler, "İş adamları için sektör listesi");
+                Snackbar.Add("Sektör eklendi", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Bu sektör zaten mevcut", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task DeleteSektor(string sektor)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            $"'{sektor}' sektörünü silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            _sektorler.Remove(sektor);
+            await SettingsService.SetListValueAsync("Sektorler", _sektorler, "İş adamları için sektör listesi");
+            Snackbar.Add("Sektör silindi", Severity.Success);
+        }
+    }
+
+    private async Task AddUniversite()
+    {
+        var parameters = new DialogParameters<SimpleInputDialog>
+        {
+            { x => x.Title, "Yeni Üniversite Ekle" },
+            { x => x.Label, "Üniversite Adı" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Yeni Üniversite", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string newUni && !string.IsNullOrWhiteSpace(newUni))
+        {
+            if (!_universiteler.Contains(newUni))
+            {
+                _universiteler.Add(newUni);
+                await SettingsService.SetListValueAsync("Universiteler", _universiteler, "Öğrenciler için üniversite listesi");
+                Snackbar.Add("Üniversite eklendi", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Bu üniversite zaten mevcut", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task DeleteUniversite(string uni)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            $"'{uni}' üniversitesini silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            _universiteler.Remove(uni);
+            await SettingsService.SetListValueAsync("Universiteler", _universiteler, "Öğrenciler için üniversite listesi");
+            Snackbar.Add("Üniversite silindi", Severity.Success);
+        }
+    }
+
+    private async Task AddBolum()
+    {
+        var parameters = new DialogParameters<SimpleInputDialog>
+        {
+            { x => x.Title, "Yeni Bölüm Ekle" },
+            { x => x.Label, "Bölüm Adı" }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Yeni Bölüm", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is string newBolum && !string.IsNullOrWhiteSpace(newBolum))
+        {
+            if (!_bolumler.Contains(newBolum))
+            {
+                _bolumler.Add(newBolum);
+                await SettingsService.SetListValueAsync("Bolumler", _bolumler, "Öğrenciler için bölüm listesi");
+                Snackbar.Add("Bölüm eklendi", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Bu bölüm zaten mevcut", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task DeleteBolum(string bolum)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            $"'{bolum}' bölümünü silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true)
+        {
+            _bolumler.Remove(bolum);
+            await SettingsService.SetListValueAsync("Bolumler", _bolumler, "Öğrenciler için bölüm listesi");
+            Snackbar.Add("Bölüm silindi", Severity.Success);
+        }
+    }
+
+    private async Task RunTranscriptCheck()
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Transkript Kontrolü",
+            "Bu işlem GNO'su 2.0'ın altında olan tüm aktif burslu öğrencilerin burslarını kesecektir. Devam etmek istiyor musunuz?",
+            yesText: "Evet, Başlat", cancelText: "İptal");
+
+        if (confirm != true)
+            return;
+
+        _processingTranscript = true;
+        StateHasChanged();
+        
+        try
+        {
+            var affectedStudents = await TranscriptService.CheckAndUpdateScholarshipsWithDetailsAsync();
+            _transcriptCutStudents = affectedStudents;
+            
+            if (affectedStudents.Count > 0)
+            {
+                // Excel dosyası oluştur ve indir
+                var excelData = ExcelService.ExportScholarshipCutStudents(affectedStudents, "Transkript");
+                var fileName = $"Transkript_Bursu_Kesilenler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelData));
+                
+                Snackbar.Add($"Transkript kontrolü tamamlandı. {affectedStudents.Count} öğrencinin bursu kesildi. Excel raporu indirildi.", 
+                    Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add("Transkript kontrolü tamamlandı. Bursu kesilen öğrenci yok.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processingTranscript = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RunMeetingCheck()
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Toplantı Katılım Kontrolü",
+            "Bu işlem en son toplantıya katılmayan tüm aktif burslu öğrencilerin burslarını kesecektir. Devam etmek istiyor musunuz?",
+            yesText: "Evet, Başlat", cancelText: "İptal");
+
+        if (confirm != true)
+            return;
+
+        _processingMeeting = true;
+        StateHasChanged();
+        
+        try
+        {
+            var affectedStudents = await MeetingService.ApplyLatestMeetingAbsencePenaltyWithDetailsAsync();
+            _meetingCutStudents = affectedStudents;
+            
+            if (affectedStudents.Count > 0)
+            {
+                // Excel dosyası oluştur ve indir
+                var excelData = ExcelService.ExportScholarshipCutStudents(affectedStudents, "Toplanti");
+                var fileName = $"Toplanti_Bursu_Kesilenler_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(excelData));
+                
+                Snackbar.Add($"Toplantı kontrolü tamamlandı. {affectedStudents.Count} öğrencinin bursu kesildi. Excel raporu indirildi.", 
+                    Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add("Toplantı kontrolü tamamlandı. Bursu kesilen öğrenci yok.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processingMeeting = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,106 @@
+@using IzolluVakfi.Data.Entities
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" />
+            Toplantı Detayları
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudPaper Class="pa-4" Elevation="0" Style="background-color: #f5f5f5; border-radius: 8px;">
+                <MudText Typo="Typo.h6" Class="mb-2">@Meeting.Baslik</MudText>
+                <MudDivider Class="mb-3" />
+                
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Toplantı Türü</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">@Meeting.ToplantiTuru</MudChip>
+                        </MudStack>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Konum</MudText>
+                            <MudText Typo="Typo.body1">
+                                <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mr-1" />
+                                @(string.IsNullOrEmpty(Meeting.Konum) ? "-" : Meeting.Konum)
+                            </MudText>
+                        </MudStack>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Tarih</MudText>
+                            <MudText Typo="Typo.body1">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mr-1" />
+                                @Meeting.Tarih.ToString("dd MMMM yyyy")
+                            </MudText>
+                        </MudStack>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Saat</MudText>
+                            <MudText Typo="Typo.body1">
+                                <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                                @Meeting.Tarih.ToString("HH:mm") - @Meeting.BitisTarihi.ToString("HH:mm")
+                            </MudText>
+                        </MudStack>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Katılım Durumu</MudText>
+                            <MudText Typo="Typo.body1">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-1" />
+                                @AttendedCount / @TotalCount kişi katıldı
+                            </MudText>
+                        </MudStack>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Oluşturulma Tarihi</MudText>
+                            <MudText Typo="Typo.body1">
+                                @Meeting.OlusturmaTarihi.ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+            
+            @if (!string.IsNullOrWhiteSpace(Meeting.Aciklama))
+            {
+                <MudPaper Class="pa-4" Elevation="0" Style="background-color: #e3f2fd; border-radius: 8px;">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-1" />
+                        Toplantı Notu
+                    </MudText>
+                    <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@Meeting.Aciklama</MudText>
+                </MudPaper>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Kapat</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    private MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public Meeting Meeting { get; set; } = new();
+
+    [Parameter]
+    public int AttendedCount { get; set; }
+
+    [Parameter]
+    public int TotalCount { get; set; }
+
+    private void Close() => MudDialog?.Close();
+}

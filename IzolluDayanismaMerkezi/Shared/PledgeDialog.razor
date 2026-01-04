@@ -1,0 +1,464 @@
+@using IzolluVakfi.Services
+@inject MemberScholarshipCommitmentService CommitmentService
+@inject SettingsService SettingsService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog Style="max-width: 550px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Handshake" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Taahhüt Düzenle" : "Yeni Taahhüt Ekle")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            <!-- Üye Bilgisi -->
+            <MudPaper Elevation="0" Class="pa-3 mb-4" Style="background-color: #f8fafc; border-radius: 8px;">
+                <MudText Typo="Typo.body2" Color="Color.Default">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" Style="vertical-align: middle;" />
+                    <strong>Üye:</strong> @MemberName
+                </MudText>
+            </MudPaper>
+            
+            <MudGrid Spacing="3">
+                <!-- Dönem Seçimi -->
+                <MudItem xs="12">
+                    <div class="form-group">
+                        <label class="form-label">Dönem *</label>
+                        <select class="form-select selectpicker" data-live-search="true" value="@_selectedPeriod" @onchange="OnPeriodChanged">
+                            @foreach (var year in _academicYears)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                </MudItem>
+                
+                <!-- Giriş Modu Seçimi -->
+                <MudItem xs="12">
+                    <MudButtonGroup OverrideStyles="false" Class="mb-2">
+                        <MudButton Color="@(_entryMode == EntryMode.ByCount ? Color.Primary : Color.Default)" 
+                                   Variant="@(_entryMode == EntryMode.ByCount ? Variant.Filled : Variant.Outlined)"
+                                   OnClick="@(() => SetEntryMode(EntryMode.ByCount))"
+                                   Size="Size.Small">
+                            Burs Adedi ile Gir
+                        </MudButton>
+                        <MudButton Color="@(_entryMode == EntryMode.ByAmount ? Color.Primary : Color.Default)"
+                                   Variant="@(_entryMode == EntryMode.ByAmount ? Variant.Filled : Variant.Outlined)"
+                                   OnClick="@(() => SetEntryMode(EntryMode.ByAmount))"
+                                   Size="Size.Small">
+                            Toplam Tutar ile Gir
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudItem>
+                
+                @if (_entryMode == EntryMode.ByCount)
+                {
+                    <!-- Taahhüt Edilen Burs Adedi (Ondalıklı) -->
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="_pledgedCountInput" 
+                                      Label="Taahhüt Edilen Burs Adedi" 
+                                      Required="true"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Assignment"
+                                      HelperText="Örn: 2,5 veya 3"
+                                      Immediate="true"
+                                      TextChanged="OnPledgedCountInputChanged" />
+                    </MudItem>
+                }
+                else
+                {
+                    <!-- Toplam Taahhüt Tutarı -->
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="decimal"
+                                        Value="_totalPledgedAmount" 
+                                        Label="Toplam Taahhüt Tutarı (₺)" 
+                                        Min="0"
+                                        Format="N0"
+                                        Required="true"
+                                        Variant="Variant.Outlined"
+                                        Adornment="Adornment.Start"
+                                        AdornmentIcon="@Icons.Material.Filled.CurrencyLira"
+                                        HelperText="Yıllık toplam tutar"
+                                        ValueChanged="OnTotalAmountChanged" />
+                    </MudItem>
+                }
+
+                <!-- Fiilen Verilen Burs Adedi -->
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_givenCountInput" 
+                                  Label="Fiilen Verilen Burs Adedi" 
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.CheckCircle"
+                                  HelperText="Örn: 1,5 veya 2"
+                                  Immediate="true"
+                                  TextChanged="OnGivenCountInputChanged" />
+                </MudItem>
+
+                <!-- Burs Başına Dönemlik Tutar (8 Ay) (Otomatik) -->
+                <MudItem xs="12">
+                    <MudNumericField @bind-Value="_commitment.YearlyAmountPerScholarship" 
+                                    Label="Burs Başına Dönemlik Tutar - 8 Ay (₺)" 
+                                    Min="0"
+                                    Format="N0"
+                                    Required="true"
+                                    Variant="Variant.Outlined"
+                                    ReadOnly="true"
+                                    Adornment="Adornment.Start"
+                                    AdornmentIcon="@Icons.Material.Filled.CurrencyLira"
+                                    HelperText="Seçili dönem için ayarlardan otomatik yüklenir (8 ay)" />
+                </MudItem>
+
+                <!-- Notlar -->
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_commitment.Notes" 
+                                 Label="Notlar (Opsiyonel)" 
+                                 Lines="2"
+                                 Variant="Variant.Outlined"
+                                 MaxLength="500" />
+                </MudItem>
+            </MudGrid>
+
+            <!-- Özet Kartı -->
+            @if (_pledgedCountDecimal > 0 && _commitment.YearlyAmountPerScholarship > 0)
+            {
+                <MudPaper Class="pa-4 mt-4" Elevation="1" Style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px;">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="Size.Small" Class="mr-1" />
+                        Özet Bilgiler
+                    </MudText>
+                    <MudSimpleTable Dense="true" Hover="false" Elevation="0" Style="background: transparent;">
+                        <tbody>
+                            <tr>
+                                <td style="border: none; padding: 4px 8px;"><strong>Taahhüt Edilen:</strong></td>
+                                <td style="border: none; padding: 4px 8px; text-align: right;">@FormatDecimal(_pledgedCountDecimal) adet</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 4px 8px;"><strong>Fiilen Verilen:</strong></td>
+                                <td style="border: none; padding: 4px 8px; text-align: right; color: #16a34a;">@FormatDecimal(_givenCountDecimal) adet</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 4px 8px;"><strong>Kalan:</strong></td>
+                                <td style="border: none; padding: 4px 8px; text-align: right; color: #ea580c;">@FormatDecimal(_pledgedCountDecimal - _givenCountDecimal) adet</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #cbd5e1;">
+                                <td style="border: none; padding: 8px 8px 4px;"><strong>Aylık Tutar (Bir Burs):</strong></td>
+                                <td style="border: none; padding: 8px 8px 4px; text-align: right;">@((_commitment.YearlyAmountPerScholarship / 8).ToString("N0")) ₺</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 4px 8px;"><strong>Toplam Aylık:</strong></td>
+                                <td style="border: none; padding: 4px 8px; text-align: right; font-weight: 600; color: #2563eb;">@(((_commitment.YearlyAmountPerScholarship / 8) * _pledgedCountDecimal).ToString("N0")) ₺</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 4px 8px;"><strong>Toplam Dönemlik (8 Ay):</strong></td>
+                                <td style="border: none; padding: 4px 8px; text-align: right; font-weight: 700; color: #7c3aed; font-size: 1.1em;">@((_commitment.YearlyAmountPerScholarship * _pledgedCountDecimal).ToString("N0")) ₺</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        @if (IsEdit)
+        {
+            <MudButton Color="Color.Error" OnClick="Delete" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Delete">Sil</MudButton>
+        }
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Kaydet")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public int MemberId { get; set; }
+    [Parameter] public string MemberName { get; set; } = string.Empty;
+    [Parameter] public bool IsEdit { get; set; }
+    [Parameter] public MemberScholarshipCommitment? ExistingCommitment { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private MemberScholarshipCommitment _commitment = new();
+    private List<string> _academicYears = new();
+    private string _selectedPeriod = "2025-2026";
+    private string _instanceId = Guid.NewGuid().ToString("N");
+    private bool _isRendered;
+    
+    // Decimal burs girişi için yeni değişkenler
+    private enum EntryMode { ByCount, ByAmount }
+    private EntryMode _entryMode = EntryMode.ByCount;
+    private string _pledgedCountInput = "";
+    private string _givenCountInput = "";
+    private decimal _pledgedCountDecimal;
+    private decimal _givenCountDecimal;
+    private decimal _totalPledgedAmount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load periods from settings first
+        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
+        if (periodsFromSettings.Count > 0)
+        {
+            _academicYears = periodsFromSettings.OrderBy(p => p).ToList();
+        }
+        else
+        {
+            // Fallback: Generate academic years from 2025-2026 to 2039-2040
+            for (int startYear = 2025; startYear <= 2039; startYear++)
+            {
+                _academicYears.Add($"{startYear}-{startYear + 1}");
+            }
+        }
+
+        if (IsEdit && ExistingCommitment != null)
+        {
+            // Edit mode - load existing commitment
+            _commitment = new MemberScholarshipCommitment
+            {
+                Id = ExistingCommitment.Id,
+                MemberId = ExistingCommitment.MemberId,
+                PledgedCount = ExistingCommitment.PledgedCount,
+                GivenCount = ExistingCommitment.GivenCount,
+                YearlyAmountPerScholarship = ExistingCommitment.YearlyAmountPerScholarship,
+                AcademicYear = ExistingCommitment.AcademicYear,
+                Notes = ExistingCommitment.Notes
+            };
+            _selectedPeriod = ExistingCommitment.AcademicYear ?? _academicYears.FirstOrDefault() ?? "2025-2026";
+            _success = true; // Edit mode - form is valid by default
+            
+            // Initialize decimal values from existing commitment
+            _pledgedCountDecimal = ExistingCommitment.PledgedCount;
+            _givenCountDecimal = ExistingCommitment.GivenCount;
+            _pledgedCountInput = ExistingCommitment.PledgedCount.ToString();
+            _givenCountInput = ExistingCommitment.GivenCount.ToString();
+            _totalPledgedAmount = _pledgedCountDecimal * ExistingCommitment.YearlyAmountPerScholarship;
+        }
+        else
+        {
+            // Initialize commitment with default values
+            _commitment.MemberId = MemberId;
+            _commitment.GivenCount = 0;
+            _selectedPeriod = _academicYears.FirstOrDefault() ?? "2025-2026";
+            _commitment.AcademicYear = _selectedPeriod;
+            _pledgedCountInput = "";
+            _givenCountInput = "0";
+            
+            // Try to load scholarship amount from settings for default period
+            await LoadScholarshipAmountForPeriod(_selectedPeriod);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isRendered = true;
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async Task OnPeriodChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string newPeriod && !string.IsNullOrWhiteSpace(newPeriod))
+        {
+            _selectedPeriod = newPeriod;
+            _commitment.AcademicYear = newPeriod;
+            await LoadScholarshipAmountForPeriod(newPeriod);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnPeriodChangedMud(string newPeriod)
+    {
+        if (!string.IsNullOrWhiteSpace(newPeriod))
+        {
+            _selectedPeriod = newPeriod;
+            _commitment.AcademicYear = newPeriod;
+            await LoadScholarshipAmountForPeriod(newPeriod);
+        }
+    }
+
+    private async Task LoadScholarshipAmountForPeriod(string period)
+    {
+        try
+        {
+            var scholarshipAmounts = await SettingsService.GetScholarshipAmountsAsync();
+            var matchingAmount = scholarshipAmounts.FirstOrDefault(a => a.Period == period);
+            
+            if (matchingAmount != null)
+            {
+                // Convert monthly amount to period amount (8 months per academic period)
+                _commitment.YearlyAmountPerScholarship = matchingAmount.Amount * 8;
+            }
+            else
+            {
+                // Default value if no setting found (3000 TL x 8 months)
+                _commitment.YearlyAmountPerScholarship = 24000;
+            }
+        }
+        catch
+        {
+            // Fallback to default (8 months)
+            _commitment.YearlyAmountPerScholarship = 24000;
+        }
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (!_success)
+            return;
+
+        if (_givenCountDecimal > _pledgedCountDecimal)
+        {
+            Snackbar.Add("Verilen burs sayısı, taahhüt edilen sayıdan fazla olamaz!", Severity.Warning);
+            return;
+        }
+
+        // Decimal değerleri int'e çevir ve commitment'a kaydet
+        _commitment.PledgedCount = (int)Math.Ceiling(_pledgedCountDecimal);
+        _commitment.GivenCount = (int)Math.Floor(_givenCountDecimal);
+
+        // Notlara ondalıklı değerleri kaydet (referans için)
+        if (_pledgedCountDecimal != Math.Floor(_pledgedCountDecimal) || _givenCountDecimal != Math.Floor(_givenCountDecimal))
+        {
+            var decimalNote = $"[Ondalıklı Burs: Taahhüt={FormatDecimal(_pledgedCountDecimal)}, Verilen={FormatDecimal(_givenCountDecimal)}]";
+            if (string.IsNullOrEmpty(_commitment.Notes))
+            {
+                _commitment.Notes = decimalNote;
+            }
+            else if (!_commitment.Notes.Contains("[Ondalıklı Burs:"))
+            {
+                _commitment.Notes = decimalNote + " " + _commitment.Notes;
+            }
+            else
+            {
+                // Mevcut ondalıklı burs notunu güncelle
+                _commitment.Notes = System.Text.RegularExpressions.Regex.Replace(
+                    _commitment.Notes, 
+                    @"\[Ondalıklı Burs:.*?\]", 
+                    decimalNote);
+            }
+        }
+
+        try
+        {
+            if (IsEdit)
+            {
+                await CommitmentService.UpdateAsync(_commitment);
+                Snackbar.Add("Taahhüt başarıyla güncellendi.", Severity.Success);
+            }
+            else
+            {
+                await CommitmentService.CreateAsync(_commitment);
+                Snackbar.Add("Taahhüt başarıyla oluşturuldu.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task Delete()
+    {
+        if (!IsEdit || ExistingCommitment == null)
+            return;
+
+        try
+        {
+            await CommitmentService.DeleteAsync(ExistingCommitment.Id);
+            Snackbar.Add("Taahhüt başarıyla silindi.", Severity.Info);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void SetEntryMode(EntryMode mode)
+    {
+        _entryMode = mode;
+        
+        // Toplam tutardan giriş moduna geçerken mevcut değerleri hesapla
+        if (mode == EntryMode.ByAmount && _commitment.YearlyAmountPerScholarship > 0)
+        {
+            _totalPledgedAmount = _pledgedCountDecimal * _commitment.YearlyAmountPerScholarship;
+        }
+    }
+
+    private void OnPledgedCountInputChanged(string value)
+    {
+        _pledgedCountInput = value;
+        
+        // Türkçe formatını destekle (virgül kullanımı)
+        var normalizedValue = value?.Replace(",", ".") ?? "0";
+        if (decimal.TryParse(normalizedValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var decimalValue))
+        {
+            _pledgedCountDecimal = decimalValue;
+            _commitment.PledgedCount = (int)Math.Ceiling(decimalValue); // Yuvarla
+            
+            // Toplam tutarı güncelle
+            _totalPledgedAmount = _pledgedCountDecimal * _commitment.YearlyAmountPerScholarship;
+        }
+    }
+
+    private void OnGivenCountInputChanged(string value)
+    {
+        _givenCountInput = value;
+        
+        // Türkçe formatını destekle (virgül kullanımı)
+        var normalizedValue = value?.Replace(",", ".") ?? "0";
+        if (decimal.TryParse(normalizedValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var decimalValue))
+        {
+            _givenCountDecimal = decimalValue;
+            _commitment.GivenCount = (int)Math.Floor(decimalValue); // Sadece tam burslar sayılır
+        }
+    }
+
+    private void OnTotalAmountChanged(decimal value)
+    {
+        _totalPledgedAmount = value;
+        
+        // Toplam tutardan burs adedi hesapla
+        if (_commitment.YearlyAmountPerScholarship > 0)
+        {
+            _pledgedCountDecimal = value / _commitment.YearlyAmountPerScholarship;
+            _pledgedCountInput = FormatDecimal(_pledgedCountDecimal);
+            _commitment.PledgedCount = (int)Math.Ceiling(_pledgedCountDecimal);
+        }
+    }
+
+    private string FormatDecimal(decimal value)
+    {
+        // Tam sayıysa sadece tam sayı göster, değilse 2 ondalık basamak
+        if (value == Math.Floor(value))
+        {
+            return ((int)value).ToString();
+        }
+        return value.ToString("0.##").Replace(".", ",");
+    }
+}

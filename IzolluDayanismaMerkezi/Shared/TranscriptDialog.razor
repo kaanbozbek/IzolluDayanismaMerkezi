@@ -1,0 +1,125 @@
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject TranscriptService TranscriptService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudNumericField @bind-Value="_selectedGno" 
+                            Label="GNO *"
+                            Min="0.0m"
+                            Max="4.0m"
+                            Step="0.01m"
+                            Format="N2"
+                            Variant="Variant.Outlined"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Grade"
+                            HelperText="0.00 - 4.00 arası bir değer girin (örn: 3.45, 4.00)" />
+
+            <label class="form-label">Giriş Tarihi</label>
+            <InputDate @bind-Value="_girisTarihi" class="form-control" />
+
+            <MudTextField @bind-Value="_transcript.Notlar" 
+                         Label="Notlar" 
+                         Variant="Variant.Outlined" 
+                         Lines="3" />
+
+            <MudFileUpload T="IBrowserFile" 
+                          Accept=".pdf" 
+                          OnFilesChanged="OnFileSelected"
+                          MaximumFileCount="1">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              StartIcon="@Icons.Material.Filled.CloudUpload">
+                        PDF Yükle
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+
+            @if (!string.IsNullOrEmpty(_fileName))
+            {
+                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.AttachFile">
+                    @_fileName
+                </MudChip>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">İptal</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Kaydet</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public int StudentId { get; set; }
+
+    private TranscriptRecord _transcript = new();
+    private DateTime? _girisTarihi = DateTime.Now;
+    private IBrowserFile? _selectedFile;
+    private string _fileName = string.Empty;
+    private decimal _selectedGno = 0m;
+
+    protected override void OnInitialized()
+    {
+        _transcript.StudentId = StudentId;
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _fileName = e.File.Name;
+    }
+
+    private async Task Save()
+    {
+        // Validate GNO
+        if (_selectedGno < 0 || _selectedGno > 4)
+        {
+            Snackbar.Add("GNO değeri 0.00 ile 4.00 arasında olmalıdır", Severity.Warning);
+            return;
+        }
+
+        _transcript.GNO = _selectedGno;
+
+        if (!_girisTarihi.HasValue)
+        {
+            Snackbar.Add("Lütfen giriş tarihi seçiniz", Severity.Warning);
+            return;
+        }
+
+        _transcript.GirisTarihi = _girisTarihi.Value;
+
+        // PDF dosyasını kaydet
+        if (_selectedFile != null)
+        {
+            try
+            {
+                var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "transcripts");
+                Directory.CreateDirectory(uploadsPath);
+
+                var fileName = $"{StudentId}_{DateTime.Now:yyyyMMddHHmmss}_{_selectedFile.Name}";
+                var filePath = Path.Combine(uploadsPath, fileName);
+
+                await using FileStream fs = new(filePath, FileMode.Create);
+                await _selectedFile.OpenReadStream(maxAllowedSize: 10485760).CopyToAsync(fs); // 10MB limit
+
+                _transcript.PdfDosyaYolu = $"/uploads/transcripts/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Dosya yüklenirken hata oluştu: {ex.Message}", Severity.Error);
+                return;
+            }
+        }
+
+        await TranscriptService.CreateAsync(_transcript);
+        Snackbar.Add("Transkript başarıyla eklendi", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

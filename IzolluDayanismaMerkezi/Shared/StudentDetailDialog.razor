@@ -1,0 +1,926 @@
+@using IzolluVakfi.Data.Models
+@using IzolluVakfi.Data.Entities
+@inject StudentService StudentService
+@inject TranscriptService TranscriptService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject MeetingService MeetingService
+@inject ActivityLogService ActivityLogService
+@inject TermService TermService
+@inject StudentScholarshipStatusService ScholarshipStatusService
+@inject SettingsService SettingsService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_student != null)
+        {
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Centered="false" PanelClass="pa-4" @bind-ActivePanelIndex="_activePanelIndex">
+                <MudTabPanel Text="Genel Bilgiler" Icon="@Icons.Material.Filled.Person">
+                    <MudGrid Class="mt-4" Style="padding-left: 20px; padding-right: 20px;">
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2" Color="Color.Default"><strong>Ad Soyad:</strong> @_student.AdSoyad</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>TC No:</strong> @_student.TCNo</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Email:</strong> @_student.Email</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Telefon:</strong> @_student.Telefon</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Doğum Tarihi:</strong> @_student.DogumTarihi?.ToString("dd/MM/yyyy")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Yaş:</strong> @_student.Yas</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Cinsiyet:</strong> @FormatGender(_student.Cinsiyet)</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2"><strong>Adres:</strong> @_student.Adres</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Üniversite:</strong> @_student.Universite</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Bölüm:</strong> @_student.Bolum</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Sınıf:</strong> @_student.Sinif</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>IBAN:</strong> @(_student.IBAN ?? "-")</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Burs Bilgileri" Icon="@Icons.Material.Filled.CurrencyLira">
+                    <MudGrid Class="mt-4" Style="padding-left: 20px; padding-right: 20px;">
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Bağışçı:</strong> @_student.BagisciAdi</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Aylık Tutar:</strong> @_defaultBursTutari.ToString("N2") ₺</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Başlangıç:</strong> @_student.BursBaslangicTarihi?.ToString("dd/MM/yyyy")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Bitiş:</strong> @_student.BursBitisTarihi?.ToString("dd/MM/yyyy")</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudText Typo="Typo.h6" Class="mb-2">Burs Özeti</MudText>
+                                <MudText Typo="Typo.body2"><strong>Dönem İçinde Alınan:</strong> @CalculatePeriodScholarship().ToString("N2") ₺</MudText>
+                                <MudText Typo="Typo.body2"><strong>Bugüne Kadar Toplam:</strong> @_student.ToplamAlinanBurs.ToString("N2") ₺</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12">
+                            @if (_student.AktifBursMu)
+                            {
+                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Aktif Burs</MudChip>
+                            }
+                            else if (!string.IsNullOrEmpty(_student.ScholarshipCutReason))
+                            {
+                                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                                    <MudText Typo="Typo.body2"><strong>Burs Kesim Sebebi:</strong> @_student.ScholarshipCutReason</MudText>
+                                    @if (_student.ScholarshipCutDate.HasValue)
+                                    {
+                                        <MudText Typo="Typo.body2"><strong>Kesim Tarihi:</strong> @_student.ScholarshipCutDate.Value.ToString("dd/MM/yyyy HH:mm")</MudText>
+                                    }
+                                </MudAlert>
+                            }
+                            else if (!string.IsNullOrEmpty(_student.Notlar))
+                            {
+                                @if (_student.Notlar.Contains("Transkript"))
+                                {
+                                    <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Cancel">Bursu Kesildi (Transkript)</MudChip>
+                                }
+                                else if (_student.Notlar.Contains("Toplantı"))
+                                {
+                                    <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Cancel">Bursu Kesildi (Toplantıya Katılmama)</MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Color="Color.Default">Burs Yok</MudChip>
+                                }
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Default">Burs Yok</MudChip>
+                            }
+                        </MudItem>
+                        
+                        @* DÖNEM SEÇİMİ VE AYLIK BURS DURUMU *@
+                        <MudItem xs="12">
+                            <MudDivider Class="my-4" />
+                            <MudText Typo="Typo.h6" Class="mb-3">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Class="mr-2" Style="vertical-align: middle;" />
+                                Aylık Burs Takibi
+                            </MudText>
+                        </MudItem>
+                        
+                        <MudItem xs="12" md="6">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600; color: #374151;">Dönem Seç</label>
+                                <select id="donemSelect" class="selectpicker" data-live-search="true" 
+                                        data-width="100%" data-container="body" data-style="btn-outline-secondary"
+                                        title="Dönem Seçiniz" @onchange="OnPeriodSelectedAsync">
+                                    @foreach (var scholarshipAmount in _scholarshipAmounts)
+                                    {
+                                        @if (_selectedPeriodName == scholarshipAmount.Period)
+                                        {
+                                            <option value="@scholarshipAmount.Period" selected>@scholarshipAmount.Period</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@scholarshipAmount.Period">@scholarshipAmount.Period</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </MudItem>
+                        
+                        @if (_selectedPeriodId.HasValue)
+                        {
+                            @if (_loadingScholarshipStatuses)
+                            {
+                                <MudItem xs="12">
+                                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                                </MudItem>
+                            }
+                            else if (_scholarshipStatuses.Any())
+                            {
+                                <MudItem xs="12">
+                                    <MudPaper Elevation="1" Class="pa-3">
+                                        <MudText Typo="Typo.subtitle2" Class="mb-3" Color="Color.Primary">
+                                            8 Aylık Burs Dönemi (Ekim - Mayıs)
+                                        </MudText>
+                                        <MudTable Items="@_scholarshipStatuses" Dense="true" Hover="true" Elevation="0">
+                                            <HeaderContent>
+                                                <MudTh Style="width: 150px;">Ay</MudTh>
+                                                <MudTh Style="width: 120px;">Tutar</MudTh>
+                                                <MudTh Style="width: 150px;">Durum</MudTh>
+                                                <MudTh>Kesim Sebebi</MudTh>
+                                            </HeaderContent>
+                                            <RowTemplate>
+                                                <MudTd DataLabel="Ay">
+                                                    <MudText Typo="Typo.body2">
+                                                        <strong>@context.GetMonthName() @context.Year</strong>
+                                                    </MudText>
+                                                </MudTd>
+                                                <MudTd DataLabel="Tutar">
+                                                    <MudText Typo="Typo.body2">@CalculatePaidAmount(context).ToString("N2") ₺</MudText>
+                                                </MudTd>
+                                                <MudTd DataLabel="Durum">
+                                                    @* TOPLANTILARDAKI KATILIM TİCK STILI *@
+                                                    <MudCheckBox T="bool"
+                                                                 Value="@context.IsPaid"
+                                                                 Color="@(context.IsPaid ? Color.Success : Color.Error)"
+                                                                 Label="@(context.IsPaid ? "Ödendi" : "Kesildi")"
+                                                                 ValueChanged="@(value => ToggleScholarshipStatusAsync(context, value))" />
+                                                </MudTd>
+                                                <MudTd DataLabel="Kesim Sebebi">
+                                                    @if (!context.IsPaid && !string.IsNullOrEmpty(context.CutReason))
+                                                    {
+                                                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined">
+                                                            @context.CutReason
+                                                        </MudChip>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>-</span>
+                                                    }
+                                                </MudTd>
+                                            </RowTemplate>
+                                        </MudTable>
+                                        
+                                        @* ÖZET *@
+                                        <MudDivider Class="my-3" />
+                                        <div class="d-flex justify-space-between">
+                                            <div>
+                                                <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                                                    @_scholarshipStatuses.Count(s => s.IsPaid) Ay Ödendi
+                                                </MudChip>
+                                                <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                                                    @_scholarshipStatuses.Count(s => !s.IsPaid) Ay Kesildi
+                                                </MudChip>
+                                            </div>
+                                            <div>
+                                                <MudText Typo="Typo.body2">
+                                                    <strong>Toplam Ödenen:</strong> @CalculateTotalPaid().ToString("N2") ₺
+                                                </MudText>
+                                            </div>
+                                        </div>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                            else
+                            {
+                                <MudItem xs="12">
+                                    <MudAlert Severity="Severity.Info">
+                                        Bu dönem için burs durumu kaydı bulunmuyor. "Durumları Yükle" butonuna tıklayarak başlatabilirsiniz.
+                                    </MudAlert>
+                                </MudItem>
+                            }
+                        }
+                        else
+                        {
+                            <MudItem xs="12">
+                                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                                    Aylık burs durumlarını görmek için lütfen bir dönem seçin.
+                                </MudAlert>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Transkript" Icon="@Icons.Material.Filled.Receipt">
+                    <div class="mt-4">
+                        @if (!string.IsNullOrWhiteSpace(_latestTranscriptNote))
+                        {
+                            <MudAlert Severity="Severity.Info" Class="mb-4">
+                                <strong>Son Transkript Notu:</strong> @_latestTranscriptNote
+                            </MudAlert>
+                        }
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Add" 
+                                   OnClick="OpenAddTranscriptDialog" Class="mb-4">
+                            Transkript Ekle
+                        </MudButton>
+                        
+                        @if (_transcripts.Any())
+                        {
+                            <MudTable Items="@_transcripts" Dense="true">
+                                <HeaderContent>
+                                    <MudTh>GNO</MudTh>
+                                    <MudTh>Giriş Tarihi</MudTh>
+                                    <MudTh>Notlar</MudTh>
+                                    <MudTh>PDF</MudTh>
+                                    <MudTh>İşlemler</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>
+                                        <MudChip T="string" Color="@(context.GNO >= 2.0m ? Color.Success : Color.Error)" Size="Size.Small">
+                                            @context.GNO.ToString("0.00")
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd>@context.GirisTarihi.ToString("dd/MM/yyyy")</MudTd>
+                                    <MudTd>@(string.IsNullOrEmpty(context.Notlar) ? "-" : context.Notlar)</MudTd>
+                                    <MudTd>
+                                        @if (!string.IsNullOrEmpty(context.PdfDosyaYolu))
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" 
+                                                           Size="Size.Small" 
+                                                           Color="Color.Error"
+                                                           Href="@context.PdfDosyaYolu"
+                                                           Target="_blank"
+                                                           Title="PDF'i Görüntüle" />
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                       Size="Size.Small" 
+                                                       Color="Color.Error" 
+                                                       OnClick="@(() => DeleteTranscript(context.Id))" />
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Info">Henüz transkript kaydı bulunmamaktadır.</MudAlert>
+                        }
+                    </div>
+                </MudTabPanel>
+                
+                <MudTabPanel Text="Mezuniyet" Icon="@Icons.Material.Filled.School">
+                    <div class="mt-4">
+                        @if (_student.MezunMu)
+                        {
+                            <MudAlert Severity="Severity.Success" Class="mb-4">
+                                <strong>Mezuniyet Tarihi:</strong> @_student.MezuniyetTarihi?.ToString("dd/MM/yyyy")
+                            </MudAlert>
+                            
+                            <MudGrid Class="mt-4">
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.body2"><strong>Meslek:</strong> @(!string.IsNullOrEmpty(_student.Meslek) ? _student.Meslek : "-")</MudText>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.body2"><strong>Çalıştığı Firma:</strong> @(!string.IsNullOrEmpty(_student.Firma) ? _student.Firma : "-")</MudText>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Info" Class="mb-4">
+                                Bu öğrenci henüz mezun olmamıştır.
+                            </MudAlert>
+                            
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Success" 
+                                       StartIcon="@Icons.Material.Filled.School"
+                                       OnClick="OpenGraduateDialog">
+                                Mezun Et
+                            </MudButton>
+                        }
+                    </div>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Toplantılar" Icon="@Icons.Material.Filled.EventAvailable">
+                    <div class="mt-4">
+                        @if (_meetingAttendances.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Info">Bu öğrenci için toplantı kaydı bulunamadı.</MudAlert>
+                        }
+                        else
+                        {
+                            <MudTable Items="@_meetingAttendances" Dense="true">
+                                <HeaderContent>
+                                    <MudTh>Tarih</MudTh>
+                                    <MudTh>Tür</MudTh>
+                                    <MudTh>Lokasyon</MudTh>
+                                    <MudTh>Saat Aralığı</MudTh>
+                                    <MudTh>Not</MudTh>
+                                    <MudTh>Katılım</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Tarih">@context.Meeting.Tarih.ToString("dd/MM/yyyy")</MudTd>
+                                    <MudTd DataLabel="Tür">@context.Meeting.ToplantiTuru</MudTd>
+                                    <MudTd DataLabel="Lokasyon">@(string.IsNullOrWhiteSpace(context.Meeting.Konum) ? "-" : context.Meeting.Konum)</MudTd>
+                                    <MudTd DataLabel="Saat Aralığı">@context.Meeting.Tarih.ToString("HH:mm") - @context.Meeting.BitisTarihi.ToString("HH:mm")</MudTd>
+                                    <MudTd DataLabel="Not">@(string.IsNullOrWhiteSpace(context.Meeting.Aciklama) ? "-" : context.Meeting.Aciklama)</MudTd>
+                                    <MudTd DataLabel="Katılım">
+                                        <MudCheckBox T="bool"
+                                                     Value="@context.Katildi"
+                                                     Color="Color.Primary"
+                                                     Label="Katıldı"
+                                                     ValueChanged="@(value => UpdateAttendanceAsync(context, value))" />
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </div>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Hareket Logları" Icon="@Icons.Material.Filled.History">
+                    <div class="mt-4">
+                        @if (_activityLogs.Count == 0)
+                        {
+                            <MudAlert Severity="Severity.Info">Bu öğrenci için hareket logu bulunamadı.</MudAlert>
+                        }
+                        else
+                        {
+                            <MudTable Items="@_activityLogs" Dense="true" Hover="true">
+                                <HeaderContent>
+                                    <MudTh>Tarih</MudTh>
+                                    <MudTh>İşlem Tipi</MudTh>
+                                    <MudTh>Detay</MudTh>
+                                    <MudTh>Kullanıcı</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Tarih">@context.Tarih.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                                    <MudTd DataLabel="İşlem Tipi">
+                                        <MudChip T="string" Size="Size.Small" Color="@GetLogTypeColor(context.IslemTipi)">
+                                            @GetLogTypeText(context.IslemTipi)
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Detay">@context.Detay</MudTd>
+                                    <MudTd DataLabel="Kullanıcı">@context.KullaniciAdi</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                    </div>
+                </MudTabPanel>
+            </MudTabs>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Close">Kapat</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public int StudentId { get; set; }
+
+    private Student? _student;
+    private List<TranscriptRecord> _transcripts = new();
+    private List<StudentMeetingAttendance> _meetingAttendances = new();
+    private List<ActivityLog> _activityLogs = new();
+    private bool _loading = true;
+    private bool _disposed = false;
+    private int _activePanelIndex = 0;
+    private string _latestTranscriptNote = string.Empty;
+    
+    // Scholarship status tracking
+    private List<Term> _terms = new();
+    private List<string> _academicPeriods = new();
+    private string _selectedPeriodName = string.Empty;
+    private int? _selectedPeriodId;
+    private List<StudentScholarshipStatus> _scholarshipStatuses = new();
+    private bool _loadingScholarshipStatuses = false;
+    private decimal _defaultBursTutari = 3000;
+    private bool _dataLoaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (StudentId > 0)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Only initialize selectpicker when:
+        // 1. Burs Bilgileri tab is active (index 1)
+        // 2. Data has been loaded (options are rendered)
+        // 3. Selectpicker hasn't been initialized yet
+        if (_activePanelIndex == 1 && _dataLoaded && !_selectPickerInitialized)
+        {
+            await InitializeSelectPickerAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (_disposed) return;
+        
+        _loading = true;
+        try
+        {
+            // Load default burs tutari from settings (fallback)
+            _defaultBursTutari = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
+            
+            _student = await StudentService.GetByIdAsync(StudentId);
+            if (_student != null && !_disposed)
+            {
+                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                var latestTranscript = _transcripts.FirstOrDefault();
+                _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                _meetingAttendances = await MeetingService.GetAttendancesForStudentAsync(StudentId);
+                _activityLogs = await ActivityLogService.GetByPersonNameAsync(_student.AdSoyad);
+                
+                // Load academic periods from ScholarshipAmountsByPeriod
+                _scholarshipAmounts = await SettingsService.GetScholarshipAmountsAsync();
+                _scholarshipAmounts = _scholarshipAmounts.OrderByDescending(s => s.Period).ToList();
+                
+                // Keep the string list populated for Term management
+                _academicPeriods = _scholarshipAmounts.Select(s => s.Period).ToList();
+
+                // Fallback if no scholarship amounts configured
+                if (!_scholarshipAmounts.Any())
+                {
+                    // Generate default periods
+                    for (int startYear = 2024; startYear <= 2030; startYear++)
+                    {
+                        _academicPeriods.Add($"{startYear}-{startYear + 1}");
+                    }
+                    _academicPeriods = _academicPeriods.OrderByDescending(p => p).ToList();
+                }
+
+                // Ensure database Terms exist for all periods
+                _terms = await TermService.EnsureTermsFromPeriodsAsync(_academicPeriods);
+
+                // Auto-select first period (most recent)
+                if (_scholarshipAmounts.Any())
+                {
+                    var firstAmount = _scholarshipAmounts.First();
+                    _selectedPeriodName = firstAmount.Period;
+                    _defaultBursTutari = firstAmount.Amount;
+                    
+                    var matchingTerm = _terms.FirstOrDefault(t => t.DisplayName == _selectedPeriodName);
+                    if (matchingTerm != null)
+                    {
+                        _selectedPeriodId = matchingTerm.Id;
+                    }
+                    
+                    await LoadScholarshipStatuses();
+                }
+                else if (_academicPeriods.Any())
+                {
+                    _selectedPeriodName = _academicPeriods.First();
+                    var matchingTerm = _terms.FirstOrDefault(t => t.DisplayName == _selectedPeriodName);
+                    if (matchingTerm != null)
+                    {
+                        _selectedPeriodId = matchingTerm.Id;
+                    }
+                    await LoadScholarshipStatuses();
+                }
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component disposed during async operation, ignore
+        }
+        catch (Exception ex)
+        {
+            if (!_disposed)
+            {
+                Snackbar?.Add($"Veri yüklenirken hata: {ex.Message}", Severity.Error);
+            }
+        }
+        finally
+        {
+            if (!_disposed)
+            {
+                _loading = false;
+                _dataLoaded = true; // Mark data as loaded so selectpicker can be initialized
+                StateHasChanged();
+                // Note: RefreshSelectPickerAsync will be called on next render via OnAfterRenderAsync
+            }
+        }
+    }
+
+    private List<ScholarshipAmountModel> _scholarshipAmounts = new();
+
+    private async Task OnPeriodSelectedAsync(ChangeEventArgs e)
+    {
+        var selectedPeriod = e.Value?.ToString(); // This is now the Period string (e.g., "2025-2026")
+        
+        if (string.IsNullOrWhiteSpace(selectedPeriod))
+        {
+            _selectedPeriodName = string.Empty;
+            _selectedPeriodId = null;
+            _scholarshipStatuses.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        _selectedPeriodName = selectedPeriod;
+        
+        // Find matching Term
+        var matchingTerm = _terms.FirstOrDefault(t => t.DisplayName == selectedPeriod);
+        if (matchingTerm != null)
+        {
+            _selectedPeriodId = matchingTerm.Id;
+        }
+        else
+        {
+            // Term might not exist yet, ensure it's created
+            _terms = await TermService.EnsureTermsFromPeriodsAsync(new List<string> { selectedPeriod });
+            matchingTerm = _terms.FirstOrDefault(t => t.DisplayName == selectedPeriod);
+            _selectedPeriodId = matchingTerm?.Id;
+        }
+
+        // Load amount from _scholarshipAmounts
+        var scholarshipAmount = _scholarshipAmounts.FirstOrDefault(s => s.Period == selectedPeriod);
+        if (scholarshipAmount != null)
+        {
+            _defaultBursTutari = scholarshipAmount.Amount;
+        }
+        else
+        {
+            // Fallback to default
+            _defaultBursTutari = await SettingsService.GetDecimalValueAsync("DefaultBursTutari", 3000);
+        }
+
+        await LoadScholarshipStatuses();
+        StateHasChanged();
+        await RefreshSelectPickerAsync();
+    }
+    
+    private async Task LoadDefaultAmountForPeriod(string period)
+    {
+        var amountsJson = await SettingsService.GetValueAsync("ScholarshipAmountsByPeriod");
+        if (!string.IsNullOrWhiteSpace(amountsJson))
+        {
+            try
+            {
+                var amounts = System.Text.Json.JsonSerializer.Deserialize<List<ScholarshipAmountModel>>(amountsJson);
+                var periodAmount = amounts?.FirstOrDefault(a => a.Period == period);
+                if (periodAmount != null)
+                {
+                    _defaultBursTutari = periodAmount.Amount;
+                }
+            }
+            catch { }
+        }
+    }
+
+    private const string SelectPickerId = "donemSelect";
+    private bool _selectPickerInitialized = false;
+
+    private async Task InitializeSelectPickerAsync()
+    {
+        try
+        {
+            await Task.Delay(200); // Give DOM time to render
+            await JS.InvokeVoidAsync("bootstrapSelect.initById", SelectPickerId);
+            _selectPickerInitialized = true;
+            Console.WriteLine("[StudentDetailDialog] SelectPicker initialized");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[StudentDetailDialog] InitializeSelectPicker error: {ex.Message}");
+        }
+    }
+    
+    private async Task RefreshSelectPickerAsync()
+    {
+        try
+        {
+            await Task.Delay(150);
+            if (_selectPickerInitialized)
+            {
+                await JS.InvokeVoidAsync("bootstrapSelect.refreshById", SelectPickerId);
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("bootstrapSelect.initById", SelectPickerId);
+                _selectPickerInitialized = true;
+            }
+            Console.WriteLine("[StudentDetailDialog] SelectPicker refreshed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[StudentDetailDialog] RefreshSelectPicker error: {ex.Message}");
+        }
+    }
+
+    private async Task LoadScholarshipStatuses()
+    {
+        if (!_selectedPeriodId.HasValue || _student == null) return;
+        
+        _loadingScholarshipStatuses = true;
+        StateHasChanged();
+        
+        try
+        {
+            _scholarshipStatuses = await ScholarshipStatusService.GetByStudentAndTermAsync(StudentId, _selectedPeriodId.Value);
+            
+            // If no statuses exist, initialize them
+            if (!_scholarshipStatuses.Any())
+            {
+                // Get period-based scholarship amount from settings
+                decimal monthlyAmount = _defaultBursTutari; // Default fallback
+                
+                var selectedTerm = _terms.FirstOrDefault(t => t.Id == _selectedPeriodId.Value);
+                if (selectedTerm != null)
+                {
+                    // Try to get period-specific amount from ScholarshipAmountsByPeriod
+                    var amountsJson = await SettingsService.GetValueAsync("ScholarshipAmountsByPeriod");
+                    if (!string.IsNullOrWhiteSpace(amountsJson))
+                    {
+                        try
+                        {
+                            var amounts = System.Text.Json.JsonSerializer.Deserialize<List<ScholarshipAmountModel>>(amountsJson);
+                            var periodAmount = amounts?.FirstOrDefault(a => a.Period == selectedTerm.DisplayName);
+                            if (periodAmount != null)
+                            {
+                                monthlyAmount = periodAmount.Amount;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                
+                _scholarshipStatuses = await ScholarshipStatusService.InitializeForStudentAsync(
+                    StudentId, 
+                    _selectedPeriodId.Value, 
+                    monthlyAmount);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar?.Add($"Burs durumları yüklenirken hata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingScholarshipStatuses = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleScholarshipStatusAsync(StudentScholarshipStatus status, bool isPaid)
+    {
+        try
+        {
+            string? cutReason = null;
+            
+            if (!isPaid)
+            {
+                // Show dialog to get cut reason
+                var parameters = new DialogParameters
+                {
+                    ["Title"] = "Burs Kesim Sebebi",
+                    ["ContentText"] = $"{status.GetMonthName()} {status.Year} ayı bursu kesilecek. Sebep belirtiniz:",
+                    ["DefaultValue"] = "",
+                    ["Label"] = "Kesim Sebebi"
+                };
+                var options = new DialogOptions { MaxWidth = MaxWidth.Small };
+                var dialog = await DialogService.ShowAsync<SimpleInputDialog>("Kesim Sebebi", parameters, options);
+                var result = await dialog.Result;
+                
+                if (result.Canceled)
+                    return;
+                
+                cutReason = result.Data?.ToString() ?? "Manuel Kesim";
+            }
+            
+            await ScholarshipStatusService.ToggleStatusAsync(status.Id, isPaid, cutReason);
+            
+            // Update local state
+            status.IsPaid = isPaid;
+            status.CutReason = cutReason;
+            
+            Snackbar?.Add(isPaid ? "Burs durumu 'Ödendi' olarak güncellendi." : $"Burs kesildi: {cutReason}", 
+                isPaid ? Severity.Success : Severity.Warning);
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar?.Add($"Durum güncellenirken hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private decimal CalculatePeriodScholarship()
+    {
+        if (_student == null || !_student.BursBaslangicTarihi.HasValue || !_student.BursBitisTarihi.HasValue)
+            return 0;
+
+        var start = _student.BursBaslangicTarihi.Value;
+        var end = _student.BursBitisTarihi.Value > DateTime.Now ? DateTime.Now : _student.BursBitisTarihi.Value;
+        
+        if (end <= start)
+            return 0;
+
+        var months = ((end.Year - start.Year) * 12) + end.Month - start.Month + 1;
+        return _student.AylikTutar * months;
+    }
+
+    private async Task OpenAddTranscriptDialog()
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["StudentId"] = StudentId 
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<TranscriptDialog>("Transkript Ekle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && !_disposed)
+        {
+            try
+            {
+                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                var latestTranscript = _transcripts.FirstOrDefault();
+                _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                
+                if (!_disposed)
+                {
+                    StateHasChanged();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed, ignore
+            }
+            catch (Exception ex)
+            {
+                if (!_disposed)
+                {
+                    Snackbar?.Add($"Transkript yenilenirken hata: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task DeleteTranscript(int transcriptId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Onayla",
+            "Bu transkript kaydını silmek istediğinizden emin misiniz?",
+            yesText: "Sil", cancelText: "İptal");
+
+        if (result == true && !_disposed)
+        {
+            try
+            {
+                await TranscriptService.DeleteAsync(transcriptId);
+                _transcripts = await TranscriptService.GetByStudentIdAsync(StudentId);
+                var latestTranscript = _transcripts.FirstOrDefault();
+                _latestTranscriptNote = latestTranscript != null ? $"GNO: {latestTranscript.GNO:0.00}" : string.Empty;
+                
+                if (!_disposed)
+                {
+                    StateHasChanged();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed, ignore
+            }
+            catch (Exception ex)
+            {
+                if (!_disposed)
+                {
+                    Snackbar?.Add($"Transkript silinirken hata: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task OpenGraduateDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<GraduateStudentDialog>("Öğrenciyi Mezun Et", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is GraduateStudentDialog.GraduationResult graduationResult)
+        {
+            await StudentService.GraduateStudentAsync(StudentId, graduationResult.MezuniyetTarihi, graduationResult.Meslek, graduationResult.Firma);
+            _student = await StudentService.GetByIdAsync(StudentId);
+            Snackbar.Add($"{_student?.AdSoyad} mezun edildi.", Severity.Success);
+            StateHasChanged();
+        }
+    }
+
+    private void Close()
+    {
+        _disposed = true;
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+
+    private async Task UpdateAttendanceAsync(StudentMeetingAttendance attendance, bool katildi)
+    {
+        await MeetingService.UpdateAttendanceAsync(attendance.Id, katildi);
+        attendance.Katildi = katildi;
+        Snackbar.Add("Katılım durumu güncellendi.", Severity.Success);
+    }
+
+    private Color GetLogTypeColor(string islemTipi)
+    {
+        return islemTipi switch
+        {
+            "OgrenciEkle" => Color.Success,
+            "OgrenciGuncelle" => Color.Info,
+            "OgrenciSil" => Color.Error,
+            "OgrenciMezun" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private string GetLogTypeText(string islemTipi)
+    {
+        return islemTipi switch
+        {
+            "OgrenciEkle" => "Ekleme",
+            "OgrenciGuncelle" => "Güncelleme",
+            "OgrenciSil" => "Silme",
+            "OgrenciMezun" => "Mezuniyet",
+            _ => islemTipi
+        };
+    }
+
+    // Calculate the actual paid amount: 80% of Global Monthly Amount
+    private decimal CalculatePaidAmount(StudentScholarshipStatus status)
+    {
+        // Get the global amount for the selected period
+        var globalAmount = _scholarshipAmounts.FirstOrDefault(s => s.Period == _selectedPeriodName)?.Amount ?? _defaultBursTutari;
+        return globalAmount * 0.8m;
+    }
+
+    // Calculate total paid amount for summary
+    private decimal CalculateTotalPaid()
+    {
+        var paidCount = _scholarshipStatuses.Count(s => s.IsPaid);
+        var globalAmount = _scholarshipAmounts.FirstOrDefault(s => s.Period == _selectedPeriodName)?.Amount ?? _defaultBursTutari;
+        return paidCount * (globalAmount * 0.8m);
+    }
+
+    // Format gender to display properly (Erkek/Kadın instead of ERKEK/KADIN)
+    private string FormatGender(string? cinsiyet)
+    {
+        if (string.IsNullOrEmpty(cinsiyet))
+            return "-";
+        
+        var lower = cinsiyet.ToLower();
+        if (lower == "erkek")
+            return "Erkek";
+        if (lower == "kadın" || lower == "kadin")
+            return "Kadın";
+        
+        return cinsiyet;
+    }
+}

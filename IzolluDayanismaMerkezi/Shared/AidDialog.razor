@@ -1,0 +1,268 @@
+@using IzolluVakfi.Data.Entities
+@using IzolluVakfi.Services
+@inject AidService AidService
+@inject SettingsService SettingsService
+@inject MemberService MemberService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog Style="max-width: 700px;">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Class="mr-2" Style="vertical-align: middle;" />
+            @(IsEdit ? "Yardım Düzenle" : "Yeni Yardım Ekle")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_success">
+            @* Kişisel Bilgiler *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                    Kişisel Bilgiler
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Aid.Ad" Label="İsim" Required="true" RequiredError="İsim gereklidir" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Aid.Telefon" Label="Telefon" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        @if (_isLoadingMembers)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" />
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Refere Eden</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="Aid.RefereEden">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var member in _members)
+                                    {
+                                        <option value="@member.AdSoyad">@member.AdSoyad</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <div class="form-group">
+                            <label class="form-label">Dönem</label>
+                            <select class="form-select selectpicker" data-live-search="true" @bind="Aid.AcademicYear">
+                                @foreach (var period in _academicYears)
+                                {
+                                    <option value="@period">@period</option>
+                                }
+                            </select>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Adres Bilgileri *@
+            <MudPaper Elevation="0" Class="pa-3 mb-3" Style="background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <MudText Typo="Typo.subtitle2" Style="color: #b45309;" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mr-1" />
+                    Adres Bilgileri
+                </MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudCheckBox T="bool" Value="Aid.IsIzollulu" ValueChanged="OnIsIzolluluChanged" Label="İzollulu mu?" Color="Color.Secondary" />
+                    </MudItem>
+                    <MudItem xs="12" md="8">
+                        @if (Aid.IsIzollulu)
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Köy</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="Aid.Koy">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var village in _izolluVillages)
+                                    {
+                                        <option value="@village">@village</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Şehir</label>
+                                <select class="form-select selectpicker" data-live-search="true" @bind="Aid.Sehir">
+                                    <option value="">Seçiniz</option>
+                                    @foreach (var city in _turkishCities)
+                                    {
+                                        <option value="@city">@city</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="Aid.Adres" Label="Açık Adres" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            @* Notlar *@
+            <MudPaper Elevation="0" Class="pa-3" Style="background-color: #d1fae5; border-radius: 12px; border-left: 4px solid #22c55e;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Notes" Size="Size.Small" Class="mr-1" />
+                    Notlar
+                </MudText>
+                <MudTextField @bind-Value="Aid.Notlar" 
+                              Label="Notlar" 
+                              Lines="3" 
+                              Variant="Variant.Outlined"
+                              Placeholder="Yardım ile ilgili notlarınızı buraya yazabilirsiniz..." />
+            </MudPaper>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">İptal</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_success)" Variant="Variant.Filled">
+            @(IsEdit ? "Güncelle" : "Kaydet")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public Aid Aid { get; set; } = new();
+
+    [Parameter]
+    public bool IsEdit { get; set; }
+
+    private MudForm _form = null!;
+    private bool _success;
+    private List<string> _academicYears = new();
+    private List<Member> _members = new();
+    private bool _isLoadingMembers = true;
+    
+    private readonly List<string> _izolluVillages = new()
+    {
+        "Abuşoğlu", "Akça", "Akuşağı", "Bağlıca", "Bentköy", "Çanakçı", "Darıpınar",
+        "Dedeköy", "Düztarla", "Erdemli", "Gülenköy", "Güneyce", "İkizpınar", "Kaleköy",
+        "Karaağaç", "Karahüseyin", "Kıyıcak", "Kozluk", "Kumluyazı", "Mahmut Dursun",
+        "Salkımlı", "Sarıot", "Soğukpınar", "Tepebaşı", "Uyanık", "Uzunhüseyin",
+        "Üçdeğirmen", "Yenidamlar"
+    };
+
+    private readonly List<string> _turkishCities = new()
+    {
+        "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya",
+        "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik",
+        "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum",
+        "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir",
+        "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Iğdır", "Isparta", "İstanbul",
+        "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis",
+        "Kırıkkale", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa",
+        "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Osmaniye",
+        "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas", "Şırnak",
+        "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoadingMembers = true;
+        _members = await MemberService.GetAllAsync();
+        _isLoadingMembers = false;
+        
+        var periodsFromSettings = await SettingsService.GetListValueAsync("AcademicPeriods");
+        if (periodsFromSettings.Count > 0)
+        {
+            _academicYears = periodsFromSettings.OrderBy(p => p).ToList();
+        }
+        else
+        {
+            for (int startYear = 2025; startYear <= 2039; startYear++)
+            {
+                _academicYears.Add($"{startYear}-{startYear + 1}");
+            }
+        }
+        
+        if (!IsEdit && string.IsNullOrEmpty(Aid.AcademicYear) && _academicYears.Count > 0)
+        {
+            Aid.AcademicYear = _academicYears.First();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeSelectPickersAsync();
+        }
+    }
+
+    private async Task InitializeSelectPickersAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("bootstrapSelect.init");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap select initialization error: {ex.Message}");
+        }
+    }
+
+    private async void OnIsIzolluluChanged(bool value)
+    {
+        Aid.IsIzollulu = value;
+        if (value)
+        {
+            Aid.Sehir = null;
+        }
+        else
+        {
+            Aid.Koy = null;
+        }
+        StateHasChanged();
+        await Task.Delay(50);
+        await InitializeSelectPickersAsync();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+
+        if (_success)
+        {
+            try
+            {
+                if (Aid.IsIzollulu)
+                {
+                    Aid.Sehir = null;
+                }
+                else
+                {
+                    Aid.Koy = null;
+                }
+
+                if (IsEdit)
+                {
+                    await AidService.UpdateAsync(Aid);
+                    Snackbar.Add("Yardım başarıyla güncellendi.", Severity.Success);
+                }
+                else
+                {
+                    await AidService.CreateAsync(Aid);
+                    Snackbar.Add("Yardım başarıyla eklendi.", Severity.Success);
+                }
+
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}
